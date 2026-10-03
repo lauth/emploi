@@ -2,6 +2,7 @@ packages:
   - back
   - front
   - shared
+  - e2e
 
 onlyBuiltDependencies:
   - '@prisma/engines'

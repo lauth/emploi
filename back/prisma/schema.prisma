@@ -1,5 +1,4 @@
 // Data model of emploi, single source of truth for the database (adrs/0003-postgresql-with-prisma.md).
-// No models yet: features are not implemented.
 
 generator client {
   provider     = "prisma-client"
@@ -9,4 +8,21 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+/// A job offer the user responded to (adrs/0011-offer-data-model-and-api.md).
+model Offer {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  title       String    @db.VarChar(200)
+  company     String    @db.VarChar(200)
+  url         String?   @db.VarChar(2048)
+  location    String?   @db.VarChar(200)
+  description String?
+  /// Day the user responded to the offer (no time part).
+  appliedAt   DateTime? @map("applied_at") @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@map("offers")
 }

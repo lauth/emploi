@@ -1,0 +1,153 @@
+import type { Offer } from '@emploi/shared';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { ApiError, createOffer, deleteOffer, updateOffer } from '@/lib/api';
+import { EMPTY_OFFER_FORM, initialOfferFormState } from '@/lib/offer-form';
+import {
+  createOfferAction,
+  deleteOfferAction,
+  updateOfferAction,
+} from './actions';
+
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
+vi.mock('next/navigation', () => ({
+  // The real `redirect` throws to stop the action; so does this one.
+  redirect: vi.fn((url: string) => {
+    throw new Error(`redirect:${url}`);
+  }),
+}));
+vi.mock('@/lib/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/api')>()),
+  createOffer: vi.fn(),
+  updateOffer: vi.fn(),
+  deleteOffer: vi.fn(),
+}));
+
+const ID = '0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d';
+const initial = initialOfferFormState(EMPTY_OFFER_FORM);
+
+function form(fields: Record<string, string>): FormData {
+  const formData = new FormData();
+  for (const [name, value] of Object.entries(fields)) {
+    formData.set(name, value);
+  }
+  return formData;
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
+});
+
+describe('createOfferAction', () => {
+  it('returns field errors without calling the API', async () => {
+    const state = await createOfferAction(initial, form({ company: 'Acme' }));
+
+    expect(state.fieldErrors).toHaveProperty('title');
+    expect(state.values.company).toBe('Acme');
+    expect(createOffer).not.toHaveBeenCalled();
+  });
+
+  it('creates the offer and redirects to it', async () => {
+    vi.mocked(createOffer).mockResolvedValue({ id: ID } as Offer);
+
+    await expect(
+      createOfferAction(initial, form({ title: 'Dev', company: 'Acme' })),
+    ).rejects.toThrow(`redirect:/offers/${ID}`);
+
+    expect(createOffer).toHaveBeenCalledWith({
+      title: 'Dev',
+      company: 'Acme',
+      url: null,
+      location: null,
+      description: null,
+      appliedAt: null,
+    });
+    expect(revalidatePath).toHaveBeenCalledWith('/offers');
+  });
+
+  it('shows the API validation messages', async () => {
+    vi.mocked(createOffer).mockRejectedValue(
+      new ApiError(400, [
+        'title must be shorter than or equal to 200 characters',
+      ]),
+    );
+
+    const state = await createOfferAction(
+      initial,
+      form({ title: 'Dev', company: 'Acme' }),
+    );
+
+    expect(state.formErrors).toEqual([
+      'title must be shorter than or equal to 200 characters',
+    ]);
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('shows a generic message when the API fails', async () => {
+    vi.mocked(createOffer).mockRejectedValue(new TypeError('fetch failed'));
+
+    const state = await createOfferAction(
+      initial,
+      form({ title: 'Dev', company: 'Acme' }),
+    );
+
+    expect(state.formErrors).toEqual([
+      'The offer could not be saved. Please try again.',
+    ]);
+    expect(state.values.title).toBe('Dev');
+  });
+});
+
+describe('updateOfferAction', () => {
+  it('sends every field, clearing empty ones', async () => {
+    vi.mocked(updateOffer).mockResolvedValue({ id: ID } as Offer);
+
+    await expect(
+      updateOfferAction(
+        ID,
+        initial,
+        form({ title: 'Dev', company: 'Acme', url: '' }),
+      ),
+    ).rejects.toThrow(`redirect:/offers/${ID}`);
+
+    expect(updateOffer).toHaveBeenCalledWith(
+      ID,
+      expect.objectContaining({ url: null }),
+    );
+  });
+
+  it('reports an offer deleted in the meantime', async () => {
+    vi.mocked(updateOffer).mockRejectedValue(new ApiError(404, ['Not found']));
+
+    const state = await updateOfferAction(
+      ID,
+      initial,
+      form({ title: 'Dev', company: 'Acme' }),
+    );
+
+    expect(state.formErrors).toEqual(['This offer no longer exists.']);
+  });
+});
+
+describe('deleteOfferAction', () => {
+  it('deletes and redirects to the list', async () => {
+    vi.mocked(deleteOffer).mockResolvedValue();
+
+    await expect(deleteOfferAction(ID)).rejects.toThrow('redirect:/offers');
+    expect(deleteOffer).toHaveBeenCalledWith(ID);
+  });
+
+  it('treats an offer already deleted as success', async () => {
+    vi.mocked(deleteOffer).mockRejectedValue(new ApiError(404, ['Not found']));
+
+    await expect(deleteOfferAction(ID)).rejects.toThrow('redirect:/offers');
+  });
+
+  it('rethrows other errors', async () => {
+    const failure = new ApiError(500, ['Internal server error']);
+    vi.mocked(deleteOffer).mockRejectedValue(failure);
+
+    await expect(deleteOfferAction(ID)).rejects.toBe(failure);
+  });
+});

@@ -9,4 +9,5 @@ back/src/generated
 .certs
 k8s
 adrs
+e2e
 .git

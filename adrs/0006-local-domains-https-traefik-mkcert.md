@@ -1,6 +1,6 @@
 # 6. Local domains and HTTPS with Traefik and mkcert
 
-- Status: Accepted
+- Status: Accepted; how the front reaches the API superseded by ADR-0012
 - Date: 2026-10-03
 
 ## Context

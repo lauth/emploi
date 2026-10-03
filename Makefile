@@ -63,6 +63,20 @@ test-front: ## Run front tests, filtered with T=<path or name>, e.g. make test-f
 .PHONY: check
 check: format-check lint typecheck test test-e2e ## Run every check; must pass before a change is done
 
+##@ Browser tests (Playwright, against the running cluster)
+
+.PHONY: browser-install
+browser-install: ## Download the Chromium build used by Playwright (once per machine)
+	pnpm --filter e2e browser:install
+
+.PHONY: test-browser
+test-browser: ## Run the browser tests, filtered with T=<file or name>, e.g. make test-browser T=offers
+	pnpm --filter e2e test:browser $(T)
+
+.PHONY: browser-report
+browser-report: ## Open the report of the last browser test run
+	pnpm --filter e2e report
+
 ##@ Database (needs back/.env and a running cluster)
 
 .PHONY: db-generate
@@ -70,9 +84,10 @@ db-generate: ## Generate the Prisma client from the schema
 	pnpm --filter back prisma:generate
 
 .PHONY: db-migrate
-db-migrate: ## Create and apply a migration: make db-migrate NAME=<change>
+db-migrate: ## Create and apply a migration, then regenerate the client: make db-migrate NAME=<change>
 	@test -n "$(NAME)" || { echo "Usage: make db-migrate NAME=<change>"; exit 1; }
 	pnpm --filter back prisma:migrate --name $(NAME)
+	pnpm --filter back prisma:generate
 
 .PHONY: db-deploy
 db-deploy: ## Apply pending migrations to the cluster database
@@ -133,7 +148,7 @@ certs: $(CERT_DIR)/emploi.pem ## Generate the mkcert certificate and store it as
 .PHONY: images
 images: ## Build the back and front images and import them into the cluster
 	docker build --file back/Dockerfile --tag emploi-back:dev .
-	docker build --file front/Dockerfile --build-arg NEXT_PUBLIC_API_URL=$(API_URL) --tag emploi-front:dev .
+	docker build --file front/Dockerfile --tag emploi-front:dev .
 	k3d image import --cluster $(CLUSTER) emploi-back:dev emploi-front:dev
 
 .PHONY: deploy

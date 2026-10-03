@@ -11,10 +11,8 @@ RUN pnpm fetch
 COPY shared shared
 COPY front front
 RUN pnpm install --offline --frozen-lockfile --filter front...
-# NEXT_PUBLIC_* values are inlined into the browser bundle at build time.
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
-  NEXT_TELEMETRY_DISABLED=1
+# No build-time configuration: API_URL is read at runtime (adrs/0012-front-calls-api-from-server.md).
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter front build
 
 FROM node:22-alpine AS runtime
