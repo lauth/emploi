@@ -1,6 +1,7 @@
 import type { InterviewStep } from '@emploi/shared';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { cache } from 'react';
 import { getInterviewStep } from '@/lib/api';
 import type { InterviewStepFormValues } from '@/lib/interview-step-form';
@@ -15,7 +16,8 @@ type Props = PageProps<'/offers/[id]/steps/[stepId]/edit'>;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id, stepId } = await params;
   const step = await loadStep(id, stepId);
-  return { title: `Edit ${step?.title ?? 'step'} · emploi` };
+  const t = await getTranslations('steps.edit');
+  return { title: step ? t('metaTitle', { title: step.title }) : t('title') };
 }
 
 export default async function EditInterviewStepPage({ params }: Props) {
@@ -24,14 +26,15 @@ export default async function EditInterviewStepPage({ params }: Props) {
   if (step === null) {
     notFound();
   }
+  const t = await getTranslations('steps.edit');
 
   return (
     <>
-      <h1>Edit the interview step</h1>
+      <h1>{t('title')}</h1>
       <InterviewStepForm
         action={updateInterviewStepAction.bind(null, step.offerId, step.id)}
         initialValues={toFormValues(step)}
-        submitLabel="Save"
+        submitLabel={t('submit')}
         cancelHref={`/offers/${step.offerId}`}
       />
     </>

@@ -66,12 +66,17 @@ describe('createOfferAction', () => {
     expect(revalidatePath).toHaveBeenCalledWith('/offers');
   });
 
-  it('shows the API validation messages', async () => {
-    vi.mocked(createOffer).mockRejectedValue(
-      new ApiError(400, [
-        'title must be shorter than or equal to 200 characters',
-      ]),
-    );
+  it('translates field errors', async () => {
+    const state = await createOfferAction(initial, form({ title: ' ' }));
+
+    expect(state.fieldErrors).toEqual({ title: ['Champ obligatoire'] });
+  });
+
+  it('shows a translated message, not the API one, when the API rejects the data', async () => {
+    const rejection = new ApiError(400, [
+      'title must be shorter than or equal to 200 characters',
+    ]);
+    vi.mocked(createOffer).mockRejectedValue(rejection);
 
     const state = await createOfferAction(
       initial,
@@ -79,8 +84,9 @@ describe('createOfferAction', () => {
     );
 
     expect(state.formErrors).toEqual([
-      'title must be shorter than or equal to 200 characters',
+      'Le serveur a refusé ces données. Vérifiez les champs et réessayez.',
     ]);
+    expect(console.error).toHaveBeenCalledWith(rejection);
     expect(redirect).not.toHaveBeenCalled();
   });
 
@@ -93,7 +99,7 @@ describe('createOfferAction', () => {
     );
 
     expect(state.formErrors).toEqual([
-      'The offer could not be saved. Please try again.',
+      'L’offre n’a pas pu être enregistrée. Veuillez réessayer.',
     ]);
     expect(state.values.title).toBe('Dev');
   });
@@ -126,7 +132,7 @@ describe('updateOfferAction', () => {
       form({ title: 'Dev', company: 'Acme' }),
     );
 
-    expect(state.formErrors).toEqual(['This offer no longer exists.']);
+    expect(state.formErrors).toEqual(['Cette offre n’existe plus.']);
   });
 });
 

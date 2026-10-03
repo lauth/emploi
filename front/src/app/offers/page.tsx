@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getFormatter, getTranslations } from 'next-intl/server';
 import { listOffers } from '@/lib/api';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { pageCount, parsePageParam } from '@/lib/pagination';
@@ -8,7 +9,10 @@ import styles from './offers.module.css';
 
 const PAGE_SIZE = 20;
 
-export const metadata: Metadata = { title: 'Offers · emploi' };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('offers.list');
+  return { title: t('title') };
+}
 
 export default async function OffersPage({
   searchParams,
@@ -19,24 +23,23 @@ export default async function OffersPage({
     offset: (page - 1) * PAGE_SIZE,
   });
   const pages = pageCount(total, PAGE_SIZE);
+  const t = await getTranslations('offers.list');
+  const format = await getFormatter();
 
   return (
     <>
       <div className={styles.heading}>
-        <h1>Offers</h1>
+        <h1>{t('title')}</h1>
         <Link href="/offers/new" className={styles.primary}>
-          Add an offer
+          {t('add')}
         </Link>
       </div>
 
       {total === 0 ? (
-        <p className={styles.empty}>
-          No offer yet. Add the first job offer you responded to.
-        </p>
+        <p className={styles.empty}>{t('empty')}</p>
       ) : items.length === 0 ? (
         <p className={styles.empty}>
-          No offer on this page.{' '}
-          <Link href="/offers">Back to the first page</Link>
+          {t('emptyPage')} <Link href="/offers">{t('firstPage')}</Link>
         </p>
       ) : (
         <ul className={styles.list}>
@@ -48,8 +51,12 @@ export default async function OffersPage({
               <CompanyAndLocation offer={offer} />
               <p className={styles.meta}>
                 {offer.appliedAt
-                  ? `Applied on ${formatDate(offer.appliedAt)}`
-                  : `Added on ${formatDateTime(offer.createdAt)}`}
+                  ? t('appliedOn', {
+                      date: formatDate(format, offer.appliedAt),
+                    })
+                  : t('addedOn', {
+                      date: formatDateTime(format, offer.createdAt),
+                    })}
               </p>
             </li>
           ))}
@@ -57,17 +64,17 @@ export default async function OffersPage({
       )}
 
       {pages > 1 && (
-        <nav aria-label="Pagination" className={styles.pagination}>
+        <nav aria-label={t('pagination')} className={styles.pagination}>
           {page > 1 ? (
-            <Link href={`/offers?page=${String(page - 1)}`}>Previous</Link>
+            <Link href={`/offers?page=${String(page - 1)}`}>
+              {t('previous')}
+            </Link>
           ) : (
             <span />
           )}
-          <span>
-            Page {page} of {pages}
-          </span>
+          <span>{t('page', { page, pages })}</span>
           {page < pages ? (
-            <Link href={`/offers?page=${String(page + 1)}`}>Next</Link>
+            <Link href={`/offers?page=${String(page + 1)}`}>{t('next')}</Link>
           ) : (
             <span />
           )}

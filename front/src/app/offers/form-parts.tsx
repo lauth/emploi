@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type { FormState } from '@/lib/forms';
 import styles from './offers.module.css';
 
@@ -56,13 +57,14 @@ export function FormActions({
   submitLabel: string;
   cancelHref: string;
 }) {
+  const t = useTranslations('form');
   return (
     <div className={styles.actions}>
       <button type="submit" className={styles.primary} disabled={pending}>
-        {pending ? 'Saving…' : submitLabel}
+        {pending ? t('saving') : submitLabel}
       </button>
       <Link href={cancelHref} className={styles.secondary}>
-        Cancel
+        {t('cancel')}
       </Link>
     </div>
   );

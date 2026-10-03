@@ -10,6 +10,7 @@ import {
   requiredText,
   type FormState,
   type ParseResult,
+  type TranslateValidation,
 } from './forms';
 
 /** `satisfies` makes the compiler reject any drift from the API limits. */
@@ -66,6 +67,7 @@ export function initialOfferFormState(values: OfferFormValues): OfferFormState {
 
 export function parseOfferForm(
   values: OfferFormValues,
+  translate: TranslateValidation,
 ): ParseResult<OfferField, z.infer<typeof offerFormSchema>> {
-  return parseForm(offerFormSchema, values);
+  return parseForm(offerFormSchema, values, translate);
 }

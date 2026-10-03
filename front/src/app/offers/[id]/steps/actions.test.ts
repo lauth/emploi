@@ -95,7 +95,9 @@ describe('createInterviewStepAction', () => {
       form({ title: 'Phone screen', status: 'planned' }),
     );
 
-    expect(state.formErrors).toEqual(['This offer or step no longer exists.']);
+    expect(state.formErrors).toEqual([
+      'Cette offre ou cette étape n’existe plus.',
+    ]);
     expect(state.values.title).toBe('Phone screen');
   });
 });
@@ -119,7 +121,21 @@ describe('updateInterviewStepAction', () => {
     });
   });
 
-  it('shows the API validation messages', async () => {
+  it('translates field errors', async () => {
+    const state = await updateInterviewStepAction(
+      OFFER_ID,
+      'a',
+      initial,
+      form({ title: 'Call', status: 'won' }),
+    );
+
+    expect(state.fieldErrors).toEqual({
+      status: ['Choisissez une valeur de la liste'],
+    });
+    expect(updateInterviewStep).not.toHaveBeenCalled();
+  });
+
+  it('shows a translated message, not the API one, when the API rejects the data', async () => {
     vi.mocked(updateInterviewStep).mockRejectedValue(
       new ApiError(400, ['status must be one of the following values']),
     );
@@ -132,7 +148,7 @@ describe('updateInterviewStepAction', () => {
     );
 
     expect(state.formErrors).toEqual([
-      'status must be one of the following values',
+      'Le serveur a refusé ces données. Vérifiez les champs et réessayez.',
     ]);
     expect(redirect).not.toHaveBeenCalled();
   });

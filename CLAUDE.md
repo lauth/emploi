@@ -96,19 +96,24 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 
 ## Front (Next.js) conventions
 
+- **The interface is translated (ADR-0016), French only for now.** Never hardcode user-facing text: add it to `front/messages/fr.json` (the reference catalogue; keys are type-checked) and read it with `getTranslations` (server components, actions, `generateMetadata`) or `useTranslations` (client components). `react/jsx-no-literals` fails the lint on text in JSX; text in props (labels passed as props, placeholders, `aria-label`, confirm messages) isn't caught, so check it yourself. Code, comments, ADRs and API messages stay in English.
+- Dates go through next-intl's formatter with the named formats of `src/i18n/formats.ts`: `formatDate(format, …)` for `YYYY-MM-DD` values, `formatDateTime(format, …)` for timestamps (`src/lib/format.ts`). Page titles only give their own part; the layout's template adds "· emploi".
+- Validation messages are keys of the `validation` namespace, produced by the schema helpers of `src/lib/forms.ts` and translated by server actions with `validationTranslator()` (`src/lib/action-helpers.ts`). API error messages are never shown: `saveErrorMessages()` logs them and returns a translated message.
+- The locale is resolved in `src/i18n/request.ts` (always `fr`; no locale in URLs). Adding a language: a new catalogue, the locale in `src/i18n/config.ts`, and an ADR for how it is chosen.
+
 - The browser never calls the API (ADR-0012). Pages are server components that read through `src/lib/api.ts`; mutations are server actions (`src/app/<feature>/actions.ts`) that validate input with Zod, call the API, then `revalidatePath` + `redirect`. Forms are client components using `useActionState` and get back the submitted values plus field/form errors.
 - `src/lib/api.ts` is the only API client: server-only, no caching, and its read functions call `connection()` so pages render per request (otherwise `next build` would try to prerender them without an API). It throws `ApiError` (status + NestJS validation messages).
 - Server env is validated with Zod in `src/lib/env.ts` (`serverEnv()`); add new variables there, to `front/.env.example` and to `k8s/front.yaml`. Running the front on the host against the cluster API needs `API_URL=https://api.emploi.localhost` and `NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"`.
 - Field length limits are typed in `@emploi/shared` (`OfferFieldLimits`, `InterviewStepFieldLimits`) and declared on each side with `satisfies`; keep the Zod schemas (`src/lib/offer-form.ts`, `src/lib/interview-step-form.ts`) in line with the back DTOs. Build new forms from `src/lib/forms.ts` (form state, `readForm`, `parseForm`, schema helpers) and `src/app/offers/form-parts.tsx` (errors, actions); use `ConfirmButton` for destructive actions.
 - Validate external input (forms, query params such as `?page=`) on the front too. Server actions are reachable by direct POST: never trust their arguments.
-- Tests: Vitest + Testing Library + jsdom, `src/**/*.test.{ts,tsx}` next to the code (`vitest.setup.ts` loads jest-dom matchers). `server-only` is aliased to a stub in `vitest.config.mts`; mock `next/navigation`, `next/cache` and `next/server` where needed. Async server component pages aren't unit-tested.
+- Tests: Vitest + Testing Library + jsdom, `src/**/*.test.{ts,tsx}` next to the code (`vitest.setup.ts` loads jest-dom matchers). `server-only` is aliased to a stub in `vitest.config.mts`; mock `next/navigation`, `next/cache` and `next/server` where needed. Async server component pages aren't unit-tested. Tests use the real French catalogue: render components with `renderWithIntl` (`src/test/intl.tsx`); `next-intl/server` is mocked globally in `vitest.setup.ts` with the same catalogue, so assertions are on French text.
 - `make typecheck` runs `next typegen` first so route types like `PageProps<'/offers/[id]'>` exist.
 
 ## Browser tests (Playwright)
 
 - `e2e/` tests user flows in Chromium against the deployed cluster, not a dev server: after changing the UI or the API, run `make images deploy` then `make test-browser`. They are not part of `make check` (which works without a cluster).
 - The cluster database holds real data: use the `offers` fixture (`e2e/fixtures/offers.ts`). It gives unique titles (`uniqueTitle`), creates data through the API (`create`, `addStep`), registers offers created through the UI (`track(page.url())`), and deletes everything after each test (steps go with their offer). Assert only on data the test created; never assume an empty database or a fixed count.
-- Prefer role and label locators (`getByRole`, `getByLabel`) and web-first assertions (`await expect(locator)…`); `eslint-plugin-playwright` enforces the rest. Base URLs can be overridden with `E2E_BASE_URL` / `E2E_API_URL`.
+- Prefer role and label locators (`getByRole`, `getByLabel`) and web-first assertions (`await expect(locator)…`); `eslint-plugin-playwright` enforces the rest. Locators use the French labels of the catalogue. Base URLs can be overridden with `E2E_BASE_URL` / `E2E_API_URL`.
 
 ## Code quality requirements
 

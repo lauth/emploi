@@ -2,7 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { ApiError, createOffer, deleteOffer, updateOffer } from '@/lib/api';
+import { getTranslations } from 'next-intl/server';
+import { saveErrorMessages, validationTranslator } from '@/lib/action-helpers';
+import { createOffer, deleteOffer, isNotFound, updateOffer } from '@/lib/api';
 import {
   parseOfferForm,
   readOfferForm,
@@ -17,7 +19,7 @@ export async function createOfferAction(
   formData: FormData,
 ): Promise<OfferFormState> {
   const values = readOfferForm(formData);
-  const parsed = parseOfferForm(values);
+  const parsed = parseOfferForm(values, await validationTranslator());
   if (!parsed.success) {
     return { values, fieldErrors: parsed.fieldErrors, formErrors: [] };
   }
@@ -26,7 +28,7 @@ export async function createOfferAction(
   try {
     ({ id } = await createOffer(parsed.data));
   } catch (error) {
-    return { values, fieldErrors: {}, formErrors: errorMessages(error) };
+    return { values, fieldErrors: {}, formErrors: await errorMessages(error) };
   }
 
   revalidatePath('/offers');
@@ -39,7 +41,7 @@ export async function updateOfferAction(
   formData: FormData,
 ): Promise<OfferFormState> {
   const values = readOfferForm(formData);
-  const parsed = parseOfferForm(values);
+  const parsed = parseOfferForm(values, await validationTranslator());
   if (!parsed.success) {
     return { values, fieldErrors: parsed.fieldErrors, formErrors: [] };
   }
@@ -47,7 +49,7 @@ export async function updateOfferAction(
   try {
     await updateOffer(id, parsed.data);
   } catch (error) {
-    return { values, fieldErrors: {}, formErrors: errorMessages(error) };
+    return { values, fieldErrors: {}, formErrors: await errorMessages(error) };
   }
 
   revalidatePath('/offers');
@@ -59,7 +61,7 @@ export async function deleteOfferAction(id: string): Promise<void> {
     await deleteOffer(id);
   } catch (error) {
     // Already gone (404) or not an offer id (400): nothing to delete.
-    if (!(error instanceof ApiError && [400, 404].includes(error.status))) {
+    if (!isNotFound(error)) {
       throw error;
     }
   }
@@ -68,16 +70,10 @@ export async function deleteOfferAction(id: string): Promise<void> {
   redirect('/offers');
 }
 
-/** Messages shown above the form when the API rejects or fails a request. */
-function errorMessages(error: unknown): string[] {
-  if (error instanceof ApiError) {
-    if (error.status === 404) {
-      return ['This offer no longer exists.'];
-    }
-    if (error.status === 400) {
-      return error.messages;
-    }
-  }
-  console.error(error);
-  return ['The offer could not be saved. Please try again.'];
+async function errorMessages(error: unknown): Promise<string[]> {
+  const t = await getTranslations('offers.errors');
+  return saveErrorMessages(error, {
+    notFound: t('notFound'),
+    failed: t('failed'),
+  });
 }

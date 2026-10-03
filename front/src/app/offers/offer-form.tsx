@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 import {
   initialOfferFormState,
@@ -35,13 +36,14 @@ export function OfferForm({
     initialOfferFormState(initialValues),
   );
   const { values, fieldErrors } = state;
+  const t = useTranslations('offers.fields');
 
   return (
     <form action={formAction} className={styles.form}>
       <FormErrors messages={state.formErrors} />
 
       <div className={styles.field}>
-        <label htmlFor="title">Title</label>
+        <label htmlFor="title">{t('title')}</label>
         <input
           id="title"
           name="title"
@@ -54,7 +56,7 @@ export function OfferForm({
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="company">Company</label>
+        <label htmlFor="company">{t('company')}</label>
         <input
           id="company"
           name="company"
@@ -66,7 +68,7 @@ export function OfferForm({
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="url">Link to the offer</label>
+        <label htmlFor="url">{t('url')}</label>
         <input
           id="url"
           name="url"
@@ -81,7 +83,7 @@ export function OfferForm({
 
       <div className={styles.row}>
         <div className={styles.field}>
-          <label htmlFor="location">Location</label>
+          <label htmlFor="location">{t('location')}</label>
           <input
             id="location"
             name="location"
@@ -93,7 +95,7 @@ export function OfferForm({
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="appliedAt">Applied on</label>
+          <label htmlFor="appliedAt">{t('appliedAt')}</label>
           <input
             id="appliedAt"
             name="appliedAt"
@@ -106,7 +108,7 @@ export function OfferForm({
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="description">Description</label>
+        <label htmlFor="description">{t('description')}</label>
         <textarea
           id="description"
           name="description"

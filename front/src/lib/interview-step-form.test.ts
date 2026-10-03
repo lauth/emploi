@@ -1,10 +1,15 @@
+import type { TranslateValidation } from './forms';
 import {
   EMPTY_INTERVIEW_STEP_FORM,
-  INTERVIEW_STEP_STATUS_LABELS,
+  INTERVIEW_STEP_STATUSES,
   parseInterviewStepForm,
   readInterviewStepForm,
   type InterviewStepFormValues,
 } from './interview-step-form';
+
+/** Returns the message key (and limit), to assert which rule failed. */
+const keys: TranslateValidation = (message, { max }) =>
+  message === 'tooLong' ? `tooLong:${String(max)}` : message;
 
 const valid: InterviewStepFormValues = {
   ...EMPTY_INTERVIEW_STEP_FORM,
@@ -14,7 +19,10 @@ const valid: InterviewStepFormValues = {
 describe('parseInterviewStepForm', () => {
   it('trims values and turns empty optional fields into null', () => {
     expect(
-      parseInterviewStepForm({ ...valid, title: ' Phone screen ', date: '' }),
+      parseInterviewStepForm(
+        { ...valid, title: ' Phone screen ', date: '' },
+        keys,
+      ),
     ).toEqual({
       success: true,
       data: {
@@ -26,26 +34,23 @@ describe('parseInterviewStepForm', () => {
     });
   });
 
-  it.each(Object.keys(INTERVIEW_STEP_STATUS_LABELS))(
-    'accepts the status %s',
-    (status) => {
-      expect(parseInterviewStepForm({ ...valid, status }).success).toBe(true);
-    },
-  );
-
-  it.each<[string, Partial<InterviewStepFormValues>, string]>([
-    ['a missing title', { title: '  ' }, 'title'],
-    ['a title too long', { title: 'x'.repeat(201) }, 'title'],
-    ['an unknown status', { status: 'won' }, 'status'],
-    ['an empty status', { status: '' }, 'status'],
-    ['an impossible date', { date: '2026-02-30' }, 'date'],
-  ])('rejects %s', (_case, override, field) => {
-    const result = parseInterviewStepForm({ ...valid, ...override });
-
-    expect(result.success).toBe(false);
-    expect(result.success ? undefined : result.fieldErrors).toHaveProperty(
-      field,
+  it.each(INTERVIEW_STEP_STATUSES)('accepts the status %s', (status) => {
+    expect(parseInterviewStepForm({ ...valid, status }, keys).success).toBe(
+      true,
     );
+  });
+
+  it.each<[string, Partial<InterviewStepFormValues>, string, string]>([
+    ['a missing title', { title: '  ' }, 'title', 'required'],
+    ['a title too long', { title: 'x'.repeat(201) }, 'title', 'tooLong:200'],
+    ['an unknown status', { status: 'won' }, 'status', 'invalidChoice'],
+    ['an empty status', { status: '' }, 'status', 'invalidChoice'],
+    ['an impossible date', { date: '2026-02-30' }, 'date', 'invalidDate'],
+  ])('rejects %s', (_case, override, field, message) => {
+    expect(parseInterviewStepForm({ ...valid, ...override }, keys)).toEqual({
+      success: false,
+      fieldErrors: { [field]: [message] },
+    });
   });
 });
 

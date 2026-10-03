@@ -1,10 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 import {
   initialInterviewStepFormState,
   INTERVIEW_STEP_LIMITS,
-  INTERVIEW_STEP_STATUS_LABELS,
+  INTERVIEW_STEP_STATUSES,
   type InterviewStepFormState,
   type InterviewStepFormValues,
 } from '@/lib/interview-step-form';
@@ -38,18 +39,19 @@ export function InterviewStepForm({
     initialInterviewStepFormState(initialValues),
   );
   const { values, fieldErrors } = state;
+  const t = useTranslations('steps');
 
   return (
     <form action={formAction} className={styles.form}>
       <FormErrors messages={state.formErrors} />
 
       <div className={styles.field}>
-        <label htmlFor="title">Step</label>
+        <label htmlFor="title">{t('fields.title')}</label>
         <input
           id="title"
           name="title"
           required
-          placeholder="Phone screen with HR, technical test…"
+          placeholder={t('fields.titlePlaceholder')}
           maxLength={INTERVIEW_STEP_LIMITS.title}
           defaultValue={values.title}
           {...errorProps(state, 'title')}
@@ -59,7 +61,7 @@ export function InterviewStepForm({
 
       <div className={styles.row}>
         <div className={styles.field}>
-          <label htmlFor="date">Date</label>
+          <label htmlFor="date">{t('fields.date')}</label>
           <input
             id="date"
             name="date"
@@ -71,32 +73,30 @@ export function InterviewStepForm({
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="status">Status</label>
+          <label htmlFor="status">{t('fields.status')}</label>
           <select
             id="status"
             name="status"
             defaultValue={values.status}
             {...errorProps(state, 'status')}
           >
-            {Object.entries(INTERVIEW_STEP_STATUS_LABELS).map(
-              ([status, label]) => (
-                <option key={status} value={status}>
-                  {label}
-                </option>
-              ),
-            )}
+            {INTERVIEW_STEP_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {t(`status.${status}`)}
+              </option>
+            ))}
           </select>
           <FieldError field="status" messages={fieldErrors.status} />
         </div>
       </div>
 
       <div className={styles.field}>
-        <label htmlFor="description">Notes</label>
+        <label htmlFor="description">{t('fields.description')}</label>
         <textarea
           id="description"
           name="description"
           rows={8}
-          placeholder="Who you met, what was asked, feedback…"
+          placeholder={t('fields.descriptionPlaceholder')}
           maxLength={INTERVIEW_STEP_LIMITS.description}
           defaultValue={values.description}
           {...errorProps(state, 'description')}

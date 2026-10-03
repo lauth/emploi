@@ -2,8 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
+import { saveErrorMessages, validationTranslator } from '@/lib/action-helpers';
 import {
-  ApiError,
   createInterviewStep,
   deleteInterviewStep,
   isNotFound,
@@ -27,7 +28,7 @@ export async function createInterviewStepAction(
   formData: FormData,
 ): Promise<InterviewStepFormState> {
   const values = readInterviewStepForm(formData);
-  const parsed = parseInterviewStepForm(values);
+  const parsed = parseInterviewStepForm(values, await validationTranslator());
   if (!parsed.success) {
     return { values, fieldErrors: parsed.fieldErrors, formErrors: [] };
   }
@@ -35,7 +36,7 @@ export async function createInterviewStepAction(
   try {
     await createInterviewStep(offerId, parsed.data);
   } catch (error) {
-    return { values, fieldErrors: {}, formErrors: errorMessages(error) };
+    return { values, fieldErrors: {}, formErrors: await errorMessages(error) };
   }
 
   revalidatePath(`/offers/${offerId}`);
@@ -49,7 +50,7 @@ export async function updateInterviewStepAction(
   formData: FormData,
 ): Promise<InterviewStepFormState> {
   const values = readInterviewStepForm(formData);
-  const parsed = parseInterviewStepForm(values);
+  const parsed = parseInterviewStepForm(values, await validationTranslator());
   if (!parsed.success) {
     return { values, fieldErrors: parsed.fieldErrors, formErrors: [] };
   }
@@ -57,7 +58,7 @@ export async function updateInterviewStepAction(
   try {
     await updateInterviewStep(offerId, stepId, parsed.data);
   } catch (error) {
-    return { values, fieldErrors: {}, formErrors: errorMessages(error) };
+    return { values, fieldErrors: {}, formErrors: await errorMessages(error) };
   }
 
   revalidatePath(`/offers/${offerId}`);
@@ -109,16 +110,10 @@ export async function moveInterviewStepAction(
   revalidatePath(`/offers/${offerId}`);
 }
 
-/** Messages shown above the form when the API rejects or fails a request. */
-function errorMessages(error: unknown): string[] {
-  if (error instanceof ApiError) {
-    if (error.status === 404) {
-      return ['This offer or step no longer exists.'];
-    }
-    if (error.status === 400) {
-      return error.messages;
-    }
-  }
-  console.error(error);
-  return ['The step could not be saved. Please try again.'];
+async function errorMessages(error: unknown): Promise<string[]> {
+  const t = await getTranslations('steps.errors');
+  return saveErrorMessages(error, {
+    notFound: t('notFound'),
+    failed: t('failed'),
+  });
 }

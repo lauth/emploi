@@ -5,6 +5,7 @@ import type {
 } from '@emploi/shared';
 import { z } from 'zod';
 import {
+  choice,
   initialFormState,
   optionalDate,
   optionalText,
@@ -13,6 +14,7 @@ import {
   requiredText,
   type FormState,
   type ParseResult,
+  type TranslateValidation,
 } from './forms';
 
 /** `satisfies` makes the compiler reject any drift from the API limits. */
@@ -21,20 +23,18 @@ export const INTERVIEW_STEP_LIMITS = {
   description: 20000,
 } as const satisfies InterviewStepFieldLimits;
 
-/**
- * Labels of the statuses, in the order of the select. A Record must list every
- * status: one added to the shared type breaks the build until it has a label.
- */
-export const INTERVIEW_STEP_STATUS_LABELS: Record<InterviewStepStatus, string> =
-  {
-    planned: 'Planned',
-    pending: 'Waiting for an answer',
-    passed: 'Passed',
-    failed: 'Rejected',
-    cancelled: 'Cancelled',
-  };
+// A Record must list every status, and only those: a status added to the
+// shared type breaks the build until it is handled here. Key order is the
+// order of the select; labels are in the catalogue (`steps.status.*`).
+const STATUSES: Record<InterviewStepStatus, true> = {
+  planned: true,
+  pending: true,
+  passed: true,
+  failed: true,
+  cancelled: true,
+};
 
-const STATUSES = Object.keys(INTERVIEW_STEP_STATUS_LABELS) as [
+export const INTERVIEW_STEP_STATUSES = Object.keys(STATUSES) as [
   InterviewStepStatus,
   ...InterviewStepStatus[],
 ];
@@ -64,7 +64,7 @@ export const EMPTY_INTERVIEW_STEP_FORM: InterviewStepFormValues = {
 export const interviewStepFormSchema = z.object({
   title: requiredText(INTERVIEW_STEP_LIMITS.title),
   date: optionalDate(),
-  status: z.enum(STATUSES, 'Choose a status'),
+  status: choice(INTERVIEW_STEP_STATUSES),
   description: optionalText(INTERVIEW_STEP_LIMITS.description),
 }) satisfies z.ZodType<
   Required<CreateInterviewStepRequest>,
@@ -85,6 +85,7 @@ export function initialInterviewStepFormState(
 
 export function parseInterviewStepForm(
   values: InterviewStepFormValues,
+  translate: TranslateValidation,
 ): ParseResult<InterviewStepField, z.infer<typeof interviewStepFormSchema>> {
-  return parseForm(interviewStepFormSchema, values);
+  return parseForm(interviewStepFormSchema, values, translate);
 }

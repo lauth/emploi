@@ -1,6 +1,7 @@
 import type { Offer } from '@emploi/shared';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import type { OfferFormValues } from '@/lib/offer-form';
 import { updateOfferAction } from '../../actions';
 import { OfferForm } from '../../offer-form';
@@ -10,7 +11,12 @@ export async function generateMetadata({
   params,
 }: PageProps<'/offers/[id]/edit'>): Promise<Metadata> {
   const offer = await loadOffer((await params).id);
-  return { title: `Edit ${offer?.title ?? 'offer'} · emploi` };
+  const t = await getTranslations('offers');
+  return {
+    title: offer
+      ? t('edit.metaTitle', { title: offer.title })
+      : t('edit.title'),
+  };
 }
 
 export default async function EditOfferPage({
@@ -20,14 +26,15 @@ export default async function EditOfferPage({
   if (offer === null) {
     notFound();
   }
+  const t = await getTranslations('offers.edit');
 
   return (
     <>
-      <h1>Edit the offer</h1>
+      <h1>{t('title')}</h1>
       <OfferForm
         action={updateOfferAction.bind(null, offer.id)}
         initialValues={toFormValues(offer)}
-        submitLabel="Save"
+        submitLabel={t('submit')}
         cancelHref={`/offers/${offer.id}`}
       />
     </>

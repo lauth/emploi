@@ -1,12 +1,13 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getTranslations('notFound');
   return (
     <>
-      <h1>Not found</h1>
+      <h1>{t('title')}</h1>
       <p>
-        This page doesn&apos;t exist.{' '}
-        <Link href="/offers">Back to the offers</Link>
+        {t('text')} <Link href="/offers">{t('back')}</Link>
       </p>
     </>
   );

@@ -35,9 +35,35 @@ export type ParseResult<Field extends string, Output> =
   | { success: true; data: Output }
   | { success: false; fieldErrors: Partial<Record<Field, string[]>> };
 
+/**
+ * Validation messages are keys of the `validation` namespace of the catalogue
+ * (adrs/0016-internationalized-interface.md), translated when errors are built.
+ */
+const VALIDATION_MESSAGES = [
+  'required',
+  'tooLong',
+  'invalidUrl',
+  'invalidDate',
+  'invalidChoice',
+  'invalid',
+] as const;
+
+export type ValidationMessage = (typeof VALIDATION_MESSAGES)[number];
+
+/** Translates a validation message, e.g. with `getTranslations('validation')`. */
+export type TranslateValidation = (
+  message: ValidationMessage,
+  values: { max: number },
+) => string;
+
+function isValidationMessage(message: string): message is ValidationMessage {
+  return (VALIDATION_MESSAGES as readonly string[]).includes(message);
+}
+
 export function parseForm<Field extends string, Output>(
   schema: z.ZodType<Output, Record<Field, string>>,
   values: Record<Field, string>,
+  translate: TranslateValidation,
 ): ParseResult<Field, Output> {
   const result = schema.safeParse(values);
   if (result.success) {
@@ -49,29 +75,39 @@ export function parseForm<Field extends string, Output>(
   for (const issue of result.error.issues) {
     const field = issue.path[0];
     if (isField(field)) {
-      (fieldErrors[field] ??= []).push(issue.message);
+      const message = isValidationMessage(issue.message)
+        ? issue.message
+        : 'invalid';
+      const max = issue.code === 'too_big' ? Number(issue.maximum) : 0;
+      (fieldErrors[field] ??= []).push(translate(message, { max }));
     }
   }
   return { success: false, fieldErrors };
 }
 
-// Schema helpers
-
-const tooLong = (max: number) => `At most ${String(max)} characters`;
+// Schema helpers. Messages are `ValidationMessage` keys.
 
 const emptyToNull = (value: string) => (value === '' ? null : value);
 
 export const requiredText = (max: number) =>
-  z.string().trim().min(1, 'Required').max(max, tooLong(max));
+  z
+    .string()
+    .trim()
+    .min(1, 'required' satisfies ValidationMessage)
+    .max(max, 'tooLong' satisfies ValidationMessage);
 
 /** Empty input means "no value": `null`, which also clears it on update. */
 export const optionalText = (max: number) =>
-  z.string().trim().max(max, tooLong(max)).transform(emptyToNull);
+  z
+    .string()
+    .trim()
+    .max(max, 'tooLong' satisfies ValidationMessage)
+    .transform(emptyToNull);
 
 export const optionalHttpUrl = (max: number) =>
   optionalText(max).refine(
     (value) => value === null || isHttpUrl(value),
-    'Must be an http:// or https:// URL',
+    'invalidUrl' satisfies ValidationMessage,
   );
 
 /** `YYYY-MM-DD` (what `<input type="date">` submits), or empty. */
@@ -80,7 +116,15 @@ export const optionalDate = () =>
     .string()
     .trim()
     .transform(emptyToNull)
-    .refine((value) => value === null || isDateOnly(value), 'Must be a date');
+    .refine(
+      (value) => value === null || isDateOnly(value),
+      'invalidDate' satisfies ValidationMessage,
+    );
+
+/** One of the given values. */
+export const choice = <Value extends string>(
+  values: readonly [Value, ...Value[]],
+) => z.enum(values, 'invalidChoice' satisfies ValidationMessage);
 
 function isHttpUrl(value: string): boolean {
   if (!URL.canParse(value)) {

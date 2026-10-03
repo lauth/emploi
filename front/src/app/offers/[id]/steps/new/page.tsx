@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { EMPTY_INTERVIEW_STEP_FORM } from '@/lib/interview-step-form';
 import { loadOffer } from '../../load-offer';
 import { createInterviewStepAction } from '../actions';
@@ -9,7 +10,10 @@ export async function generateMetadata({
   params,
 }: PageProps<'/offers/[id]/steps/new'>): Promise<Metadata> {
   const offer = await loadOffer((await params).id);
-  return { title: `Add a step to ${offer?.title ?? 'an offer'} · emploi` };
+  const t = await getTranslations('steps.new');
+  return {
+    title: offer ? t('metaTitle', { offer: offer.title }) : t('title'),
+  };
 }
 
 export default async function NewInterviewStepPage({
@@ -19,15 +23,16 @@ export default async function NewInterviewStepPage({
   if (offer === null) {
     notFound();
   }
+  const t = await getTranslations('steps.new');
 
   return (
     <>
-      <h1>Add an interview step</h1>
+      <h1>{t('title')}</h1>
       <p>{offer.title}</p>
       <InterviewStepForm
         action={createInterviewStepAction.bind(null, offer.id)}
         initialValues={EMPTY_INTERVIEW_STEP_FORM}
-        submitLabel="Add the step"
+        submitLabel={t('submit')}
         cancelHref={`/offers/${offer.id}`}
       />
     </>

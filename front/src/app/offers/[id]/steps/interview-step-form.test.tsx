@@ -1,10 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   EMPTY_INTERVIEW_STEP_FORM,
   readInterviewStepForm,
   type InterviewStepFormState,
 } from '@/lib/interview-step-form';
+import { renderWithIntl } from '@/test/intl';
 import { InterviewStepForm } from './interview-step-form';
 
 vi.mock('next/link', () => ({
@@ -23,30 +24,29 @@ type Action = (
 ) => Promise<InterviewStepFormState>;
 
 function renderForm(action: Action, initialValues = EMPTY_INTERVIEW_STEP_FORM) {
-  render(
+  renderWithIntl(
     <InterviewStepForm
       action={action}
       initialValues={initialValues}
-      submitLabel="Save"
+      submitLabel="Enregistrer"
       cancelHref="/offers/1"
     />,
   );
 }
 
 describe('InterviewStepForm', () => {
-  it('defaults the status to planned and lists every status', () => {
+  it('defaults the status to planned and lists every status in French', () => {
     renderForm(vi.fn<Action>());
 
-    const status = screen.getByLabelText('Status');
-    expect(status).toHaveValue('planned');
+    expect(screen.getByLabelText('Statut')).toHaveValue('planned');
     expect(
       screen.getAllByRole('option').map((option) => option.textContent),
     ).toEqual([
-      'Planned',
-      'Waiting for an answer',
-      'Passed',
-      'Rejected',
-      'Cancelled',
+      'Prévue',
+      'En attente de réponse',
+      'Validée',
+      'Refusée',
+      'Annulée',
     ]);
   });
 
@@ -57,12 +57,12 @@ describe('InterviewStepForm', () => {
       return Promise.resolve(state);
     });
 
-    await userEvent.type(screen.getByLabelText('Step'), 'Technical test');
-    await userEvent.selectOptions(screen.getByLabelText('Status'), 'pending');
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await userEvent.type(screen.getByLabelText('Étape'), 'Test technique');
+    await userEvent.selectOptions(screen.getByLabelText('Statut'), 'pending');
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     expect(submitted).toHaveLength(1);
-    expect(submitted[0]?.get('title')).toBe('Technical test');
+    expect(submitted[0]?.get('title')).toBe('Test technique');
     expect(submitted[0]?.get('status')).toBe('pending');
   });
 
@@ -70,20 +70,20 @@ describe('InterviewStepForm', () => {
     renderForm((_state, formData) =>
       Promise.resolve({
         values: readInterviewStepForm(formData),
-        fieldErrors: { date: ['Must be a date'] },
-        formErrors: ['This offer or step no longer exists.'],
+        fieldErrors: { date: ['Saisissez une date valide'] },
+        formErrors: ['Cette offre ou cette étape n’existe plus.'],
       }),
     );
 
-    await userEvent.type(screen.getByLabelText('Step'), 'Call');
-    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await userEvent.type(screen.getByLabelText('Étape'), 'Appel');
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'This offer or step no longer exists.',
+      'Cette offre ou cette étape n’existe plus.',
     );
     expect(screen.getByLabelText('Date')).toHaveAccessibleDescription(
-      'Must be a date',
+      'Saisissez une date valide',
     );
-    expect(screen.getByLabelText('Step')).toHaveValue('Call');
+    expect(screen.getByLabelText('Étape')).toHaveValue('Appel');
   });
 });

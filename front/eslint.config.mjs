@@ -19,6 +19,25 @@ export default defineConfig([
     },
   },
   {
+    // All user-facing text comes from messages/<locale>.json
+    // (adrs/0016-internationalized-interface.md).
+    files: ['src/**/*.tsx'],
+    ignores: ['src/**/*.test.tsx'],
+    rules: {
+      'react/jsx-no-literals': [
+        'error',
+        {
+          noStrings: true,
+          // Props are mostly technical (classes, URLs, ids); translated ones
+          // (labels, placeholders) are checked by review and browser tests.
+          ignoreProps: true,
+          // Typographic separators, not words.
+          allowedStrings: ['—', '·'],
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.{js,mjs,cjs}'],
     extends: [tseslint.configs.disableTypeChecked],
   },

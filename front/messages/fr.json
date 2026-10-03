@@ -1,0 +1,121 @@
+{
+  "app": {
+    "name": "emploi",
+    "description": "Historique de recherche d’emploi"
+  },
+  "nav": {
+    "label": "Navigation principale",
+    "offers": "Offres"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "text": "Cette page n’existe pas.",
+    "back": "Retour aux offres"
+  },
+  "error": {
+    "title": "Une erreur est survenue",
+    "text": "La page n’a pas pu être chargée. L’API est peut-être indisponible.",
+    "retry": "Réessayer"
+  },
+  "form": {
+    "saving": "Enregistrement…",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "deleting": "Suppression…",
+    "rejected": "Le serveur a refusé ces données. Vérifiez les champs et réessayez."
+  },
+  "validation": {
+    "required": "Champ obligatoire",
+    "tooLong": "{max, number} caractères maximum",
+    "invalidUrl": "Saisissez une adresse commençant par http:// ou https://",
+    "invalidDate": "Saisissez une date valide",
+    "invalidChoice": "Choisissez une valeur de la liste",
+    "invalid": "Valeur invalide"
+  },
+  "offers": {
+    "list": {
+      "title": "Offres",
+      "add": "Ajouter une offre",
+      "empty": "Aucune offre pour l’instant. Ajoutez la première offre à laquelle vous avez répondu.",
+      "emptyPage": "Aucune offre sur cette page.",
+      "firstPage": "Revenir à la première page",
+      "appliedOn": "Candidature le {date}",
+      "addedOn": "Ajoutée le {date}",
+      "pagination": "Pagination",
+      "previous": "Page précédente",
+      "next": "Page suivante",
+      "page": "Page {page, number} sur {pages, number}"
+    },
+    "new": {
+      "title": "Ajouter une offre",
+      "submit": "Ajouter l’offre"
+    },
+    "edit": {
+      "title": "Modifier l’offre",
+      "metaTitle": "Modifier « {title} »",
+      "submit": "Enregistrer"
+    },
+    "detail": {
+      "metaFallback": "Offre",
+      "back": "← Toutes les offres",
+      "deleteConfirm": "Supprimer cette offre et ses étapes d’entretien ? Cette action est définitive.",
+      "link": "Lien",
+      "appliedOn": "Candidature le",
+      "addedOn": "Ajoutée le",
+      "updatedOn": "Modifiée le",
+      "description": "Description",
+      "noDescription": "Pas de description."
+    },
+    "fields": {
+      "title": "Intitulé du poste",
+      "company": "Entreprise",
+      "url": "Lien vers l’offre",
+      "location": "Lieu",
+      "appliedAt": "Date de candidature",
+      "description": "Description"
+    },
+    "errors": {
+      "notFound": "Cette offre n’existe plus.",
+      "failed": "L’offre n’a pas pu être enregistrée. Veuillez réessayer."
+    }
+  },
+  "steps": {
+    "title": "Processus de recrutement",
+    "add": "Ajouter une étape",
+    "empty": "Aucune étape pour l’instant.",
+    "noDate": "Date à définir",
+    "moveUp": "Monter",
+    "moveDown": "Descendre",
+    "deleteConfirm": "Supprimer l’étape « {title} » ?",
+    "new": {
+      "title": "Ajouter une étape d’entretien",
+      "metaTitle": "Ajouter une étape à « {offer} »",
+      "submit": "Ajouter l’étape"
+    },
+    "edit": {
+      "title": "Modifier l’étape d’entretien",
+      "metaTitle": "Modifier « {title} »",
+      "submit": "Enregistrer"
+    },
+    "fields": {
+      "title": "Étape",
+      "titlePlaceholder": "Entretien téléphonique RH, test technique…",
+      "date": "Date",
+      "status": "Statut",
+      "description": "Notes",
+      "descriptionPlaceholder": "Interlocuteurs, questions posées, retours…"
+    },
+    "status": {
+      "planned": "Prévue",
+      "pending": "En attente de réponse",
+      "passed": "Validée",
+      "failed": "Refusée",
+      "cancelled": "Annulée"
+    },
+    "errors": {
+      "notFound": "Cette offre ou cette étape n’existe plus.",
+      "failed": "L’étape n’a pas pu être enregistrée. Veuillez réessayer."
+    }
+  }
+}

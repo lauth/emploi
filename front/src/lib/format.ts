@@ -1,25 +1,16 @@
-// Timestamps use the server time zone (`TZ`, set in k8s/front.yaml): pages are
-// rendered on the server.
-const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-});
+import type { createFormatter } from 'next-intl';
 
-// Dates without a time are stored as UTC midnight: format them in UTC so the
-// day never shifts.
-const dateFormat = new Intl.DateTimeFormat('en-GB', {
-  dateStyle: 'medium',
-  timeZone: 'UTC',
-});
+/** next-intl's formatter: `await getFormatter()` on the server, `useFormatter()` on the client. */
+type Formatter = ReturnType<typeof createFormatter>;
 
-/** ISO 8601 timestamp, e.g. "3 Oct 2026, 22:15". */
-export function formatDateTime(iso: string): string {
-  return dateTimeFormat.format(new Date(iso));
+/** ISO 8601 timestamp, in the configured time zone: "3 oct. 2026, 22:15". */
+export function formatDateTime(format: Formatter, iso: string): string {
+  return format.dateTime(new Date(iso), 'dateTime');
 }
 
-/** `YYYY-MM-DD`, e.g. "28 Sept 2026". */
-export function formatDate(dateOnly: string): string {
-  return dateFormat.format(new Date(`${dateOnly}T00:00:00.000Z`));
+/** `YYYY-MM-DD`, without any day shift: "28 sept. 2026". */
+export function formatDate(format: Formatter, dateOnly: string): string {
+  return format.dateTime(new Date(`${dateOnly}T00:00:00.000Z`), 'dateOnly');
 }
 
 /** "Acme · Lyon", leaving out what's missing; `null` when both are. */

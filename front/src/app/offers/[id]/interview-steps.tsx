@@ -1,7 +1,7 @@
 import type { InterviewStep } from '@emploi/shared';
 import Link from 'next/link';
+import { getFormatter, getTranslations } from 'next-intl/server';
 import { formatDate } from '@/lib/format';
-import { INTERVIEW_STEP_STATUS_LABELS } from '@/lib/interview-step-form';
 import { ConfirmButton } from '../confirm-button';
 import styles from '../offers.module.css';
 import {
@@ -10,27 +10,30 @@ import {
 } from './steps/actions';
 
 /** The interview process of an offer: its steps, in order (adrs/0004). */
-export function InterviewSteps({
+export async function InterviewSteps({
   offerId,
   steps,
 }: {
   offerId: string;
   steps: InterviewStep[];
 }) {
+  const t = await getTranslations();
+  const format = await getFormatter();
+
   return (
     <section aria-labelledby="interview-process">
       <div className={styles.sectionHeading}>
-        <h2 id="interview-process">Interview process</h2>
+        <h2 id="interview-process">{t('steps.title')}</h2>
         <Link
           href={`/offers/${offerId}/steps/new`}
           className={styles.secondary}
         >
-          Add a step
+          {t('steps.add')}
         </Link>
       </div>
 
       {steps.length === 0 ? (
-        <p className={styles.empty}>No step yet.</p>
+        <p className={styles.empty}>{t('steps.empty')}</p>
       ) : (
         <ol className={styles.steps}>
           {steps.map((step, index) => (
@@ -42,11 +45,11 @@ export function InterviewSteps({
                     .filter(Boolean)
                     .join(' ')}
                 >
-                  {INTERVIEW_STEP_STATUS_LABELS[step.status]}
+                  {t(`steps.status.${step.status}`)}
                 </span>
               </div>
               <p className={styles.meta}>
-                {step.date ? formatDate(step.date) : 'Date not set'}
+                {step.date ? formatDate(format, step.date) : t('steps.noDate')}
               </p>
               {step.description && (
                 <p className={styles.description}>{step.description}</p>
@@ -57,7 +60,7 @@ export function InterviewSteps({
                   href={`/offers/${offerId}/steps/${step.id}/edit`}
                   className={styles.secondary}
                 >
-                  Edit
+                  {t('form.edit')}
                 </Link>
                 {index > 0 && (
                   <form
@@ -69,7 +72,7 @@ export function InterviewSteps({
                     )}
                   >
                     <button type="submit" className={styles.secondary}>
-                      Move up
+                      {t('steps.moveUp')}
                     </button>
                   </form>
                 )}
@@ -83,7 +86,7 @@ export function InterviewSteps({
                     )}
                   >
                     <button type="submit" className={styles.secondary}>
-                      Move down
+                      {t('steps.moveDown')}
                     </button>
                   </form>
                 )}
@@ -93,9 +96,11 @@ export function InterviewSteps({
                     offerId,
                     step.id,
                   )}
-                  confirmMessage={`Delete the step “${step.title}”?`}
-                  label="Delete"
-                  pendingLabel="Deleting…"
+                  confirmMessage={t('steps.deleteConfirm', {
+                    title: step.title,
+                  })}
+                  label={t('form.delete')}
+                  pendingLabel={t('form.deleting')}
                   className={styles.danger}
                 />
               </div>

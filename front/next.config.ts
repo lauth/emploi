@@ -1,5 +1,9 @@
 import path from 'node:path';
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+// Translations (adrs/0016-internationalized-interface.md).
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
@@ -9,4 +13,4 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(import.meta.dirname, '..'),
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);
