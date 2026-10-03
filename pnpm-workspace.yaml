@@ -1,0 +1,12 @@
+packages:
+  - back
+  - front
+  - shared
+
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - prisma
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

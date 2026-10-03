@@ -1,0 +1,12 @@
+// Data model of emploi, single source of truth for the database (adrs/0003-postgresql-with-prisma.md).
+// No models yet: features are not implemented.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}

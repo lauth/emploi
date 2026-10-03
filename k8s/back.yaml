@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: back
+  labels:
+    app.kubernetes.io/name: back
+data:
+  PORT: '3000'
+  CORS_ORIGINS: https://emploi.localhost
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: back
+  labels:
+    app.kubernetes.io/name: back
+spec:
+  selector:
+    app.kubernetes.io/name: back
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: back
+  labels:
+    app.kubernetes.io/name: back
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: back
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: back
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: back
+          # Built locally and imported with `make images` (no registry).
+          image: emploi-back:dev
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: back
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: emploi-db
+                  key: DATABASE_URL
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ['ALL']

@@ -1,0 +1,21 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.DS_Store
+
+# Local configuration and secrets (see the .env.example files)
+.env
+.env.*
+!.env.example
+
+# mkcert certificates
+.certs/
+
+# Prisma generated client
+back/src/generated/
+
+# Next.js
+front/.next/
+front/out/
+front/next-env.d.ts

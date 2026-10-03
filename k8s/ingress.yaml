@@ -1,0 +1,80 @@
+# Routing through Traefik, the ingress controller shipped with k3s
+# (adrs/0006-local-domains-https-traefik-mkcert.md).
+#
+# Two Ingresses because a Traefik router with TLS only serves HTTPS:
+# - `emploi-http` (entrypoint web, port 80) only redirects to HTTPS;
+# - `emploi` (entrypoint websecure, port 443) serves the apps with the mkcert certificate.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-https
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: emploi-http
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: emploi-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: emploi.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: front
+                port:
+                  name: http
+    - host: api.emploi.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: back
+                port:
+                  name: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: emploi
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - emploi.localhost
+        - api.emploi.localhost
+      secretName: emploi-tls
+  rules:
+    - host: emploi.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: front
+                port:
+                  name: http
+    - host: api.emploi.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: back
+                port:
+                  name: http

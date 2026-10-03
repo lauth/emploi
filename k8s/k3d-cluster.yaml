@@ -1,0 +1,20 @@
+# Local k3d cluster (adrs/0005-local-kubernetes-with-k3d.md). Created by `make cluster-create`.
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: emploi
+servers: 1
+agents: 0
+ports:
+  # Traefik (adrs/0006-local-domains-https-traefik-mkcert.md). No host IP, so Docker
+  # publishes on IPv4 and IPv6: *.localhost resolves to ::1 on the dev machine.
+  - port: 80:80
+    nodeFilters:
+      - loadbalancer
+  - port: 443:443
+    nodeFilters:
+      - loadbalancer
+  # PostgreSQL NodePort (k8s/postgres.yaml), for the Prisma CLI and tools on the host.
+  - port: 127.0.0.1:54320:30432
+    nodeFilters:
+      - loadbalancer

@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+**/dist
+**/.next
+**/coverage
+**/generated
+front/next-env.d.ts
+front/AGENTS.md

@@ -1,0 +1,11 @@
+# Applied by `make deploy`. The `emploi-db` and `emploi-tls` secrets are created by
+# `make secrets` and `make certs` from local, uncommitted values.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: emploi
+resources:
+  - namespace.yaml
+  - postgres.yaml
+  - back.yaml
+  - front.yaml
+  - ingress.yaml
