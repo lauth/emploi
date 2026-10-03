@@ -1,6 +1,6 @@
 # 11. Offer data model and API
 
-- Status: Accepted
+- Status: Accepted; required company superseded by ADR-0014
 - Date: 2026-10-03
 
 ## Context

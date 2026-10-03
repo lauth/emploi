@@ -19,11 +19,11 @@ export class CreateOfferDto implements CreateOfferRequest {
   @MaxLength(OFFER_LIMITS.title)
   title: string;
 
-  @Trim()
+  @TrimToNull()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(OFFER_LIMITS.company)
-  company: string;
+  company?: string | null;
 
   @TrimToNull()
   @IsOptional()

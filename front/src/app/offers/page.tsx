@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { listOffers } from '@/lib/api';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { pageCount, parsePageParam } from '@/lib/pagination';
+import { CompanyAndLocation } from './company-and-location';
 import styles from './offers.module.css';
 
 const PAGE_SIZE = 20;
@@ -44,10 +45,7 @@ export default async function OffersPage({
               <Link href={`/offers/${offer.id}`} className={styles.cardTitle}>
                 {offer.title}
               </Link>
-              <p className={styles.meta}>
-                {offer.company}
-                {offer.location && ` · ${offer.location}`}
-              </p>
+              <CompanyAndLocation offer={offer} />
               <p className={styles.meta}>
                 {offer.appliedAt
                   ? `Applied on ${formatDate(offer.appliedAt)}`

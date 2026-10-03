@@ -55,6 +55,21 @@ test('shows the server validation errors and keeps the input', async ({
   await expect(page).toHaveURL('/offers/new');
 });
 
+test('adds an offer with only a title', async ({ page, offers }) => {
+  const title = offers.uniqueTitle('Anonymous posting');
+
+  await page.goto('/offers/new');
+  await page.getByLabel('Title').fill(title);
+  await page.getByRole('button', { name: 'Add the offer' }).click();
+
+  await expect(page).toHaveURL(/\/offers\/[0-9a-f-]{36}$/);
+  const id = offers.track(page.url());
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
+
+  await page.goto(`/offers/${id}/edit`);
+  await expect(page.getByLabel('Company')).toHaveValue('');
+});
+
 test('edits an offer and clears optional fields', async ({ page, offers }) => {
   const offer = await offers.create({
     company: 'Acme',
@@ -70,11 +85,13 @@ test('edits an offer and clears optional fields', async ({ page, offers }) => {
   );
 
   await page.getByLabel('Location').fill('Remote');
+  await page.getByLabel('Company').clear();
   await page.getByLabel('Link to the offer').clear();
   await page.getByRole('button', { name: 'Save' }).click();
 
   await expect(page).toHaveURL(`/offers/${offer.id}`);
-  await expect(page.getByText('Acme · Remote')).toBeVisible();
+  await expect(page.getByText('Remote', { exact: true })).toBeVisible();
+  await expect(page.getByText('Acme')).toHaveCount(0);
   await expect(
     page.getByRole('link', { name: 'https://jobs.example.com/42' }),
   ).toHaveCount(0);

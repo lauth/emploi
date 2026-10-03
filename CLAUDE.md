@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Offers** the user applied to: link, title, description (plus the company).
 - **Interview process** for each offer: a sequence of steps. Every company runs its process differently, so steps are **not a fixed pipeline**. Model them as an ordered, open-ended list attached to an application (e.g. phone screen → technical test → onsite → offer). Each step has its own type, date, status and notes. Don't hardcode a set of stages in the schema or the UI.
 
-Implemented: offers (CRUD, ADR-0011): `back/src/offers`, `front/src/app/offers`. Not yet: interview steps.
+Implemented: offers (CRUD, ADR-0011; only the title is required, ADR-0014): `back/src/offers`, `front/src/app/offers`. Not yet: interview steps.
 
 ## Architecture decisions (ADRs)
 
@@ -71,6 +71,7 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 - `make certs` generates the mkcert certificate into `.certs/` (not committed). `make secrets` creates the `emploi-db` secret from `.env`. Never put real values in committed manifests.
 - `*.localhost` resolves to `::1` here; the k3d ports have no host IP so Docker publishes on IPv4 and IPv6.
 - URLs come from runtime configuration, not code: `CORS_ORIGINS` (back ConfigMap in `k8s/back.yaml`), `API_URL` (front ConfigMap in `k8s/front.yaml`: `http://back`, the in-cluster service, because `*.localhost` resolves to the pod itself inside the cluster). The front ConfigMap also sets `TZ`, the time zone timestamps are displayed in.
+- Rollouts have no downtime: `maxUnavailable: 0` plus a 5 s `preStop` sleep so Traefik stops routing to a pod before it exits. Keep both on new Deployments, otherwise requests right after `make deploy` (including browser tests) get 502s.
 - Pods run as non-root with a read-only root filesystem. `back` has readiness `/health/ready` (checks the database) and liveness `/health/live`.
 
 ## Back (NestJS) conventions

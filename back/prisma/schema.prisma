@@ -14,7 +14,8 @@ datasource db {
 model Offer {
   id          String    @id @default(uuid(7)) @db.Uuid
   title       String    @db.VarChar(200)
-  company     String    @db.VarChar(200)
+  /// Optional: many offers don't name the employer (adrs/0014-offer-company-optional.md).
+  company     String?   @db.VarChar(200)
   url         String?   @db.VarChar(2048)
   location    String?   @db.VarChar(200)
   description String?

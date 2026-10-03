@@ -33,9 +33,15 @@ describe('parseOfferForm', () => {
     });
   });
 
+  it('accepts an offer without a company', () => {
+    const result = parseOfferForm({ ...valid, company: '   ' });
+
+    expect(result).toMatchObject({ success: true, data: { company: null } });
+  });
+
   it.each<[string, Partial<OfferFormValues>, string]>([
     ['a missing title', { title: '' }, 'title'],
-    ['a blank company', { company: '   ' }, 'company'],
+    ['a company too long', { company: 'x'.repeat(201) }, 'company'],
     ['a title too long', { title: 'x'.repeat(201) }, 'title'],
     ['a non-http URL', { url: 'ftp://example.com' }, 'url'],
     ['a malformed URL', { url: 'not a url' }, 'url'],

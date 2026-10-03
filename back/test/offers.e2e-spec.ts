@@ -94,9 +94,30 @@ describe('Offers (e2e)', () => {
       });
     });
 
+    it.each([{ title: 'Dev' }, { title: 'Dev', company: '  ' }])(
+      'creates an offer without a company: %j',
+      async (body) => {
+        prisma.offer.create.mockResolvedValue({ ...model, company: null });
+
+        const response = await request(app.getHttpServer())
+          .post('/offers')
+          .send(body)
+          .expect(201);
+
+        expect(response.body).toMatchObject({ company: null });
+        expect(prisma.offer.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({ company: null }) as unknown,
+        });
+      },
+    );
+
     it.each([
       ['a missing title', { company: 'Acme' }, 'title'],
-      ['a blank company', { title: 'Dev', company: '  ' }, 'company'],
+      [
+        'a company too long',
+        { title: 'Dev', company: 'x'.repeat(201) },
+        'company',
+      ],
       [
         'a title too long',
         { title: 'x'.repeat(201), company: 'Acme' },
@@ -210,6 +231,20 @@ describe('Offers (e2e)', () => {
           url: null,
           title: undefined,
         }) as unknown,
+      });
+    });
+
+    it('clears the company with null', async () => {
+      prisma.offer.update.mockResolvedValue({ ...model, company: null });
+
+      await request(app.getHttpServer())
+        .patch(`/offers/${ID}`)
+        .send({ company: null })
+        .expect(200);
+
+      expect(prisma.offer.update).toHaveBeenCalledWith({
+        where: { id: ID },
+        data: expect.objectContaining({ company: null }) as unknown,
       });
     });
 

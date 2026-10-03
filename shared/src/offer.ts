@@ -1,10 +1,11 @@
-// Offers API (adrs/0011-offer-data-model-and-api.md).
+// Offers API (adrs/0011-offer-data-model-and-api.md, adrs/0014-offer-company-optional.md).
 
 /** A job offer the user responded to, as returned by the API. */
 export interface Offer {
   id: string;
   title: string;
-  company: string;
+  /** `null` when the offer doesn't name the employer. */
+  company: string | null;
   url: string | null;
   location: string | null;
   description: string | null;
@@ -19,7 +20,7 @@ export interface Offer {
 /** Body of `POST /offers`. */
 export interface CreateOfferRequest {
   title: string;
-  company: string;
+  company?: string | null;
   url?: string | null;
   location?: string | null;
   description?: string | null;
@@ -33,7 +34,7 @@ export interface CreateOfferRequest {
  */
 export interface UpdateOfferRequest {
   title?: string;
-  company?: string;
+  company?: string | null;
   url?: string | null;
   location?: string | null;
   description?: string | null;

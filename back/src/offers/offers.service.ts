@@ -21,7 +21,7 @@ export class OffersService {
     const created = await this.prisma.offer.create({
       data: {
         title: input.title,
-        company: input.company,
+        company: input.company ?? null,
         url: input.url ?? null,
         location: input.location ?? null,
         description: input.description ?? null,

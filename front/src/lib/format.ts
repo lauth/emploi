@@ -21,3 +21,14 @@ export function formatDateTime(iso: string): string {
 export function formatDate(dateOnly: string): string {
   return dateFormat.format(new Date(`${dateOnly}T00:00:00.000Z`));
 }
+
+/** "Acme · Lyon", leaving out what's missing; `null` when both are. */
+export function formatCompanyAndLocation(offer: {
+  company: string | null;
+  location: string | null;
+}): string | null {
+  const parts = [offer.company, offer.location].filter(
+    (part): part is string => part !== null,
+  );
+  return parts.length > 0 ? parts.join(' · ') : null;
+}

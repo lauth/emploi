@@ -30,12 +30,11 @@ export class UpdateOfferDto implements UpdateOfferRequest {
   @MaxLength(OFFER_LIMITS.title)
   title?: string;
 
-  @Trim()
-  @IfPresent()
+  @TrimToNull()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(OFFER_LIMITS.company)
-  company?: string;
+  company?: string | null;
 
   @TrimToNull()
   @IsOptional()

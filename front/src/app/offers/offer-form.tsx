@@ -72,7 +72,6 @@ export function OfferForm({
         <input
           id="company"
           name="company"
-          required
           maxLength={OFFER_LIMITS.company}
           defaultValue={values.company}
           {...errorProps('company')}

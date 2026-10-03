@@ -58,14 +58,13 @@ describe('OffersService', () => {
 
       await service.create({
         title: 'Backend developer',
-        company: 'Acme',
         appliedAt: '2026-09-28',
       });
 
       expect(prisma.offer.create).toHaveBeenCalledWith({
         data: {
           title: 'Backend developer',
-          company: 'Acme',
+          company: null,
           url: null,
           location: null,
           description: null,

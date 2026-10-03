@@ -66,7 +66,7 @@ const optional = (max: number) =>
 /** Mirrors the API validation (back/src/offers/dto) for immediate feedback. */
 export const offerFormSchema = z.object({
   title: required(OFFER_LIMITS.title),
-  company: required(OFFER_LIMITS.company),
+  company: optional(OFFER_LIMITS.company),
   url: optional(OFFER_LIMITS.url).refine(
     (value) => value === null || isHttpUrl(value),
     'Must be an http:// or https:// URL',

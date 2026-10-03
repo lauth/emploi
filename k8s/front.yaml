@@ -33,6 +33,12 @@ metadata:
     app.kubernetes.io/name: front
 spec:
   replicas: 1
+  # Zero-downtime rollouts: the new pod is ready before the old one stops.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: front
@@ -50,6 +56,12 @@ spec:
           # Built locally and imported with `make images` (no registry).
           image: emploi-front:dev
           imagePullPolicy: Never
+          lifecycle:
+            # Keep serving while Traefik and kube-proxy stop routing to this pod;
+            # without it, requests during a rollout hit a stopped pod (502).
+            preStop:
+              sleep:
+                seconds: 5
           ports:
             - name: http
               containerPort: 3000

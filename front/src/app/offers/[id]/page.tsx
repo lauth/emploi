@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { deleteOfferAction } from '../actions';
+import { CompanyAndLocation } from '../company-and-location';
 import { DeleteOfferButton } from '../delete-offer-button';
 import styles from '../offers.module.css';
 import { loadOffer } from './load-offer';
@@ -29,10 +30,7 @@ export default async function OfferPage({ params }: PageProps<'/offers/[id]'>) {
       <div className={styles.heading}>
         <div>
           <h1>{offer.title}</h1>
-          <p className={styles.meta}>
-            {offer.company}
-            {offer.location && ` · ${offer.location}`}
-          </p>
+          <CompanyAndLocation offer={offer} />
         </div>
         <div className={styles.actions}>
           <Link href={`/offers/${offer.id}/edit`} className={styles.secondary}>

@@ -37,7 +37,7 @@ export default async function EditOfferPage({
 function toFormValues(offer: Offer): OfferFormValues {
   return {
     title: offer.title,
-    company: offer.company,
+    company: offer.company ?? '',
     url: offer.url ?? '',
     location: offer.location ?? '',
     description: offer.description ?? '',
