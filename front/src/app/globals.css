@@ -7,6 +7,8 @@
   --accent: #1a56db;
   --accent-foreground: #ffffff;
   --danger: #c5221f;
+  --success: #137333;
+  --warning: #b06000;
   --radius: 6px;
 }
 
@@ -20,6 +22,8 @@
     --accent: #5b8def;
     --accent-foreground: #0a0a0a;
     --danger: #f28b82;
+    --success: #81c995;
+    --warning: #fdd663;
   }
 
   html {

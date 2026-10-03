@@ -3,6 +3,14 @@
 
 export type { HealthStatus } from './health.js';
 export type {
+  CreateInterviewStepRequest,
+  InterviewStep,
+  InterviewStepFieldLimits,
+  InterviewStepStatus,
+  ReorderInterviewStepsRequest,
+  UpdateInterviewStepRequest,
+} from './interview-step.js';
+export type {
   CreateOfferRequest,
   Offer,
   OfferFieldLimits,

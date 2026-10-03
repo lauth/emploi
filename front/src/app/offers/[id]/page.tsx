@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { listInterviewSteps } from '@/lib/api';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { deleteOfferAction } from '../actions';
 import { CompanyAndLocation } from '../company-and-location';
-import { DeleteOfferButton } from '../delete-offer-button';
+import { ConfirmButton } from '../confirm-button';
 import styles from '../offers.module.css';
+import { InterviewSteps } from './interview-steps';
 import { loadOffer } from './load-offer';
 
 export async function generateMetadata({
@@ -20,6 +22,7 @@ export default async function OfferPage({ params }: PageProps<'/offers/[id]'>) {
   if (offer === null) {
     notFound();
   }
+  const steps = await listInterviewSteps(offer.id);
 
   return (
     <article>
@@ -36,7 +39,13 @@ export default async function OfferPage({ params }: PageProps<'/offers/[id]'>) {
           <Link href={`/offers/${offer.id}/edit`} className={styles.secondary}>
             Edit
           </Link>
-          <DeleteOfferButton action={deleteOfferAction.bind(null, offer.id)} />
+          <ConfirmButton
+            action={deleteOfferAction.bind(null, offer.id)}
+            confirmMessage="Delete this offer and its interview steps? This cannot be undone."
+            label="Delete"
+            pendingLabel="Deleting…"
+            className={styles.danger}
+          />
         </div>
       </div>
 
@@ -62,6 +71,8 @@ export default async function OfferPage({ params }: PageProps<'/offers/[id]'>) {
           </>
         )}
       </dl>
+
+      <InterviewSteps offerId={offer.id} steps={steps} />
 
       <h2>Description</h2>
       {offer.description ? (

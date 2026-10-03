@@ -1,8 +1,11 @@
 import 'server-only';
 import type {
+  CreateInterviewStepRequest,
   CreateOfferRequest,
+  InterviewStep,
   Offer,
   Page,
+  UpdateInterviewStepRequest,
   UpdateOfferRequest,
 } from '@emploi/shared';
 import { connection } from 'next/server';
@@ -78,21 +81,30 @@ export async function listOffers(query: {
   return json(await send(`/offers?${params.toString()}`));
 }
 
-/** `null` when the offer doesn't exist. */
-export async function getOffer(id: string): Promise<Offer | null> {
-  await connection();
+/** True when the API says the resource doesn't exist (400: not a valid id). */
+export function isNotFound(error: unknown): boolean {
+  return (
+    error instanceof ApiError && (error.status === 404 || error.status === 400)
+  );
+}
+
+async function nullIfNotFound<T>(request: Promise<T>): Promise<T | null> {
   try {
-    return await json<Offer>(await send(`/offers/${encodeURIComponent(id)}`));
+    return await request;
   } catch (error) {
-    // 400: not a valid id, so no such offer either.
-    if (
-      error instanceof ApiError &&
-      (error.status === 404 || error.status === 400)
-    ) {
+    if (isNotFound(error)) {
       return null;
     }
     throw error;
   }
+}
+
+const offerPath = (id: string) => `/offers/${encodeURIComponent(id)}`;
+
+/** `null` when the offer doesn't exist. */
+export async function getOffer(id: string): Promise<Offer | null> {
+  await connection();
+  return nullIfNotFound(send(offerPath(id)).then((r) => json<Offer>(r)));
 }
 
 export async function createOffer(body: CreateOfferRequest): Promise<Offer> {
@@ -115,4 +127,75 @@ export async function updateOffer(
 
 export async function deleteOffer(id: string): Promise<void> {
   await send(`/offers/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+// Interview steps (adrs/0015-interview-step-data-model-and-api.md)
+
+const stepsPath = (offerId: string) => `${offerPath(offerId)}/steps`;
+const stepPath = (offerId: string, stepId: string) =>
+  `${stepsPath(offerId)}/${encodeURIComponent(stepId)}`;
+
+/** The steps of an offer, in order. */
+export async function listInterviewSteps(
+  offerId: string,
+): Promise<InterviewStep[]> {
+  await connection();
+  return json(await send(stepsPath(offerId)));
+}
+
+/** `null` when the step doesn't exist or belongs to another offer. */
+export async function getInterviewStep(
+  offerId: string,
+  stepId: string,
+): Promise<InterviewStep | null> {
+  await connection();
+  return nullIfNotFound(
+    send(stepPath(offerId, stepId)).then((r) => json<InterviewStep>(r)),
+  );
+}
+
+/** Adds the step after the existing ones. */
+export async function createInterviewStep(
+  offerId: string,
+  body: CreateInterviewStepRequest,
+): Promise<InterviewStep> {
+  return json(
+    await send(stepsPath(offerId), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+export async function updateInterviewStep(
+  offerId: string,
+  stepId: string,
+  body: UpdateInterviewStepRequest,
+): Promise<InterviewStep> {
+  return json(
+    await send(stepPath(offerId, stepId), {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+export async function deleteInterviewStep(
+  offerId: string,
+  stepId: string,
+): Promise<void> {
+  await send(stepPath(offerId, stepId), { method: 'DELETE' });
+}
+
+/** `stepIds` must list every step of the offer, in the new order. */
+export async function reorderInterviewSteps(
+  offerId: string,
+  stepIds: string[],
+): Promise<InterviewStep[]> {
+  return json(
+    await send(`${stepsPath(offerId)}/order`, {
+      method: 'PUT',
+      body: JSON.stringify({ stepIds }),
+    }),
+  );
 }

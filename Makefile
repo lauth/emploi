@@ -158,6 +158,19 @@ deploy: ## Apply the manifests and restart the apps on the imported images
 	$(KUBECTL) rollout restart deployment/back deployment/front
 	$(KUBECTL) rollout status deployment/back --timeout 180s
 	$(KUBECTL) rollout status deployment/front --timeout 180s
+	@# `rollout status` returns while the old pods still serve during their preStop
+	@# pause; wait until only the new version runs, so what follows (browser tests)
+	@# never talks to the old one.
+	@for app in back front; do \
+		wanted=$$($(KUBECTL) get deployment $$app --output jsonpath='{.spec.replicas}'); \
+		for _ in $$(seq 60); do \
+			pods=$$($(KUBECTL) get pods --selector app.kubernetes.io/name=$$app --no-headers | wc -l); \
+			[ "$$pods" -le "$$wanted" ] && continue 2; \
+			sleep 1; \
+		done; \
+		echo "Old $$app pods still running after 60 s"; exit 1; \
+	done
+	@echo "Deployed: only the new back and front pods are running"
 
 .PHONY: status
 status: ## Show the cluster resources

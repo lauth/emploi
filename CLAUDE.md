@@ -9,7 +9,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Offers** the user applied to: link, title, description (plus the company).
 - **Interview process** for each offer: a sequence of steps. Every company runs its process differently, so steps are **not a fixed pipeline**. Model them as an ordered, open-ended list attached to an application (e.g. phone screen → technical test → onsite → offer). Each step has its own type, date, status and notes. Don't hardcode a set of stages in the schema or the UI.
 
-Implemented: offers (CRUD, ADR-0011; only the title is required, ADR-0014): `back/src/offers`, `front/src/app/offers`. Not yet: interview steps.
+Implemented:
+
+- Offers (CRUD, ADR-0011; only the title is required, ADR-0014): `back/src/offers`, `front/src/app/offers`.
+- Interview steps (ADR-0015): nested resource `/offers/:offerId/steps` with a `PUT …/order` to reorder; `back/src/interview-steps`, shown on the offer page (`front/src/app/offers/[id]/interview-steps.tsx`, forms and actions in `front/src/app/offers/[id]/steps`).
+
+Not yet: an overall status per offer derived from its steps.
 
 ## Architecture decisions (ADRs)
 
@@ -72,6 +77,7 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 - `*.localhost` resolves to `::1` here; the k3d ports have no host IP so Docker publishes on IPv4 and IPv6.
 - URLs come from runtime configuration, not code: `CORS_ORIGINS` (back ConfigMap in `k8s/back.yaml`), `API_URL` (front ConfigMap in `k8s/front.yaml`: `http://back`, the in-cluster service, because `*.localhost` resolves to the pod itself inside the cluster). The front ConfigMap also sets `TZ`, the time zone timestamps are displayed in.
 - Rollouts have no downtime: `maxUnavailable: 0` plus a 5 s `preStop` sleep so Traefik stops routing to a pod before it exits. Keep both on new Deployments, otherwise requests right after `make deploy` (including browser tests) get 502s.
+- `make deploy` only returns once the old pods are gone. Until then the old version still answers (keep-alive connections from the front stay pinned to the old back pod, and Next.js server action ids change with every build), so tests run earlier would hit a mix of versions.
 - Pods run as non-root with a read-only root filesystem. `back` has readiness `/health/ready` (checks the database) and liveness `/health/live`.
 
 ## Back (NestJS) conventions
@@ -81,7 +87,10 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 - One feature module per domain concept (e.g. applications, interview steps). Thin controllers, logic in services, DTOs for input and output. DTO classes implement the types from `@emploi/shared`. Never return Prisma models directly.
 - Database access only through `PrismaService` (global `PrismaModule`, Prisma 7 driver adapter `@prisma/adapter-pg`), and only from services. The Prisma client is generated into `src/generated/prisma` (git-ignored); import it from `../generated/prisma/client.js`.
 - Schema in `back/prisma/schema.prisma`, Prisma config in `back/prisma.config.ts`. Change the schema, then `make db-migrate NAME=…`; commit migrations and never edit applied ones. Prisma 7's `migrate dev` doesn't regenerate the client: the Make target runs `prisma generate` afterwards.
-- Feature module shape (see `src/offers`): DTO classes in `dto/` implementing the shared request types, a `*.mapper.ts` turning Prisma rows into shared response types (dates as ISO strings, date-only columns as `YYYY-MM-DD`), a service that maps Prisma `P2025` to `NotFoundException`, and `ParseUUIDPipe` on `:id` params. Optional string inputs are trimmed and blank becomes `null` (`src/common/transforms.ts`); for `PATCH`, absent means unchanged and `null` clears.
+- Feature module shape (see `src/offers`, `src/interview-steps`): DTO classes in `dto/` implementing the shared request types, a `*.mapper.ts` turning Prisma rows into shared response types (dates as ISO strings, date-only columns as `YYYY-MM-DD`), a service that maps Prisma `P2025` to `NotFoundException`, and `ParseUUIDPipe` on id params. Optional string inputs are trimmed and blank becomes `null` (`src/common/transforms.ts`); for `PATCH`, absent means unchanged and `null` clears; fields that can be omitted but never cleared use `@IfPresent()` (`src/common/validators.ts`), not `@IsOptional()`, which lets `null` through.
+- Nested resources check their parent: a child looked up, updated or deleted with `where: { id, offerId }` answers 404 when it belongs to another parent.
+- Enums shared with the front (e.g. `InterviewStepStatus`) are union types in `@emploi/shared`; each side builds its runtime list from a `Record<Status, …>` so a new value breaks the build until it is handled. The Prisma enum uses the same lowercase values.
+- In tests with mocked Prisma, reset mocks with `vi.resetAllMocks()`: `vi.clearAllMocks()` keeps mocked results, which leak into the next test.
 - Tests use Vitest (ADR-0010): unit tests `src/**/*.spec.ts`, e2e tests `test/**/*.e2e-spec.ts` with Supertest. e2e tests boot `AppModule` with `PrismaService` overridden by a mock; their environment variables are set in `vitest.config.e2e.ts`.
 - Under Vitest, properties without a type annotation get no decorator type metadata: use explicit `@Type(() => Number)` etc. for class-transformer conversions.
 
@@ -90,7 +99,7 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 - The browser never calls the API (ADR-0012). Pages are server components that read through `src/lib/api.ts`; mutations are server actions (`src/app/<feature>/actions.ts`) that validate input with Zod, call the API, then `revalidatePath` + `redirect`. Forms are client components using `useActionState` and get back the submitted values plus field/form errors.
 - `src/lib/api.ts` is the only API client: server-only, no caching, and its read functions call `connection()` so pages render per request (otherwise `next build` would try to prerender them without an API). It throws `ApiError` (status + NestJS validation messages).
 - Server env is validated with Zod in `src/lib/env.ts` (`serverEnv()`); add new variables there, to `front/.env.example` and to `k8s/front.yaml`. Running the front on the host against the cluster API needs `API_URL=https://api.emploi.localhost` and `NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"`.
-- Field length limits are typed in `@emploi/shared` (`OfferFieldLimits`) and declared on each side with `satisfies`; keep the Zod schema in `src/lib/offer-form.ts` in line with the back DTOs.
+- Field length limits are typed in `@emploi/shared` (`OfferFieldLimits`, `InterviewStepFieldLimits`) and declared on each side with `satisfies`; keep the Zod schemas (`src/lib/offer-form.ts`, `src/lib/interview-step-form.ts`) in line with the back DTOs. Build new forms from `src/lib/forms.ts` (form state, `readForm`, `parseForm`, schema helpers) and `src/app/offers/form-parts.tsx` (errors, actions); use `ConfirmButton` for destructive actions.
 - Validate external input (forms, query params such as `?page=`) on the front too. Server actions are reachable by direct POST: never trust their arguments.
 - Tests: Vitest + Testing Library + jsdom, `src/**/*.test.{ts,tsx}` next to the code (`vitest.setup.ts` loads jest-dom matchers). `server-only` is aliased to a stub in `vitest.config.mts`; mock `next/navigation`, `next/cache` and `next/server` where needed. Async server component pages aren't unit-tested.
 - `make typecheck` runs `next typegen` first so route types like `PageProps<'/offers/[id]'>` exist.
@@ -98,7 +107,7 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 ## Browser tests (Playwright)
 
 - `e2e/` tests user flows in Chromium against the deployed cluster, not a dev server: after changing the UI or the API, run `make images deploy` then `make test-browser`. They are not part of `make check` (which works without a cluster).
-- The cluster database holds real data: use the `offers` fixture (`e2e/fixtures/offers.ts`). It gives unique titles (`uniqueTitle`), creates data through the API (`create`), registers offers created through the UI (`track(page.url())`), and deletes everything after each test. Assert only on data the test created; never assume an empty database or a fixed count.
+- The cluster database holds real data: use the `offers` fixture (`e2e/fixtures/offers.ts`). It gives unique titles (`uniqueTitle`), creates data through the API (`create`, `addStep`), registers offers created through the UI (`track(page.url())`), and deletes everything after each test (steps go with their offer). Assert only on data the test created; never assume an empty database or a fixed count.
 - Prefer role and label locators (`getByRole`, `getByLabel`) and web-first assertions (`await expect(locator)…`); `eslint-plugin-playwright` enforces the rest. Base URLs can be overridden with `E2E_BASE_URL` / `E2E_API_URL`.
 
 ## Code quality requirements

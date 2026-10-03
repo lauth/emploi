@@ -7,15 +7,11 @@ import {
   IsUrl,
   Matches,
   MaxLength,
-  ValidateIf,
 } from 'class-validator';
 import { DATE_ONLY_PATTERN } from '../../common/date-only.js';
 import { Trim, TrimToNull } from '../../common/transforms.js';
+import { IfPresent } from '../../common/validators.js';
 import { OFFER_LIMITS } from '../offer-limits.js';
-
-/** Validated only when present: `null` is rejected, unlike `@IsOptional()`. */
-const IfPresent = (): PropertyDecorator =>
-  ValidateIf((_object: object, value: unknown) => value !== undefined);
 
 /**
  * Partial update: absent fields are left unchanged, `null` clears an optional

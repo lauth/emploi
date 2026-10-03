@@ -1,14 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import { useActionState } from 'react';
 import {
   initialOfferFormState,
   OFFER_LIMITS,
-  type OfferField,
   type OfferFormState,
   type OfferFormValues,
 } from '@/lib/offer-form';
+import { errorProps, FieldError, FormActions, FormErrors } from './form-parts';
 import styles from './offers.module.css';
 
 interface OfferFormProps {
@@ -37,22 +36,9 @@ export function OfferForm({
   );
   const { values, fieldErrors } = state;
 
-  const errorProps = (field: OfferField) =>
-    fieldErrors[field]
-      ? { 'aria-invalid': true, 'aria-describedby': `${field}-error` }
-      : {};
-
   return (
     <form action={formAction} className={styles.form}>
-      {state.formErrors.length > 0 && (
-        <div role="alert" className={styles.formErrors}>
-          <ul>
-            {state.formErrors.map((message) => (
-              <li key={message}>{message}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <FormErrors messages={state.formErrors} />
 
       <div className={styles.field}>
         <label htmlFor="title">Title</label>
@@ -62,7 +48,7 @@ export function OfferForm({
           required
           maxLength={OFFER_LIMITS.title}
           defaultValue={values.title}
-          {...errorProps('title')}
+          {...errorProps(state, 'title')}
         />
         <FieldError field="title" messages={fieldErrors.title} />
       </div>
@@ -74,7 +60,7 @@ export function OfferForm({
           name="company"
           maxLength={OFFER_LIMITS.company}
           defaultValue={values.company}
-          {...errorProps('company')}
+          {...errorProps(state, 'company')}
         />
         <FieldError field="company" messages={fieldErrors.company} />
       </div>
@@ -88,7 +74,7 @@ export function OfferForm({
           placeholder="https://"
           maxLength={OFFER_LIMITS.url}
           defaultValue={values.url}
-          {...errorProps('url')}
+          {...errorProps(state, 'url')}
         />
         <FieldError field="url" messages={fieldErrors.url} />
       </div>
@@ -101,7 +87,7 @@ export function OfferForm({
             name="location"
             maxLength={OFFER_LIMITS.location}
             defaultValue={values.location}
-            {...errorProps('location')}
+            {...errorProps(state, 'location')}
           />
           <FieldError field="location" messages={fieldErrors.location} />
         </div>
@@ -113,7 +99,7 @@ export function OfferForm({
             name="appliedAt"
             type="date"
             defaultValue={values.appliedAt}
-            {...errorProps('appliedAt')}
+            {...errorProps(state, 'appliedAt')}
           />
           <FieldError field="appliedAt" messages={fieldErrors.appliedAt} />
         </div>
@@ -127,36 +113,16 @@ export function OfferForm({
           rows={12}
           maxLength={OFFER_LIMITS.description}
           defaultValue={values.description}
-          {...errorProps('description')}
+          {...errorProps(state, 'description')}
         />
         <FieldError field="description" messages={fieldErrors.description} />
       </div>
 
-      <div className={styles.actions}>
-        <button type="submit" className={styles.primary} disabled={pending}>
-          {pending ? 'Saving…' : submitLabel}
-        </button>
-        <Link href={cancelHref} className={styles.secondary}>
-          Cancel
-        </Link>
-      </div>
+      <FormActions
+        pending={pending}
+        submitLabel={submitLabel}
+        cancelHref={cancelHref}
+      />
     </form>
-  );
-}
-
-function FieldError({
-  field,
-  messages,
-}: {
-  field: OfferField;
-  messages: string[] | undefined;
-}) {
-  if (!messages || messages.length === 0) {
-    return null;
-  }
-  return (
-    <p id={`${field}-error`} className={styles.fieldError}>
-      {messages.join(' ')}
-    </p>
   );
 }

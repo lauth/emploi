@@ -1,5 +1,13 @@
 import type { Offer } from '@emploi/shared';
-import { ApiError, createOffer, getOffer, listOffers } from './api';
+import {
+  ApiError,
+  createOffer,
+  getInterviewStep,
+  getOffer,
+  listInterviewSteps,
+  listOffers,
+  reorderInterviewSteps,
+} from './api';
 
 vi.mock('next/server', () => ({ connection: vi.fn(() => Promise.resolve()) }));
 
@@ -116,5 +124,40 @@ describe('createOffer', () => {
       status: 400,
       messages: ['title should not be empty', 'url must be a URL address'],
     });
+  });
+});
+
+describe('interview steps', () => {
+  it('lists the steps of an offer', async () => {
+    fetchMock.mockResolvedValue(jsonResponse([]));
+
+    await listInterviewSteps(offer.id);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `http://back/offers/${offer.id}/steps`,
+      expect.objectContaining({ cache: 'no-store' }),
+    );
+  });
+
+  it('returns null for a step of another offer', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ message: 'Not found', statusCode: 404 }, 404),
+    );
+
+    await expect(getInterviewStep(offer.id, 'step')).resolves.toBeNull();
+  });
+
+  it('sends the new order', async () => {
+    fetchMock.mockResolvedValue(jsonResponse([]));
+
+    await reorderInterviewSteps(offer.id, ['b', 'a']);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `http://back/offers/${offer.id}/steps/order`,
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ stepIds: ['b', 'a'] }),
+      }),
+    );
   });
 });

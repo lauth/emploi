@@ -24,6 +24,43 @@ model Offer {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  interviewSteps InterviewStep[]
+
   @@index([createdAt(sort: Desc), id(sort: Desc)])
   @@map("offers")
+}
+
+/// Where an interview step stands (adrs/0015-interview-step-data-model-and-api.md).
+enum InterviewStepStatus {
+  /// To come (scheduled or not yet).
+  planned
+  /// Done, waiting for the answer.
+  pending
+  /// Successful, the process goes on.
+  passed
+  /// Rejected at this step.
+  failed
+  /// Didn't take place.
+  cancelled
+
+  @@map("interview_step_status")
+}
+
+/// A step of the interview process of an offer (adrs/0004-flexible-interview-process-model.md).
+model InterviewStep {
+  id          String              @id @default(uuid(7)) @db.Uuid
+  offerId     String              @map("offer_id") @db.Uuid
+  offer       Offer               @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  /// Order within the offer; may have gaps, only the order matters.
+  position    Int
+  title       String              @db.VarChar(200)
+  description String?
+  /// Day of the step (no time part); unknown until scheduled.
+  date        DateTime?           @db.Date
+  status      InterviewStepStatus @default(planned)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([offerId, position])
+  @@map("interview_steps")
 }

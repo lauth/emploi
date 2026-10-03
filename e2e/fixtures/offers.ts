@@ -1,5 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import type { CreateOfferRequest, Offer } from '@emploi/shared';
+import type {
+  CreateInterviewStepRequest,
+  CreateOfferRequest,
+  InterviewStep,
+  Offer,
+} from '@emploi/shared';
 import { test as base, expect } from '@playwright/test';
 
 const API_URL = process.env.E2E_API_URL ?? 'https://api.emploi.localhost';
@@ -14,8 +19,18 @@ export interface OffersFixture {
   uniqueTitle: (label: string) => string;
   /** Creates an offer through the API; it is deleted after the test. */
   create: (input?: Partial<CreateOfferRequest>) => Promise<Offer>;
+  /**
+   * Adds an interview step through the API, at the end of the offer's steps.
+   * Steps are deleted with their offer.
+   */
+  addStep: (
+    offerId: string,
+    input: CreateInterviewStepRequest,
+  ) => Promise<InterviewStep>;
   /** HTTP status of `GET /offers/:id`. */
   status: (id: string) => Promise<number>;
+  /** Titles of the offer's steps, in order, as the API returns them. */
+  stepTitles: (offerId: string) => Promise<string[]>;
   /** Registers an offer created through the UI so it is deleted after the test. */
   track: (offerUrl: string) => string;
 }
@@ -50,8 +65,23 @@ export const test = base.extend<{ offers: OffersFixture }>({
         return offer;
       },
 
+      async addStep(offerId, input) {
+        const response = await api.post(`/offers/${offerId}/steps`, {
+          data: input,
+        });
+        expect(response.status(), await response.text()).toBe(201);
+        return (await response.json()) as InterviewStep;
+      },
+
       async status(id) {
         return (await api.get(`/offers/${id}`)).status();
+      },
+
+      async stepTitles(offerId) {
+        const response = await api.get(`/offers/${offerId}/steps`);
+        expect(response.status()).toBe(200);
+        const steps = (await response.json()) as InterviewStep[];
+        return steps.map((step) => step.title);
       },
 
       track(offerUrl) {

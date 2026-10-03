@@ -67,6 +67,93 @@
   overflow-wrap: anywhere;
 }
 
+/* Interview steps */
+
+.sectionHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+}
+
+.steps {
+  display: grid;
+  gap: 0.75rem;
+  padding-left: 1.5rem;
+}
+
+.step {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.step::marker {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.stepHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.stepTitle {
+  font-size: 1.05rem;
+}
+
+.stepActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.stepActions .secondary,
+.stepActions .danger {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.status {
+  padding: 0.125rem 0.625rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.planned {
+  color: var(--accent);
+}
+
+.pending {
+  color: var(--warning);
+}
+
+.passed {
+  color: var(--success);
+}
+
+.failed {
+  color: var(--danger);
+}
+
+.cancelled {
+  color: var(--muted);
+}
+
 /* Form */
 
 .form {
@@ -91,6 +178,7 @@
 }
 
 .field input,
+.field select,
 .field textarea {
   width: 100%;
   padding: 0.5rem 0.75rem;
