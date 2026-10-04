@@ -1,7 +1,14 @@
 import type {
+  CreateInterviewStepRequest,
+  CreateOfferRequest,
+  InterviewStep,
   InterviewStepFieldLimits,
   InterviewStepStatus,
+  Offer,
   OfferFieldLimits,
+  ReorderInterviewStepsRequest,
+  UpdateInterviewStepRequest,
+  UpdateOfferRequest,
 } from '@emploi/shared';
 import { z } from 'zod';
 
@@ -213,3 +220,52 @@ export const stepsOutput = z.object({
 });
 
 export const deletedOutput = z.object({ deleted: z.literal(true) });
+
+// Compile-time guards against drift from the API (shared types). When the back
+// changes a request or response type, these fail the type check until the
+// tools are updated. They are exported only so the linter sees them used.
+
+/** `true` when A and B are the same type, checked both ways. */
+type Equals<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+type Assert<T extends true> = T;
+
+/** Responses: a field added, removed, renamed or retyped in the API breaks the build. */
+export type OfferSchemaMatchesApi = Assert<
+  Equals<z.infer<typeof offerSchema>, Offer>
+>;
+export type StepSchemaMatchesApi = Assert<
+  Equals<z.infer<typeof stepSchema>, InterviewStep>
+>;
+
+/** Requests: a field the API accepts but a tool can't send (or the reverse) breaks the build. */
+type ToolFields<
+  Schema extends z.ZodObject,
+  Ids extends string = never,
+> = Exclude<keyof z.infer<Schema>, Ids>;
+export type CreateOfferInputMatchesApi = Assert<
+  Equals<ToolFields<typeof createOfferInput>, keyof CreateOfferRequest>
+>;
+export type UpdateOfferInputMatchesApi = Assert<
+  Equals<
+    ToolFields<typeof updateOfferInput, 'offerId'>,
+    keyof UpdateOfferRequest
+  >
+>;
+export type AddStepInputMatchesApi = Assert<
+  Equals<
+    ToolFields<typeof addStepInput, 'offerId'>,
+    keyof CreateInterviewStepRequest
+  >
+>;
+export type UpdateStepInputMatchesApi = Assert<
+  Equals<
+    ToolFields<typeof updateStepInput, 'offerId' | 'stepId'>,
+    keyof UpdateInterviewStepRequest
+  >
+>;
+export type ReorderStepsInputMatchesApi = Assert<
+  Equals<
+    ToolFields<typeof reorderStepsInput, 'offerId'>,
+    keyof ReorderInterviewStepsRequest
+  >
+>;

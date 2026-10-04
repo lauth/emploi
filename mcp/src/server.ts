@@ -1,4 +1,5 @@
 import { McpServer, type CallToolResult } from '@modelcontextprotocol/server';
+import { z } from 'zod';
 import { ApiError, type EmploiApi } from './api-client.ts';
 import {
   addStepInput,
@@ -37,7 +38,11 @@ function result(data: Record<string, unknown>): CallToolResult {
 /** API errors become tool errors the model can read and act on. */
 function failure(error: unknown): CallToolResult {
   let text: string;
-  if (error instanceof ApiError) {
+  if (error instanceof z.ZodError) {
+    // The API answered something the tool's output schema doesn't describe:
+    // the back changed and this server wasn't updated.
+    text = `The emploi API returned an unexpected response; the MCP server may need an update.\n${z.prettifyError(error)}`;
+  } else if (error instanceof ApiError) {
     const reason =
       error.status === 404
         ? 'Not found'
@@ -52,11 +57,17 @@ function failure(error: unknown): CallToolResult {
   return { isError: true, content: [{ type: 'text', text }] };
 }
 
-async function run(
-  action: () => Promise<Record<string, unknown>>,
+/**
+ * Runs a tool and shapes its result with the tool's output schema: only the
+ * documented fields reach the model, so the result always matches the schema
+ * the server advertises, and an unexpected API response is reported.
+ */
+async function run<Output extends Record<string, unknown>>(
+  outputSchema: z.ZodType<Output>,
+  action: () => Promise<unknown>,
 ): Promise<CallToolResult> {
   try {
-    return result(await action());
+    return result(outputSchema.parse(await action()));
   } catch (error) {
     return failure(error);
   }
@@ -82,7 +93,7 @@ export function createServer(api: EmploiApi): McpServer {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     ({ limit, offset }) =>
-      run(async () => {
+      run(offerPageOutput, async () => {
         const page = await api.listOffers({ limit, offset });
         return {
           offers: page.items,
@@ -104,7 +115,7 @@ export function createServer(api: EmploiApi): McpServer {
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     ({ offerId }) =>
-      run(async () => {
+      run(offerWithStepsOutput, async () => {
         const [offer, steps] = await Promise.all([
           api.getOffer(offerId),
           api.listInterviewSteps(offerId),
@@ -128,7 +139,8 @@ export function createServer(api: EmploiApi): McpServer {
         openWorldHint: false,
       },
     },
-    (input) => run(async () => ({ offer: await api.createOffer(input) })),
+    (input) =>
+      run(offerOutput, async () => ({ offer: await api.createOffer(input) })),
   );
 
   server.registerTool(
@@ -147,7 +159,9 @@ export function createServer(api: EmploiApi): McpServer {
       },
     },
     ({ offerId, ...changes }) =>
-      run(async () => ({ offer: await api.updateOffer(offerId, changes) })),
+      run(offerOutput, async () => ({
+        offer: await api.updateOffer(offerId, changes),
+      })),
   );
 
   server.registerTool(
@@ -166,7 +180,7 @@ export function createServer(api: EmploiApi): McpServer {
       },
     },
     ({ offerId }) =>
-      run(async () => {
+      run(deletedOutput, async () => {
         await api.deleteOffer(offerId);
         return { deleted: true };
       }),
@@ -190,7 +204,7 @@ export function createServer(api: EmploiApi): McpServer {
       },
     },
     ({ offerId, ...step }) =>
-      run(async () => ({
+      run(stepOutput, async () => ({
         step: await api.createInterviewStep(offerId, step),
       })),
   );
@@ -211,7 +225,7 @@ export function createServer(api: EmploiApi): McpServer {
       },
     },
     ({ offerId, stepId, ...changes }) =>
-      run(async () => ({
+      run(stepOutput, async () => ({
         step: await api.updateInterviewStep(offerId, stepId, changes),
       })),
   );
@@ -232,7 +246,7 @@ export function createServer(api: EmploiApi): McpServer {
       },
     },
     ({ offerId, stepIds }) =>
-      run(async () => ({
+      run(stepsOutput, async () => ({
         steps: await api.reorderInterviewSteps(offerId, stepIds),
       })),
   );
@@ -253,7 +267,7 @@ export function createServer(api: EmploiApi): McpServer {
       },
     },
     ({ offerId, stepId }) =>
-      run(async () => {
+      run(deletedOutput, async () => {
         await api.deleteInterviewStep(offerId, stepId);
         return { deleted: true };
       }),

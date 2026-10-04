@@ -132,6 +132,11 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 - **stdio only.** Don't add a network transport (Streamable HTTP) before the API has authentication: it would let anyone who can reach it change and delete data.
 - Built on the MCP TypeScript SDK **v2** (`@modelcontextprotocol/server`, `/server/stdio`; `@modelcontextprotocol/client` in tests), not the v1 `@modelcontextprotocol/sdk`. Tool schemas are `z.object(...)` (raw shapes are deprecated in v2); `InMemoryTransport` pairs must come from one package.
 - A new API operation the user needs gets a tool in `src/server.ts`: a Zod input and output object in `src/schemas.ts` (limits with `satisfies` the shared limit types, statuses from the `Record`), a description written for the model, and annotations (`readOnlyHint` for reads, `destructiveHint` for deletions, `idempotentHint` for updates). Results go through `run()`, which returns structured content and turns API errors into readable tool errors.
+- **Kept in step with the back by guards, not by hand-checking.** Data and business rules always come live from the API; the API's _shape_ is checked three ways, so a back change the tools don't follow fails `make check`:
+  - compile time (`src/schemas.ts`, `…MatchesApi` types): output schemas must equal the shared response types, and tool inputs must have exactly the fields of the shared request types (`Type 'false' does not satisfy the constraint 'true'` points at the one that drifted);
+  - runtime: `run(outputSchema, …)` parses every result, so only documented fields reach the model and a response the schemas no longer describe becomes a "may need an update" tool error;
+  - `src/api-coverage.test.ts` reads `back/openapi.json`: every API operation must map to a tool or be excluded with a reason in `COVERAGE`, and each tool must accept every body field its operation does.
+    After an API change: `make openapi`, then update the MCP schemas and tools until `make check` passes.
 - stdout carries the protocol: log to stderr only (`no-console` allows `console.error`).
 - Node runs the sources directly: only erasable TypeScript (`erasableSyntaxOnly`, no enums or parameter properties) and relative imports ending in `.ts`.
 - Tests (`src/*.test.ts`) connect a real MCP client to the server with `InMemoryTransport` and a fake `EmploiApi`.

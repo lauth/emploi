@@ -271,6 +271,34 @@ describe('emploi MCP server', () => {
     expect(text(result)).toBe(`Not found: Offer ${OFFER_ID} not found`);
   });
 
+  it('only passes the documented fields to the model', async () => {
+    // A field the back added but no tool describes yet.
+    api.getOffer.mockResolvedValue({ ...offer, salary: '50k' } as Offer);
+    api.listInterviewSteps.mockResolvedValue([]);
+
+    const result = await call('get_offer', { offerId: OFFER_ID });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual({ offer, steps: [] });
+    expect(text(result)).not.toContain('salary');
+  });
+
+  it('reports an API response the tools no longer describe', async () => {
+    // e.g. the back renamed a field.
+    const { title, ...renamed } = offer;
+    api.getOffer.mockResolvedValue({
+      ...renamed,
+      name: title,
+    } as unknown as Offer);
+    api.listInterviewSteps.mockResolvedValue([]);
+
+    const result = await call('get_offer', { offerId: OFFER_ID });
+
+    expect(result.isError).toBe(true);
+    expect(text(result)).toContain('may need an update');
+    expect(text(result)).toContain('offer.title');
+  });
+
   it('reports an unreachable API with a hint', async () => {
     api.listOffers.mockRejectedValue(new TypeError('fetch failed'));
 
