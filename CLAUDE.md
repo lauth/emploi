@@ -32,6 +32,7 @@ Repository `emploi` is a pnpm workspace (`pnpm-workspace.yaml`):
 - `front/`: Next.js 16 app router, `src/` directory, React Compiler, `output: 'standalone'` for Docker. Next 16 differs from older versions: read `front/AGENTS.md` and the docs in `front/node_modules/next/dist/docs/` before writing front code.
 - `shared/` (`@emploi/shared`): API request/response **types only**, no runtime code, no build step; always `import type` from it (ADR-0009).
 - `design-system/` (`@emploi/design-system`): design tokens, base styles and the basic React components, presented in Storybook (ADR-0017). No build step: Next compiles it (`transpilePackages`).
+- `mcp/` (`@emploi/mcp`): MCP server giving AI clients tools over the REST API, stdio only (ADR-0019). No build step: Node runs its TypeScript directly.
 - `e2e/`: Playwright browser tests against the deployed stack (ADR-0013).
 - `k8s/`: k3d cluster config and the Kubernetes manifests (kustomize).
 - `adrs/`: architecture decision records.
@@ -50,6 +51,7 @@ make lint | lint-fix | format | typecheck | test | test-e2e | build
 make test-back T=health    # back unit tests filtered by path/name (vitest run <filter>)
 make test-front T=page     # front tests filtered by path/name
 make openapi               # regenerate back/openapi.json after an API change
+make mcp                   # MCP server over stdio (started by AI clients through .mcp.json)
 make storybook             # design system components on http://localhost:6006
 make storybook-build       # static Storybook in design-system/storybook-static
 make browser-install       # once per machine: Playwright's Chromium
@@ -123,6 +125,16 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 - Components are presentational: React and CSS Modules only, no Next.js, no data, **no text** (everything through props, so the front translates it; `react/jsx-no-literals` enforces it). Fields always have a visible label and wire `aria-invalid` / `aria-describedby` to their hint and error.
 - Each component has stories (`*.stories.tsx`: every variant and state, `play` functions for behaviour) and, for logic, unit tests (`*.test.tsx`). `src/stories.test.tsx` runs every story as a Vitest test, with axe accessibility checks that fail on violations, so `make check` covers Storybook too.
 - Linted with `eslint-plugin-jsx-a11y` (strict), React, hooks and Storybook rules.
+
+## MCP server (`mcp/`)
+
+- Gives AI clients tools over the REST API (ADR-0019): `list_offers`, `get_offer` (with steps), `create_offer`, `update_offer`, `delete_offer`, `add_interview_step`, `update_interview_step`, `reorder_interview_steps`, `delete_interview_step`. It's a client of the API (`src/api-client.ts`), never of the database. Registered for Claude Code in `.mcp.json` (`make mcp`); the cluster must be running.
+- **stdio only.** Don't add a network transport (Streamable HTTP) before the API has authentication: it would let anyone who can reach it change and delete data.
+- Built on the MCP TypeScript SDK **v2** (`@modelcontextprotocol/server`, `/server/stdio`; `@modelcontextprotocol/client` in tests), not the v1 `@modelcontextprotocol/sdk`. Tool schemas are `z.object(...)` (raw shapes are deprecated in v2); `InMemoryTransport` pairs must come from one package.
+- A new API operation the user needs gets a tool in `src/server.ts`: a Zod input and output object in `src/schemas.ts` (limits with `satisfies` the shared limit types, statuses from the `Record`), a description written for the model, and annotations (`readOnlyHint` for reads, `destructiveHint` for deletions, `idempotentHint` for updates). Results go through `run()`, which returns structured content and turns API errors into readable tool errors.
+- stdout carries the protocol: log to stderr only (`no-console` allows `console.error`).
+- Node runs the sources directly: only erasable TypeScript (`erasableSyntaxOnly`, no enums or parameter properties) and relative imports ending in `.ts`.
+- Tests (`src/*.test.ts`) connect a real MCP client to the server with `InMemoryTransport` and a fake `EmploiApi`.
 
 ## Browser tests (Playwright)
 

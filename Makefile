@@ -67,6 +67,13 @@ openapi: ## Regenerate back/openapi.json after an API change (checked by make ch
 .PHONY: check
 check: format-check lint typecheck test test-e2e ## Run every check; must pass before a change is done
 
+##@ AI clients (MCP)
+
+.PHONY: mcp
+mcp: ## Run the MCP server over stdio (started by AI clients, see .mcp.json; needs the cluster)
+	@# stdout carries the MCP protocol: nothing else may print there.
+	@NODE_EXTRA_CA_CERTS="$$(mkcert -CAROOT)/rootCA.pem" node mcp/src/main.ts
+
 ##@ Design system
 
 .PHONY: storybook

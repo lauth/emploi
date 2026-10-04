@@ -3,6 +3,7 @@ packages:
   - front
   - shared
   - design-system
+  - mcp
   - e2e
 
 onlyBuiltDependencies:
