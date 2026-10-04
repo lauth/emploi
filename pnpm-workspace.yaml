@@ -9,6 +9,10 @@ onlyBuiltDependencies:
   - '@prisma/engines'
   - prisma
 
+# Install scripts not needed: these ship prebuilt binaries as optional packages.
 ignoredBuiltDependencies:
+  - '@parcel/watcher'
+  - '@swc/core'
+  - esbuild
   - sharp
   - unrs-resolver

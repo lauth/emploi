@@ -15,7 +15,7 @@
     "@emploi/shared": "workspace:*",
     "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.63.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.0.0",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-playwright": "^2.12.0",

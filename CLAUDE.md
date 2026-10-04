@@ -36,7 +36,7 @@ Repository `emploi` is a pnpm workspace (`pnpm-workspace.yaml`):
 - `k8s/`: k3d cluster config and the Kubernetes manifests (kustomize).
 - `adrs/`: architecture decision records.
 
-Use **pnpm** only (never npm/yarn) and commit `pnpm-lock.yaml`. TypeScript is pinned to `~6.0` because typescript-eslint doesn't support 7 yet. Prisma is pinned to 7.10.0 (npm's `latest` tag points to an 8.0 release candidate). `.pnpmfile.cjs` removes the optional `prisma`/`typescript` peer dependencies from `@prisma/client` so production images don't ship the Prisma CLI, Studio or TypeScript; the Dockerfiles copy it before installing.
+Use **pnpm** only (never npm/yarn) and commit `pnpm-lock.yaml`. Node 26 everywhere: locally (`.nvmrc`, `engines`), in the Docker images, and `@types/node` ^26. TypeScript is pinned to `~6.0` because typescript-eslint doesn't support 7 yet. Prisma is pinned to 7.10.0 (npm's `latest` tag points to an 8.0 release candidate). `.pnpmfile.cjs` removes the optional `prisma`/`typescript` peer dependencies from `@prisma/client` so production images don't ship the Prisma CLI, Studio or TypeScript; the Dockerfiles copy it before installing.
 
 ## Commands
 
@@ -74,7 +74,7 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 | `https://api.emploi.localhost` | `back`  |
 
 - k3d cluster `emploi` (`k8s/k3d-cluster.yaml`), namespace `emploi`. Make targets always pass `--context k3d-emploi`; do the same in manual kubectl commands, since other clusters exist on this machine.
-- Images `emploi-back:dev` and `emploi-front:dev` are built locally and loaded with `k3d image import` (`imagePullPolicy: Never`, no registry). Both Dockerfiles use the repo root as build context. Images take no build-time configuration.
+- Images `emploi-back:dev` and `emploi-front:dev` are built locally and loaded with `k3d image import` (`imagePullPolicy: Never`, no registry). Both Dockerfiles use the repo root as build context. Images take no build-time configuration. They run Node 26 (`NODE_IMAGE` build argument, `node:26-alpine`); Node 25+ no longer ships Corepack, so the Dockerfiles install it from npm, and it provides the pnpm version of `packageManager`.
 - Traefik (shipped with k3s) routes the domains. `k8s/ingress.yaml` has two Ingresses: an HTTP one that only redirects to HTTPS, and an HTTPS one using the `emploi-tls` secret. A single Ingress can't do both, because a Traefik router with TLS only serves HTTPS.
 - `make certs` generates the mkcert certificate into `.certs/` (not committed). `make secrets` creates the `emploi-db` secret from `.env`. Never put real values in committed manifests.
 - `*.localhost` resolves to `::1` here; the k3d ports have no host IP so Docker publishes on IPv4 and IPv6.
