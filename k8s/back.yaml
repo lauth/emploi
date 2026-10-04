@@ -7,6 +7,8 @@ metadata:
 data:
   PORT: '3000'
   CORS_ORIGINS: https://emploi.localhost
+  # Swagger UI at https://api.emploi.localhost/docs (adrs/0018-openapi-documentation.md).
+  API_DOCS_ENABLED: 'true'
 ---
 apiVersion: v1
 kind: Service

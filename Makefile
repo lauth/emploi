@@ -60,6 +60,10 @@ test-back: ## Run back unit tests, filtered with T=<path or name>, e.g. make tes
 test-front: ## Run front tests, filtered with T=<path or name>, e.g. make test-front T=page
 	pnpm --filter front exec vitest run $(T)
 
+.PHONY: openapi
+openapi: ## Regenerate back/openapi.json after an API change (checked by make check)
+	pnpm --filter back exec vitest run --config vitest.config.e2e.ts test/openapi.e2e-spec.ts --update
+
 .PHONY: check
 check: format-check lint typecheck test test-e2e ## Run every check; must pass before a change is done
 
@@ -116,8 +120,19 @@ up: cluster-create secrets certs images deploy db-deploy ## Create the cluster a
 .PHONY: down
 down: cluster-delete ## Delete the cluster and its data
 
+.PHONY: host-check
+host-check: ## Check the host can run the cluster (kernel modules)
+	@# Without br_netfilter, traffic between pods skips iptables: Kubernetes
+	@# Services and DNS stop working inside the cluster (pods time out).
+	@test -e /proc/sys/net/bridge/bridge-nf-call-iptables || { \
+		echo "The br_netfilter kernel module is not loaded: Kubernetes Services and DNS won't work."; \
+		echo "Load it now and at every boot:"; \
+		echo "  sudo modprobe br_netfilter"; \
+		echo "  echo br_netfilter | sudo tee /etc/modules-load.d/br_netfilter.conf"; \
+		exit 1; }
+
 .PHONY: cluster-create
-cluster-create: ## Create the k3d cluster if it does not exist
+cluster-create: host-check ## Create the k3d cluster if it does not exist
 	@k3d cluster get $(CLUSTER) >/dev/null 2>&1 || k3d cluster create --config k8s/k3d-cluster.yaml
 	kubectl --context k3d-$(CLUSTER) apply -f k8s/namespace.yaml
 
@@ -126,7 +141,7 @@ cluster-delete: ## Delete the k3d cluster
 	k3d cluster delete $(CLUSTER)
 
 .PHONY: cluster-start
-cluster-start: ## Start the stopped cluster
+cluster-start: host-check ## Start the stopped cluster
 	k3d cluster start $(CLUSTER)
 
 .PHONY: cluster-stop
@@ -162,7 +177,7 @@ images: ## Build the back and front images and import them into the cluster
 	k3d image import --cluster $(CLUSTER) emploi-back:dev emploi-front:dev
 
 .PHONY: deploy
-deploy: ## Apply the manifests and restart the apps on the imported images
+deploy: host-check ## Apply the manifests and restart the apps on the imported images
 	$(KUBECTL) apply --kustomize k8s
 	$(KUBECTL) rollout status statefulset/postgres --timeout 180s
 	$(KUBECTL) rollout restart deployment/back deployment/front

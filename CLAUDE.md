@@ -49,6 +49,7 @@ make check                 # format-check + lint + typecheck + unit tests + e2e:
 make lint | lint-fix | format | typecheck | test | test-e2e | build
 make test-back T=health    # back unit tests filtered by path/name (vitest run <filter>)
 make test-front T=page     # front tests filtered by path/name
+make openapi               # regenerate back/openapi.json after an API change
 make storybook             # design system components on http://localhost:6006
 make storybook-build       # static Storybook in design-system/storybook-static
 make browser-install       # once per machine: Playwright's Chromium
@@ -68,11 +69,13 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 
 ## Local environment: k3d, Traefik, HTTPS
 
-| URL                            | Service |
-| ------------------------------ | ------- |
-| `https://emploi.localhost`     | `front` |
-| `https://api.emploi.localhost` | `back`  |
+| URL                                 | Service                                       |
+| ----------------------------------- | --------------------------------------------- |
+| `https://emploi.localhost`          | `front`                                       |
+| `https://api.emploi.localhost`      | `back`                                        |
+| `https://api.emploi.localhost/docs` | Swagger UI (OpenAPI document at `/docs-json`) |
 
+- The host needs the `br_netfilter` kernel module (loaded at boot through `/etc/modules-load.d/br_netfilter.conf`). Without it, pods reach each other by IP but Services and cluster DNS silently time out (back "Database unreachable", front crash-looping). `make host-check` detects it, and `cluster-create`, `cluster-start` and `deploy` run it first.
 - k3d cluster `emploi` (`k8s/k3d-cluster.yaml`), namespace `emploi`. Make targets always pass `--context k3d-emploi`; do the same in manual kubectl commands, since other clusters exist on this machine.
 - Images `emploi-back:dev` and `emploi-front:dev` are built locally and loaded with `k3d image import` (`imagePullPolicy: Never`, no registry). Both Dockerfiles use the repo root as build context. Images take no build-time configuration. They run Node 26 (`NODE_IMAGE` build argument, `node:26-alpine`); Node 25+ no longer ships Corepack, so the Dockerfiles install it from npm, and it provides the pnpm version of `packageManager`.
 - Traefik (shipped with k3s) routes the domains. `k8s/ingress.yaml` has two Ingresses: an HTTP one that only redirects to HTTPS, and an HTTPS one using the `emploi-tls` secret. A single Ingress can't do both, because a Traefik router with TLS only serves HTTPS.
@@ -92,6 +95,7 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 - Schema in `back/prisma/schema.prisma`, Prisma config in `back/prisma.config.ts`. Change the schema, then `make db-migrate NAME=…`; commit migrations and never edit applied ones. Prisma 7's `migrate dev` doesn't regenerate the client: the Make target runs `prisma generate` afterwards.
 - Feature module shape (see `src/offers`, `src/interview-steps`): DTO classes in `dto/` implementing the shared request types, a `*.mapper.ts` turning Prisma rows into shared response types (dates as ISO strings, date-only columns as `YYYY-MM-DD`), a service that maps Prisma `P2025` to `NotFoundException`, and `ParseUUIDPipe` on id params. Optional string inputs are trimmed and blank becomes `null` (`src/common/transforms.ts`); for `PATCH`, absent means unchanged and `null` clears; fields that can be omitted but never cleared use `@IfPresent()` (`src/common/validators.ts`), not `@IsOptional()`, which lets `null` through.
 - Nested resources check their parent: a child looked up, updated or deleted with `where: { id, offerId }` answers 404 when it belongs to another parent.
+- **The API is documented with OpenAPI (ADR-0018).** Every endpoint gets `@ApiTags` (controller), `@ApiOperation({ summary })`, its success response with a type, `@ApiInvalidRequest()` when it takes input and `@ApiNotFound(…)` when it can 404 (`src/common/api-docs.ts`); id params get `ApiParam({ format: 'uuid' })`. Request DTOs carry `@ApiProperty`/`@ApiPropertyOptional` next to their validators, response shapes are `*Dto` classes implementing the shared types; field descriptions live once per feature (`offer-api-properties.ts`, `interview-step-api-properties.ts`). Give an explicit `type` for nullable, union or unannotated properties (no type metadata). Explicit decorators only, no Nest CLI Swagger plugin. After an API change run `make openapi` and commit `back/openapi.json`: `test/openapi.e2e-spec.ts` fails when it's stale, and also checks every route is documented.
 - Enums shared with the front (e.g. `InterviewStepStatus`) are union types in `@emploi/shared`; each side builds its runtime list from a `Record<Status, …>` so a new value breaks the build until it is handled. The Prisma enum uses the same lowercase values.
 - In tests with mocked Prisma, reset mocks with `vi.resetAllMocks()`: `vi.clearAllMocks()` keeps mocked results, which leak into the next test.
 - Tests use Vitest (ADR-0010): unit tests `src/**/*.spec.ts`, e2e tests `test/**/*.e2e-spec.ts` with Supertest. e2e tests boot `AppModule` with `PrismaService` overridden by a mock; their environment variables are set in `vitest.config.e2e.ts`.

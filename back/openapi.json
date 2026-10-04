@@ -1,0 +1,1238 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health/live": {
+      "get": {
+        "operationId": "HealthController_live",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Liveness: the process is up",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "HealthController_ready",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatusDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The database is unreachable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 503,
+                  "message": "Database unreachable",
+                  "error": "Service Unavailable"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Readiness: the database is reachable",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/offers": {
+      "post": {
+        "operationId": "OffersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOfferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: malformed id, body or query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 400,
+                  "message": [
+                    "title should not be empty"
+                  ],
+                  "error": "Bad Request"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create an offer",
+        "tags": [
+          "offers"
+        ]
+      },
+      "get": {
+        "operationId": "OffersController_list",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of offers per page.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Number of offers to skip.",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: malformed id, body or query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 400,
+                  "message": [
+                    "title should not be empty"
+                  ],
+                  "error": "Bad Request"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List offers, newest first",
+        "tags": [
+          "offers"
+        ]
+      }
+    },
+    "/offers/{id}": {
+      "get": {
+        "operationId": "OffersController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: malformed id, body or query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 400,
+                  "message": [
+                    "title should not be empty"
+                  ],
+                  "error": "Bad Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No offer with this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 404,
+                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
+                  "error": "Not Found"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get an offer",
+        "tags": [
+          "offers"
+        ]
+      },
+      "patch": {
+        "description": "Partial update: absent fields are left unchanged, `null` clears an optional field.",
+        "operationId": "OffersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOfferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: malformed id, body or query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 400,
+                  "message": [
+                    "title should not be empty"
+                  ],
+                  "error": "Bad Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No offer with this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 404,
+                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
+                  "error": "Not Found"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update an offer",
+        "tags": [
+          "offers"
+        ]
+      },
+      "delete": {
+        "operationId": "OffersController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "400": {
+            "description": "Invalid request: malformed id, body or query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 400,
+                  "message": [
+                    "title should not be empty"
+                  ],
+                  "error": "Bad Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No offer with this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 404,
+                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
+                  "error": "Not Found"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Delete an offer and its interview steps",
+        "tags": [
+          "offers"
+        ]
+      }
+    },
+    "/offers/{offerId}/steps": {
+      "get": {
+        "operationId": "InterviewStepsController_list",
+        "parameters": [
+          {
+            "name": "offerId",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InterviewStepDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: malformed id, body or query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 400,
+                  "message": [
+                    "title should not be empty"
+                  ],
+                  "error": "Bad Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No offer with this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 404,
+                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
+                  "error": "Not Found"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the steps of an offer, in order",
+        "tags": [
+          "interview-steps"
+        ]
+      },
+      "post": {
+        "operationId": "InterviewStepsController_create",
+        "parameters": [
+          {
+            "name": "offerId",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInterviewStepDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewStepDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: malformed id, body or query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 400,
+                  "message": [
+                    "title should not be empty"
+                  ],
+                  "error": "Bad Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No offer with this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 404,
+                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
+                  "error": "Not Found"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Add a step after the existing ones",
+        "tags": [
+          "interview-steps"
+        ]
+      }
+    },
+    "/offers/{offerId}/steps/order": {
+      "put": {
+        "description": "Replaces the whole order at once. The list must contain every step of the offer exactly once.",
+        "operationId": "InterviewStepsController_reorder",
+        "parameters": [
+          {
+            "name": "offerId",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderInterviewStepsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The steps in their new order.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InterviewStepDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: malformed id, body or query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 400,
+                  "message": [
+                    "title should not be empty"
+                  ],
+                  "error": "Bad Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No offer with this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 404,
+                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
+                  "error": "Not Found"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Reorder the steps of an offer",
+        "tags": [
+          "interview-steps"
+        ]
+      }
+    },
+    "/offers/{offerId}/steps/{stepId}": {
+      "get": {
+        "operationId": "InterviewStepsController_get",
+        "parameters": [
+          {
+            "name": "offerId",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "stepId",
+            "required": true,
+            "in": "path",
+            "description": "Interview step id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewStepDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: malformed id, body or query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 400,
+                  "message": [
+                    "title should not be empty"
+                  ],
+                  "error": "Bad Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such step for this offer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 404,
+                  "message": "Interview step 0199a7a4-3c2e-7b6a-9c1d-00000000000a not found for offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "error": "Not Found"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get a step",
+        "tags": [
+          "interview-steps"
+        ]
+      },
+      "patch": {
+        "description": "Partial update: absent fields are left unchanged, `null` clears an optional field.",
+        "operationId": "InterviewStepsController_update",
+        "parameters": [
+          {
+            "name": "offerId",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "stepId",
+            "required": true,
+            "in": "path",
+            "description": "Interview step id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInterviewStepDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewStepDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: malformed id, body or query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 400,
+                  "message": [
+                    "title should not be empty"
+                  ],
+                  "error": "Bad Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such step for this offer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 404,
+                  "message": "Interview step 0199a7a4-3c2e-7b6a-9c1d-00000000000a not found for offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "error": "Not Found"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update a step",
+        "tags": [
+          "interview-steps"
+        ]
+      },
+      "delete": {
+        "operationId": "InterviewStepsController_remove",
+        "parameters": [
+          {
+            "name": "offerId",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "stepId",
+            "required": true,
+            "in": "path",
+            "description": "Interview step id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "400": {
+            "description": "Invalid request: malformed id, body or query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 400,
+                  "message": [
+                    "title should not be empty"
+                  ],
+                  "error": "Bad Request"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such step for this offer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "example": {
+                  "statusCode": 404,
+                  "message": "Interview step 0199a7a4-3c2e-7b6a-9c1d-00000000000a not found for offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "error": "Not Found"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Delete a step",
+        "tags": [
+          "interview-steps"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "emploi API",
+    "description": "Job search history: the job offers the user responded to and the steps of their interview processes. Validation errors answer 400 with the list of problems in `message`.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "offers",
+      "description": "Job offers the user responded to."
+    },
+    {
+      "name": "interview-steps",
+      "description": "Steps of the interview process of an offer, in the order chosen by the user."
+    },
+    {
+      "name": "health",
+      "description": "Probes used by Kubernetes."
+    }
+  ],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "HealthStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "ApiErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number"
+          },
+          "message": {
+            "description": "One message, or one per validation problem.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "error": {
+            "type": "string",
+            "description": "HTTP reason phrase."
+          }
+        },
+        "required": [
+          "statusCode",
+          "message"
+        ]
+      },
+      "CreateOfferDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Job title. Trimmed.",
+            "maxLength": 200,
+            "example": "Développeur backend"
+          },
+          "company": {
+            "type": "string",
+            "nullable": true,
+            "description": "Employer, when the offer names it. Blank is stored as `null`.",
+            "maxLength": 200,
+            "example": "Acme"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "description": "Link to the offer, `http` or `https`.",
+            "maxLength": 2048,
+            "example": "https://jobs.example.com/42"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true,
+            "description": "City, country or \"Remote\".",
+            "maxLength": 200,
+            "example": "Lyon"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Text of the offer.",
+            "maxLength": 20000
+          },
+          "appliedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Day the user responded to the offer, `YYYY-MM-DD`.",
+            "example": "2026-09-28"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "OfferDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Job title. Trimmed.",
+            "maxLength": 200,
+            "example": "Développeur backend"
+          },
+          "company": {
+            "type": "string",
+            "nullable": true,
+            "description": "Employer, when the offer names it. Blank is stored as `null`.",
+            "maxLength": 200,
+            "example": "Acme"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "description": "Link to the offer, `http` or `https`.",
+            "maxLength": 2048,
+            "example": "https://jobs.example.com/42"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true,
+            "description": "City, country or \"Remote\".",
+            "maxLength": 200,
+            "example": "Lyon"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Text of the offer.",
+            "maxLength": 20000
+          },
+          "appliedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Day the user responded to the offer, `YYYY-MM-DD`.",
+            "example": "2026-09-28"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-01T08:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:45:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "company",
+          "url",
+          "location",
+          "description",
+          "appliedAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "OfferPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Newest first.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OfferDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Number of offers across all pages."
+          },
+          "limit": {
+            "type": "number"
+          },
+          "offset": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ]
+      },
+      "UpdateOfferDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Job title. Trimmed; can be changed but not cleared.",
+            "maxLength": 200,
+            "example": "Développeur backend"
+          },
+          "company": {
+            "type": "string",
+            "nullable": true,
+            "description": "Employer, when the offer names it. Blank is stored as `null`.",
+            "maxLength": 200,
+            "example": "Acme"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "description": "Link to the offer, `http` or `https`.",
+            "maxLength": 2048,
+            "example": "https://jobs.example.com/42"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true,
+            "description": "City, country or \"Remote\".",
+            "maxLength": 200,
+            "example": "Lyon"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Text of the offer.",
+            "maxLength": 20000
+          },
+          "appliedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Day the user responded to the offer, `YYYY-MM-DD`.",
+            "example": "2026-09-28"
+          }
+        }
+      },
+      "InterviewStepStatus": {
+        "type": "string",
+        "enum": [
+          "planned",
+          "pending",
+          "passed",
+          "failed",
+          "cancelled"
+        ],
+        "description": "`planned`: to come; `pending`: done, waiting for the answer; `passed`: successful; `failed`: rejected at this step; `cancelled`: did not take place."
+      },
+      "InterviewStepDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "offerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The offer the step belongs to."
+          },
+          "title": {
+            "type": "string",
+            "description": "What the step is, free text. Trimmed.",
+            "maxLength": 200,
+            "example": "Entretien téléphonique RH"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Notes: who, what was asked, feedback.",
+            "maxLength": 20000
+          },
+          "date": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Day of the step, `YYYY-MM-DD`; `null` until scheduled.",
+            "example": "2026-10-06"
+          },
+          "status": {
+            "description": "`planned`: to come; `pending`: done, waiting for the answer; `passed`: successful; `failed`: rejected at this step; `cancelled`: did not take place.",
+            "example": "planned",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InterviewStepStatus"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-01T08:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-02T09:45:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "offerId",
+          "title",
+          "description",
+          "date",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateInterviewStepDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "What the step is, free text. Trimmed.",
+            "maxLength": 200,
+            "example": "Entretien téléphonique RH"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Notes: who, what was asked, feedback.",
+            "maxLength": 20000
+          },
+          "date": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Day of the step, `YYYY-MM-DD`; `null` until scheduled.",
+            "example": "2026-10-06"
+          },
+          "status": {
+            "description": "`planned`: to come; `pending`: done, waiting for the answer; `passed`: successful; `failed`: rejected at this step; `cancelled`: did not take place.",
+            "example": "planned",
+            "default": "planned",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InterviewStepStatus"
+              }
+            ]
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "ReorderInterviewStepsDto": {
+        "type": "object",
+        "properties": {
+          "stepIds": {
+            "description": "Every step id of the offer, exactly once, in the new order. Any other list is rejected with 400.",
+            "uniqueItems": true,
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "stepIds"
+        ]
+      },
+      "UpdateInterviewStepDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "What the step is, free text. Trimmed.",
+            "maxLength": 200,
+            "example": "Entretien téléphonique RH"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Notes: who, what was asked, feedback.",
+            "maxLength": 20000
+          },
+          "date": {
+            "type": "string",
+            "nullable": true,
+            "format": "date",
+            "description": "Day of the step, `YYYY-MM-DD`; `null` until scheduled.",
+            "example": "2026-10-06"
+          },
+          "status": {
+            "description": "`planned`: to come; `pending`: done, waiting for the answer; `passed`: successful; `failed`: rejected at this step; `cancelled`: did not take place.",
+            "example": "planned",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InterviewStepStatus"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

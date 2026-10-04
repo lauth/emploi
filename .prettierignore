@@ -1,4 +1,5 @@
 pnpm-lock.yaml
+back/openapi.json
 **/dist
 **/.next
 **/coverage

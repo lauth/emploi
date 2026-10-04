@@ -1,6 +1,7 @@
 import 'reflect-metadata';
-import { plainToInstance, Type } from 'class-transformer';
+import { plainToInstance, Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsInt,
   IsNotEmpty,
   IsString,
@@ -24,6 +25,22 @@ export class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   CORS_ORIGINS: string;
+
+  /** Serves Swagger UI at /docs and the OpenAPI document at /docs-json. */
+  @Transform(({ value }: { value: unknown }) => parseBoolean(value))
+  @IsBoolean()
+  API_DOCS_ENABLED = true;
+}
+
+/** `"true"` and `"false"` as booleans; anything else is left for `@IsBoolean` to reject. */
+function parseBoolean(value: unknown): unknown {
+  if (value === 'true') {
+    return true;
+  }
+  if (value === 'false') {
+    return false;
+  }
+  return value;
 }
 
 /** Fails fast at startup when the environment is invalid. */
