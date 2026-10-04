@@ -1,5 +1,6 @@
 'use client';
 
+import { Button, type ButtonProps } from '@emploi/design-system';
 import { useFormStatus } from 'react-dom';
 
 interface ConfirmButtonProps {
@@ -8,7 +9,8 @@ interface ConfirmButtonProps {
   confirmMessage: string;
   label: string;
   pendingLabel: string;
-  className?: string;
+  variant?: ButtonProps['variant'];
+  size?: ButtonProps['size'];
 }
 
 /** A one-button form that asks for confirmation before submitting. */
@@ -17,7 +19,8 @@ export function ConfirmButton({
   confirmMessage,
   label,
   pendingLabel,
-  className,
+  variant,
+  size,
 }: ConfirmButtonProps) {
   return (
     <form
@@ -31,7 +34,8 @@ export function ConfirmButton({
       <SubmitButton
         label={label}
         pendingLabel={pendingLabel}
-        className={className}
+        variant={variant}
+        size={size}
       />
     </form>
   );
@@ -40,12 +44,13 @@ export function ConfirmButton({
 function SubmitButton({
   label,
   pendingLabel,
-  className,
-}: Pick<ConfirmButtonProps, 'label' | 'pendingLabel' | 'className'>) {
+  variant,
+  size,
+}: Pick<ConfirmButtonProps, 'label' | 'pendingLabel' | 'variant' | 'size'>) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className={className} disabled={pending}>
+    <Button type="submit" variant={variant} size={size} disabled={pending}>
       {pending ? pendingLabel : label}
-    </button>
+    </Button>
   );
 }

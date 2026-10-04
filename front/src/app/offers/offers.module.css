@@ -1,70 +1,56 @@
+/*
+ * Page layout of the offers feature. Components (buttons, fields, cards,
+ * badges…) come from @emploi/design-system and are styled there.
+ */
+
 .heading {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  margin: 1rem 0 1.5rem;
+  gap: var(--space-4);
+  margin: var(--space-4) 0 var(--space-5);
 }
 
-.meta {
-  color: var(--muted);
-}
-
+.meta,
 .empty {
-  color: var(--muted);
+  color: var(--color-text-muted);
+}
+
+.description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 /* List */
 
 .list {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
   list-style: none;
 }
 
-.card {
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
 .cardTitle {
-  font-weight: 600;
-  font-size: 1.1rem;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
 }
 
 .pagination {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  margin-top: 1.5rem;
+  margin-top: var(--space-5);
 }
 
 .pagination > :last-child {
   justify-self: end;
-}
-
-/* Details */
-
-.details {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.25rem 1rem;
-}
-
-.details dt {
-  color: var(--muted);
-}
-
-.details dd {
-  overflow-wrap: anywhere;
-}
-
-.description {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 
 /* Interview steps */
@@ -74,8 +60,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin: 1.5rem 0 0.75rem;
+  gap: var(--space-4);
+  margin: var(--space-5) 0 var(--space-3);
 }
 
 .sectionHeading h2 {
@@ -84,20 +70,13 @@
 
 .steps {
   display: grid;
-  gap: 0.75rem;
-  padding-left: 1.5rem;
+  gap: var(--space-3);
+  padding-left: var(--space-5);
 }
 
-.step {
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-.step::marker {
-  color: var(--muted);
-  font-weight: 600;
+.steps > li::marker {
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-bold);
 }
 
 .stepHeading {
@@ -105,152 +84,26 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.stepTitle {
-  font-size: 1.05rem;
+  gap: var(--space-2);
 }
 
 .stepActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
 }
 
-.stepActions .secondary,
-.stepActions .danger {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.9rem;
-}
-
-.status {
-  padding: 0.125rem 0.625rem;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.planned {
-  color: var(--accent);
-}
-
-.pending {
-  color: var(--warning);
-}
-
-.passed {
-  color: var(--success);
-}
-
-.failed {
-  color: var(--danger);
-}
-
-.cancelled {
-  color: var(--muted);
-}
-
-/* Form */
+/* Forms */
 
 .form {
   display: grid;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 .row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 1rem;
-}
-
-.field {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.field label {
-  font-weight: 600;
-}
-
-.field input,
-.field select,
-.field textarea {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--background);
-}
-
-.field textarea {
-  resize: vertical;
-}
-
-.field [aria-invalid='true'] {
-  border-color: var(--danger);
-}
-
-.fieldError {
-  color: var(--danger);
-  font-size: 0.9rem;
-}
-
-.formErrors {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--danger);
-  border-radius: var(--radius);
-  color: var(--danger);
-}
-
-.formErrors ul {
-  padding-left: 1rem;
-}
-
-/* Buttons */
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.primary,
-.secondary,
-.danger {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.primary {
-  background: var(--accent);
-  color: var(--accent-foreground);
-}
-
-.secondary {
-  border-color: var(--border);
-  background: transparent;
-  color: var(--foreground);
-}
-
-.danger {
-  border-color: var(--danger);
-  background: transparent;
-  color: var(--danger);
-}
-
-.primary:disabled,
-.danger:disabled {
-  opacity: 0.6;
-  cursor: progress;
+  gap: var(--space-4);
 }

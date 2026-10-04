@@ -20,6 +20,9 @@ front/.next/
 front/out/
 front/next-env.d.ts
 
+# Storybook static build
+design-system/storybook-static/
+
 # Playwright
 e2e/test-results/
 e2e/playwright-report/

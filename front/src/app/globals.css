@@ -1,99 +1,36 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --muted: #5f6368;
-  --border: #dadce0;
-  --surface: #f6f7f9;
-  --accent: #1a56db;
-  --accent-foreground: #ffffff;
-  --danger: #c5221f;
-  --success: #137333;
-  --warning: #b06000;
-  --radius: 6px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --muted: #a0a4a8;
-    --border: #3c4043;
-    --surface: #17191c;
-    --accent: #5b8def;
-    --accent-foreground: #0a0a0a;
-    --danger: #f28b82;
-    --success: #81c995;
-    --warning: #fdd663;
-  }
-
-  html {
-    color-scheme: dark;
-  }
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  min-height: 100vh;
-  color: var(--foreground);
-  background: var(--background);
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-a {
-  color: var(--accent);
-}
+/*
+ * App layout only. Tokens, reset and typography come from the design system
+ * (@emploi/design-system/styles.css, imported in layout.tsx).
+ */
 
 h1 {
-  font-size: 1.75rem;
-  line-height: 1.25;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--space-2);
 }
 
 h2 {
-  font-size: 1.25rem;
-  margin: 1.5rem 0 0.5rem;
+  margin: var(--space-5) 0 var(--space-2);
 }
 
 p + p {
-  margin-top: 0.75rem;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
+  margin-top: var(--space-3);
 }
 
 .site-header {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
 }
 
 .site-name {
   color: inherit;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-decoration: none;
 }
 
 .site-main {
   max-width: 48rem;
   margin: 0 auto;
-  padding: 2rem 1rem 4rem;
+  padding: var(--space-6) var(--space-4) 4rem;
 }

@@ -2,6 +2,7 @@ packages:
   - back
   - front
   - shared
+  - design-system
   - e2e
 
 onlyBuiltDependencies:

@@ -2,6 +2,7 @@
 **/dist
 **/.next
 **/coverage
+design-system/storybook-static
 **/*.tsbuildinfo
 **/.env
 **/.env.*

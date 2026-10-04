@@ -1,18 +1,18 @@
+import { Alert, Button, buttonClassName } from '@emploi/design-system';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import type { FormState } from '@/lib/forms';
 import styles from './offers.module.css';
 
-// Pieces shared by the offer and interview step forms.
+// Pieces shared by the offer and interview step forms, built on the design
+// system (adrs/0017-design-system-package-with-storybook.md).
 
-/** `aria-*` attributes linking an invalid input to its error message. */
-export function errorProps<Field extends string>(
+/** The error of a field, joined for the field's `error` prop. */
+export function fieldError<Field extends string>(
   state: FormState<Field>,
   field: Field,
-) {
-  return state.fieldErrors[field]
-    ? { 'aria-invalid': true, 'aria-describedby': `${field}-error` }
-    : {};
+): string | undefined {
+  return state.fieldErrors[field]?.join(' ');
 }
 
 /** Errors not tied to a field, announced to screen readers. */
@@ -21,30 +21,13 @@ export function FormErrors({ messages }: { messages: string[] }) {
     return null;
   }
   return (
-    <div role="alert" className={styles.formErrors}>
+    <Alert tone="danger">
       <ul>
         {messages.map((message) => (
           <li key={message}>{message}</li>
         ))}
       </ul>
-    </div>
-  );
-}
-
-export function FieldError({
-  field,
-  messages,
-}: {
-  field: string;
-  messages: string[] | undefined;
-}) {
-  if (!messages || messages.length === 0) {
-    return null;
-  }
-  return (
-    <p id={`${field}-error`} className={styles.fieldError}>
-      {messages.join(' ')}
-    </p>
+    </Alert>
   );
 }
 
@@ -60,10 +43,10 @@ export function FormActions({
   const t = useTranslations('form');
   return (
     <div className={styles.actions}>
-      <button type="submit" className={styles.primary} disabled={pending}>
+      <Button type="submit" variant="primary" disabled={pending}>
         {pending ? t('saving') : submitLabel}
-      </button>
-      <Link href={cancelHref} className={styles.secondary}>
+      </Button>
+      <Link href={cancelHref} className={buttonClassName()}>
         {t('cancel')}
       </Link>
     </div>

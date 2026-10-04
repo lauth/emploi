@@ -1,0 +1,3 @@
+/* Global styles of the design system: import once, at the root of the app. */
+@import './tokens.css';
+@import './base.css';

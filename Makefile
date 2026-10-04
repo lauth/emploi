@@ -63,6 +63,16 @@ test-front: ## Run front tests, filtered with T=<path or name>, e.g. make test-f
 .PHONY: check
 check: format-check lint typecheck test test-e2e ## Run every check; must pass before a change is done
 
+##@ Design system
+
+.PHONY: storybook
+storybook: ## Present the design system components with Storybook on http://localhost:6006
+	pnpm --filter @emploi/design-system storybook
+
+.PHONY: storybook-build
+storybook-build: ## Build the static Storybook into design-system/storybook-static
+	pnpm --filter @emploi/design-system storybook:build
+
 ##@ Browser tests (Playwright, against the running cluster)
 
 .PHONY: browser-install

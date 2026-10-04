@@ -9,6 +9,7 @@ FROM base AS build
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .pnpmfile.cjs ./
 RUN pnpm fetch
 COPY shared shared
+COPY design-system design-system
 COPY front front
 RUN pnpm install --offline --frozen-lockfile --filter front...
 # No build-time configuration: API_URL is read at runtime (adrs/0012-front-calls-api-from-server.md).

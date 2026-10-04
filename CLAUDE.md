@@ -31,6 +31,7 @@ Repository `emploi` is a pnpm workspace (`pnpm-workspace.yaml`):
 - `back/`: NestJS 12 API, ES modules (relative imports end in `.js`), PostgreSQL through Prisma 7.
 - `front/`: Next.js 16 app router, `src/` directory, React Compiler, `output: 'standalone'` for Docker. Next 16 differs from older versions: read `front/AGENTS.md` and the docs in `front/node_modules/next/dist/docs/` before writing front code.
 - `shared/` (`@emploi/shared`): API request/response **types only**, no runtime code, no build step; always `import type` from it (ADR-0009).
+- `design-system/` (`@emploi/design-system`): design tokens, base styles and the basic React components, presented in Storybook (ADR-0017). No build step: Next compiles it (`transpilePackages`).
 - `e2e/`: Playwright browser tests against the deployed stack (ADR-0013).
 - `k8s/`: k3d cluster config and the Kubernetes manifests (kustomize).
 - `adrs/`: architecture decision records.
@@ -48,6 +49,8 @@ make check                 # format-check + lint + typecheck + unit tests + e2e:
 make lint | lint-fix | format | typecheck | test | test-e2e | build
 make test-back T=health    # back unit tests filtered by path/name (vitest run <filter>)
 make test-front T=page     # front tests filtered by path/name
+make storybook             # design system components on http://localhost:6006
+make storybook-build       # static Storybook in design-system/storybook-static
 make browser-install       # once per machine: Playwright's Chromium
 make test-browser          # Playwright tests against https://emploi.localhost (cluster must be up)
 make test-browser T=offers # filtered by file name; `make browser-report` opens the last report
@@ -104,10 +107,18 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 - The browser never calls the API (ADR-0012). Pages are server components that read through `src/lib/api.ts`; mutations are server actions (`src/app/<feature>/actions.ts`) that validate input with Zod, call the API, then `revalidatePath` + `redirect`. Forms are client components using `useActionState` and get back the submitted values plus field/form errors.
 - `src/lib/api.ts` is the only API client: server-only, no caching, and its read functions call `connection()` so pages render per request (otherwise `next build` would try to prerender them without an API). It throws `ApiError` (status + NestJS validation messages).
 - Server env is validated with Zod in `src/lib/env.ts` (`serverEnv()`); add new variables there, to `front/.env.example` and to `k8s/front.yaml`. Running the front on the host against the cluster API needs `API_URL=https://api.emploi.localhost` and `NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"`.
-- Field length limits are typed in `@emploi/shared` (`OfferFieldLimits`, `InterviewStepFieldLimits`) and declared on each side with `satisfies`; keep the Zod schemas (`src/lib/offer-form.ts`, `src/lib/interview-step-form.ts`) in line with the back DTOs. Build new forms from `src/lib/forms.ts` (form state, `readForm`, `parseForm`, schema helpers) and `src/app/offers/form-parts.tsx` (errors, actions); use `ConfirmButton` for destructive actions.
+- Field length limits are typed in `@emploi/shared` (`OfferFieldLimits`, `InterviewStepFieldLimits`) and declared on each side with `satisfies`; keep the Zod schemas (`src/lib/offer-form.ts`, `src/lib/interview-step-form.ts`) in line with the back DTOs. Build new forms from `src/lib/forms.ts` (form state, `readForm`, `parseForm`, schema helpers) , design system fields with `error={fieldError(state, field)}`, and `src/app/offers/form-parts.tsx` (`FormErrors`, `FormActions`); use `ConfirmButton` for destructive actions.
 - Validate external input (forms, query params such as `?page=`) on the front too. Server actions are reachable by direct POST: never trust their arguments.
 - Tests: Vitest + Testing Library + jsdom, `src/**/*.test.{ts,tsx}` next to the code (`vitest.setup.ts` loads jest-dom matchers). `server-only` is aliased to a stub in `vitest.config.mts`; mock `next/navigation`, `next/cache` and `next/server` where needed. Async server component pages aren't unit-tested. Tests use the real French catalogue: render components with `renderWithIntl` (`src/test/intl.tsx`); `next-intl/server` is mocked globally in `vitest.setup.ts` with the same catalogue, so assertions are on French text.
 - `make typecheck` runs `next typegen` first so route types like `PageProps<'/offers/[id]'>` exist.
+
+## Design system (`design-system/`)
+
+- The front builds its UI from `@emploi/design-system`: `Button` (and `buttonClassName()` to style a Next `Link` as a button), `TextField`, `TextAreaField`, `SelectField`, `Badge`, `Card`, `Alert`, `DescriptionList`. Front CSS modules only lay out pages (grids, spacing); don't restyle components there. A missing basic element becomes a design system component first.
+- Styles use the tokens of `src/styles/tokens.css` (`--color-*`, `--space-*`, `--font-*`, `--radius-*`), never raw values; light and dark themes follow `prefers-color-scheme`. The app imports `@emploi/design-system/styles.css` once, in the root layout.
+- Components are presentational: React and CSS Modules only, no Next.js, no data, **no text** (everything through props, so the front translates it; `react/jsx-no-literals` enforces it). Fields always have a visible label and wire `aria-invalid` / `aria-describedby` to their hint and error.
+- Each component has stories (`*.stories.tsx`: every variant and state, `play` functions for behaviour) and, for logic, unit tests (`*.test.tsx`). `src/stories.test.tsx` runs every story as a Vitest test, with axe accessibility checks that fail on violations, so `make check` covers Storybook too.
+- Linted with `eslint-plugin-jsx-a11y` (strict), React, hooks and Storybook rules.
 
 ## Browser tests (Playwright)
 

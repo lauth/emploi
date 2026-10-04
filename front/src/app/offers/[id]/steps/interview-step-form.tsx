@@ -1,5 +1,6 @@
 'use client';
 
+import { SelectField, TextAreaField, TextField } from '@emploi/design-system';
 import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 import {
@@ -9,12 +10,7 @@ import {
   type InterviewStepFormState,
   type InterviewStepFormValues,
 } from '@/lib/interview-step-form';
-import {
-  errorProps,
-  FieldError,
-  FormActions,
-  FormErrors,
-} from '../../form-parts';
+import { fieldError, FormActions, FormErrors } from '../../form-parts';
 import styles from '../../offers.module.css';
 
 interface InterviewStepFormProps {
@@ -38,71 +34,56 @@ export function InterviewStepForm({
     action,
     initialInterviewStepFormState(initialValues),
   );
-  const { values, fieldErrors } = state;
+  const { values } = state;
   const t = useTranslations('steps');
 
   return (
     <form action={formAction} className={styles.form}>
       <FormErrors messages={state.formErrors} />
 
-      <div className={styles.field}>
-        <label htmlFor="title">{t('fields.title')}</label>
-        <input
-          id="title"
-          name="title"
-          required
-          placeholder={t('fields.titlePlaceholder')}
-          maxLength={INTERVIEW_STEP_LIMITS.title}
-          defaultValue={values.title}
-          {...errorProps(state, 'title')}
-        />
-        <FieldError field="title" messages={fieldErrors.title} />
-      </div>
+      <TextField
+        id="title"
+        name="title"
+        label={t('fields.title')}
+        required
+        placeholder={t('fields.titlePlaceholder')}
+        maxLength={INTERVIEW_STEP_LIMITS.title}
+        defaultValue={values.title}
+        error={fieldError(state, 'title')}
+      />
 
       <div className={styles.row}>
-        <div className={styles.field}>
-          <label htmlFor="date">{t('fields.date')}</label>
-          <input
-            id="date"
-            name="date"
-            type="date"
-            defaultValue={values.date}
-            {...errorProps(state, 'date')}
-          />
-          <FieldError field="date" messages={fieldErrors.date} />
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="status">{t('fields.status')}</label>
-          <select
-            id="status"
-            name="status"
-            defaultValue={values.status}
-            {...errorProps(state, 'status')}
-          >
-            {INTERVIEW_STEP_STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {t(`status.${status}`)}
-              </option>
-            ))}
-          </select>
-          <FieldError field="status" messages={fieldErrors.status} />
-        </div>
-      </div>
-
-      <div className={styles.field}>
-        <label htmlFor="description">{t('fields.description')}</label>
-        <textarea
-          id="description"
-          name="description"
-          rows={8}
-          placeholder={t('fields.descriptionPlaceholder')}
-          maxLength={INTERVIEW_STEP_LIMITS.description}
-          defaultValue={values.description}
-          {...errorProps(state, 'description')}
+        <TextField
+          id="date"
+          name="date"
+          type="date"
+          label={t('fields.date')}
+          defaultValue={values.date}
+          error={fieldError(state, 'date')}
         />
-        <FieldError field="description" messages={fieldErrors.description} />
+        <SelectField
+          id="status"
+          name="status"
+          label={t('fields.status')}
+          defaultValue={values.status}
+          options={INTERVIEW_STEP_STATUSES.map((status) => ({
+            value: status,
+            label: t(`status.${status}`),
+          }))}
+          error={fieldError(state, 'status')}
+        />
       </div>
+
+      <TextAreaField
+        id="description"
+        name="description"
+        label={t('fields.description')}
+        rows={8}
+        placeholder={t('fields.descriptionPlaceholder')}
+        maxLength={INTERVIEW_STEP_LIMITS.description}
+        defaultValue={values.description}
+        error={fieldError(state, 'description')}
+      />
 
       <FormActions
         pending={pending}

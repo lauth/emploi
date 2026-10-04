@@ -1,0 +1,18 @@
+.list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-4);
+}
+
+/* Each term and its value form one row of the grid. */
+.item {
+  display: contents;
+}
+
+.term {
+  color: var(--color-text-muted);
+}
+
+.description {
+  overflow-wrap: anywhere;
+}

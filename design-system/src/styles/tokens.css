@@ -1,0 +1,66 @@
+/*
+ * Design tokens of emploi (adrs/0017-design-system-package-with-storybook.md).
+ * Components and app styles use these variables, never raw values.
+ */
+
+:root {
+  /* Colours, light theme */
+  --color-background: #ffffff;
+  --color-surface: #f6f7f9;
+  --color-text: #171717;
+  --color-text-muted: #5f6368;
+  --color-border: #dadce0;
+  --color-accent: #1a56db;
+  --color-on-accent: #ffffff;
+  --color-info: #1a56db;
+  --color-success: #137333;
+  --color-warning: #b06000;
+  --color-danger: #c5221f;
+  --color-neutral: #5f6368;
+  --color-focus: #1a56db;
+
+  /* Typography */
+  --font-family:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.75rem;
+  --font-weight-normal: 400;
+  --font-weight-bold: 600;
+  --line-height: 1.5;
+  --line-height-tight: 1.25;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  /* Shapes */
+  --radius-md: 6px;
+  --radius-full: 999px;
+  --border-width: 1px;
+  --focus-ring: 2px solid var(--color-focus);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #0a0a0a;
+    --color-surface: #17191c;
+    --color-text: #ededed;
+    --color-text-muted: #a0a4a8;
+    --color-border: #3c4043;
+    --color-accent: #5b8def;
+    --color-on-accent: #0a0a0a;
+    --color-info: #8ab4f8;
+    --color-success: #81c995;
+    --color-warning: #fdd663;
+    --color-danger: #f28b82;
+    --color-neutral: #a0a4a8;
+    --color-focus: #8ab4f8;
+  }
+}

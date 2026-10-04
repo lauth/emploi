@@ -1,3 +1,4 @@
+import { buttonClassName, Card } from '@emploi/design-system';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getFormatter, getTranslations } from 'next-intl/server';
@@ -30,7 +31,10 @@ export default async function OffersPage({
     <>
       <div className={styles.heading}>
         <h1>{t('title')}</h1>
-        <Link href="/offers/new" className={styles.primary}>
+        <Link
+          href="/offers/new"
+          className={buttonClassName({ variant: 'primary' })}
+        >
           {t('add')}
         </Link>
       </div>
@@ -44,7 +48,7 @@ export default async function OffersPage({
       ) : (
         <ul className={styles.list}>
           {items.map((offer) => (
-            <li key={offer.id} className={styles.card}>
+            <Card as="li" key={offer.id}>
               <Link href={`/offers/${offer.id}`} className={styles.cardTitle}>
                 {offer.title}
               </Link>
@@ -58,7 +62,7 @@ export default async function OffersPage({
                       date: formatDateTime(format, offer.createdAt),
                     })}
               </p>
-            </li>
+            </Card>
           ))}
         </ul>
       )}

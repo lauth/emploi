@@ -5,6 +5,7 @@ pnpm-lock.yaml
 **/generated
 front/next-env.d.ts
 front/AGENTS.md
+design-system/storybook-static
 e2e/test-results
 e2e/playwright-report
 e2e/blob-report

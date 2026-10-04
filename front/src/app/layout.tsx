@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
+import '@emploi/design-system/styles.css';
 import './globals.css';
 
 export async function generateMetadata(): Promise<Metadata> {

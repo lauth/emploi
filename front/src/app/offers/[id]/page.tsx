@@ -1,3 +1,4 @@
+import { buttonClassName, DescriptionList } from '@emploi/design-system';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -28,6 +29,39 @@ export default async function OfferPage({ params }: PageProps<'/offers/[id]'>) {
   const t = await getTranslations();
   const format = await getFormatter();
 
+  const details = [
+    {
+      key: 'link',
+      term: t('offers.detail.link'),
+      description: offer.url ? (
+        <a href={offer.url} target="_blank" rel="noopener noreferrer">
+          {offer.url}
+        </a>
+      ) : (
+        '—'
+      ),
+    },
+    {
+      key: 'appliedOn',
+      term: t('offers.detail.appliedOn'),
+      description: offer.appliedAt ? formatDate(format, offer.appliedAt) : '—',
+    },
+    {
+      key: 'addedOn',
+      term: t('offers.detail.addedOn'),
+      description: formatDateTime(format, offer.createdAt),
+    },
+    ...(offer.updatedAt === offer.createdAt
+      ? []
+      : [
+          {
+            key: 'updatedOn',
+            term: t('offers.detail.updatedOn'),
+            description: formatDateTime(format, offer.updatedAt),
+          },
+        ]),
+  ];
+
   return (
     <article>
       <p>
@@ -40,7 +74,7 @@ export default async function OfferPage({ params }: PageProps<'/offers/[id]'>) {
           <CompanyAndLocation offer={offer} />
         </div>
         <div className={styles.actions}>
-          <Link href={`/offers/${offer.id}/edit`} className={styles.secondary}>
+          <Link href={`/offers/${offer.id}/edit`} className={buttonClassName()}>
             {t('form.edit')}
           </Link>
           <ConfirmButton
@@ -48,33 +82,12 @@ export default async function OfferPage({ params }: PageProps<'/offers/[id]'>) {
             confirmMessage={t('offers.detail.deleteConfirm')}
             label={t('form.delete')}
             pendingLabel={t('form.deleting')}
-            className={styles.danger}
+            variant="danger"
           />
         </div>
       </div>
 
-      <dl className={styles.details}>
-        <dt>{t('offers.detail.link')}</dt>
-        <dd>
-          {offer.url ? (
-            <a href={offer.url} target="_blank" rel="noopener noreferrer">
-              {offer.url}
-            </a>
-          ) : (
-            '—'
-          )}
-        </dd>
-        <dt>{t('offers.detail.appliedOn')}</dt>
-        <dd>{offer.appliedAt ? formatDate(format, offer.appliedAt) : '—'}</dd>
-        <dt>{t('offers.detail.addedOn')}</dt>
-        <dd>{formatDateTime(format, offer.createdAt)}</dd>
-        {offer.updatedAt !== offer.createdAt && (
-          <>
-            <dt>{t('offers.detail.updatedOn')}</dt>
-            <dd>{formatDateTime(format, offer.updatedAt)}</dd>
-          </>
-        )}
-      </dl>
+      <DescriptionList items={details} />
 
       <InterviewSteps offerId={offer.id} steps={steps} />
 

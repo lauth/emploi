@@ -1,4 +1,11 @@
-import type { InterviewStep } from '@emploi/shared';
+import {
+  Badge,
+  Button,
+  buttonClassName,
+  Card,
+  type BadgeTone,
+} from '@emploi/design-system';
+import type { InterviewStep, InterviewStepStatus } from '@emploi/shared';
 import Link from 'next/link';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { formatDate } from '@/lib/format';
@@ -8,6 +15,15 @@ import {
   deleteInterviewStepAction,
   moveInterviewStepAction,
 } from './steps/actions';
+
+/** Colour of each status; the label carries the meaning too. */
+const STATUS_TONES: Record<InterviewStepStatus, BadgeTone> = {
+  planned: 'info',
+  pending: 'warning',
+  passed: 'success',
+  failed: 'danger',
+  cancelled: 'neutral',
+};
 
 /** The interview process of an offer: its steps, in order (adrs/0004). */
 export async function InterviewSteps({
@@ -26,7 +42,7 @@ export async function InterviewSteps({
         <h2 id="interview-process">{t('steps.title')}</h2>
         <Link
           href={`/offers/${offerId}/steps/new`}
-          className={styles.secondary}
+          className={buttonClassName()}
         >
           {t('steps.add')}
         </Link>
@@ -37,16 +53,12 @@ export async function InterviewSteps({
       ) : (
         <ol className={styles.steps}>
           {steps.map((step, index) => (
-            <li key={step.id} className={styles.step}>
+            <Card as="li" key={step.id}>
               <div className={styles.stepHeading}>
-                <h3 className={styles.stepTitle}>{step.title}</h3>
-                <span
-                  className={[styles.status, styles[step.status]]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
+                <h3>{step.title}</h3>
+                <Badge tone={STATUS_TONES[step.status]}>
                   {t(`steps.status.${step.status}`)}
-                </span>
+                </Badge>
               </div>
               <p className={styles.meta}>
                 {step.date ? formatDate(format, step.date) : t('steps.noDate')}
@@ -58,7 +70,7 @@ export async function InterviewSteps({
               <div className={styles.stepActions}>
                 <Link
                   href={`/offers/${offerId}/steps/${step.id}/edit`}
-                  className={styles.secondary}
+                  className={buttonClassName({ size: 'sm' })}
                 >
                   {t('form.edit')}
                 </Link>
@@ -71,9 +83,9 @@ export async function InterviewSteps({
                       'up',
                     )}
                   >
-                    <button type="submit" className={styles.secondary}>
+                    <Button type="submit" size="sm">
                       {t('steps.moveUp')}
-                    </button>
+                    </Button>
                   </form>
                 )}
                 {index < steps.length - 1 && (
@@ -85,9 +97,9 @@ export async function InterviewSteps({
                       'down',
                     )}
                   >
-                    <button type="submit" className={styles.secondary}>
+                    <Button type="submit" size="sm">
                       {t('steps.moveDown')}
-                    </button>
+                    </Button>
                   </form>
                 )}
                 <ConfirmButton
@@ -101,10 +113,11 @@ export async function InterviewSteps({
                   })}
                   label={t('form.delete')}
                   pendingLabel={t('form.deleting')}
-                  className={styles.danger}
+                  variant="danger"
+                  size="sm"
                 />
               </div>
-            </li>
+            </Card>
           ))}
         </ol>
       )}

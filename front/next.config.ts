@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   // Trace from the workspace root so workspace dependencies end up in the standalone output.
   outputFileTracingRoot: path.join(import.meta.dirname, '..'),
+  // The design system ships TypeScript and CSS modules, compiled by Next
+  // (adrs/0017-design-system-package-with-storybook.md).
+  transpilePackages: ['@emploi/design-system'],
 };
 
 export default withNextIntl(nextConfig);

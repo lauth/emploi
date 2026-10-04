@@ -1,5 +1,6 @@
 'use client';
 
+import { TextAreaField, TextField } from '@emploi/design-system';
 import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 import {
@@ -8,7 +9,7 @@ import {
   type OfferFormState,
   type OfferFormValues,
 } from '@/lib/offer-form';
-import { errorProps, FieldError, FormActions, FormErrors } from './form-parts';
+import { fieldError, FormActions, FormErrors } from './form-parts';
 import styles from './offers.module.css';
 
 interface OfferFormProps {
@@ -35,90 +36,71 @@ export function OfferForm({
     action,
     initialOfferFormState(initialValues),
   );
-  const { values, fieldErrors } = state;
+  const { values } = state;
   const t = useTranslations('offers.fields');
 
   return (
     <form action={formAction} className={styles.form}>
       <FormErrors messages={state.formErrors} />
 
-      <div className={styles.field}>
-        <label htmlFor="title">{t('title')}</label>
-        <input
-          id="title"
-          name="title"
-          required
-          maxLength={OFFER_LIMITS.title}
-          defaultValue={values.title}
-          {...errorProps(state, 'title')}
-        />
-        <FieldError field="title" messages={fieldErrors.title} />
-      </div>
+      <TextField
+        id="title"
+        name="title"
+        label={t('title')}
+        required
+        maxLength={OFFER_LIMITS.title}
+        defaultValue={values.title}
+        error={fieldError(state, 'title')}
+      />
 
-      <div className={styles.field}>
-        <label htmlFor="company">{t('company')}</label>
-        <input
-          id="company"
-          name="company"
-          maxLength={OFFER_LIMITS.company}
-          defaultValue={values.company}
-          {...errorProps(state, 'company')}
-        />
-        <FieldError field="company" messages={fieldErrors.company} />
-      </div>
+      <TextField
+        id="company"
+        name="company"
+        label={t('company')}
+        maxLength={OFFER_LIMITS.company}
+        defaultValue={values.company}
+        error={fieldError(state, 'company')}
+      />
 
-      <div className={styles.field}>
-        <label htmlFor="url">{t('url')}</label>
-        <input
-          id="url"
-          name="url"
-          type="url"
-          placeholder="https://"
-          maxLength={OFFER_LIMITS.url}
-          defaultValue={values.url}
-          {...errorProps(state, 'url')}
-        />
-        <FieldError field="url" messages={fieldErrors.url} />
-      </div>
+      <TextField
+        id="url"
+        name="url"
+        type="url"
+        label={t('url')}
+        placeholder="https://"
+        maxLength={OFFER_LIMITS.url}
+        defaultValue={values.url}
+        error={fieldError(state, 'url')}
+      />
 
       <div className={styles.row}>
-        <div className={styles.field}>
-          <label htmlFor="location">{t('location')}</label>
-          <input
-            id="location"
-            name="location"
-            maxLength={OFFER_LIMITS.location}
-            defaultValue={values.location}
-            {...errorProps(state, 'location')}
-          />
-          <FieldError field="location" messages={fieldErrors.location} />
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="appliedAt">{t('appliedAt')}</label>
-          <input
-            id="appliedAt"
-            name="appliedAt"
-            type="date"
-            defaultValue={values.appliedAt}
-            {...errorProps(state, 'appliedAt')}
-          />
-          <FieldError field="appliedAt" messages={fieldErrors.appliedAt} />
-        </div>
-      </div>
-
-      <div className={styles.field}>
-        <label htmlFor="description">{t('description')}</label>
-        <textarea
-          id="description"
-          name="description"
-          rows={12}
-          maxLength={OFFER_LIMITS.description}
-          defaultValue={values.description}
-          {...errorProps(state, 'description')}
+        <TextField
+          id="location"
+          name="location"
+          label={t('location')}
+          maxLength={OFFER_LIMITS.location}
+          defaultValue={values.location}
+          error={fieldError(state, 'location')}
         />
-        <FieldError field="description" messages={fieldErrors.description} />
+        <TextField
+          id="appliedAt"
+          name="appliedAt"
+          type="date"
+          label={t('appliedAt')}
+          defaultValue={values.appliedAt}
+          error={fieldError(state, 'appliedAt')}
+        />
       </div>
+
+      <TextAreaField
+        id="description"
+        name="description"
+        label={t('description')}
+        rows={12}
+        maxLength={OFFER_LIMITS.description}
+        defaultValue={values.description}
+        error={fieldError(state, 'description')}
+      />
 
       <FormActions
         pending={pending}
