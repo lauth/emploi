@@ -4,9 +4,12 @@ import type {
   InterviewStep,
   InterviewStepFieldLimits,
   InterviewStepStatus,
+  ListOffersQuery,
   Offer,
   OfferFieldLimits,
+  OfferSortField,
   ReorderInterviewStepsRequest,
+  SortOrder,
   UpdateInterviewStepRequest,
   UpdateOfferRequest,
 } from '@emploi/shared';
@@ -41,6 +44,24 @@ export const STATUS_DESCRIPTIONS: Record<InterviewStepStatus, string> = {
 const STATUSES = Object.keys(STATUS_DESCRIPTIONS) as [
   InterviewStepStatus,
   ...InterviewStepStatus[],
+];
+
+// Records list every sort field and order: a new one in the shared types
+// breaks the build until it is handled here.
+const SORT_FIELD_RECORD: Record<OfferSortField, true> = {
+  appliedAt: true,
+  createdAt: true,
+  title: true,
+  company: true,
+};
+const SORT_FIELDS = Object.keys(SORT_FIELD_RECORD) as [
+  OfferSortField,
+  ...OfferSortField[],
+];
+const SORT_ORDER_RECORD: Record<SortOrder, true> = { asc: true, desc: true };
+const SORT_ORDERS = Object.keys(SORT_ORDER_RECORD) as [
+  SortOrder,
+  ...SortOrder[],
 ];
 
 const statusHelp = Object.entries(STATUS_DESCRIPTIONS)
@@ -115,6 +136,30 @@ export const listOffersInput = z.object({
     .min(0)
     .default(0)
     .describe('Offers to skip, for the next pages.'),
+  q: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .describe(
+      'Text contained in the title, company or location, ignoring case (not accents).',
+    ),
+  appliedFrom: dateOnly('Only offers applied on or after this day.').optional(),
+  appliedTo: dateOnly(
+    'Only offers applied on or before this day (not before appliedFrom).',
+  ).optional(),
+  sort: z
+    .enum(SORT_FIELDS)
+    .optional()
+    .describe(
+      'Sort field, default appliedAt (application date). Offers with no value for it come last.',
+    ),
+  order: z
+    .enum(SORT_ORDERS)
+    .optional()
+    .describe(
+      'Sort direction. Default: desc for dates (most recent first), asc for title and company.',
+    ),
 });
 
 export const offerIdInput = z.object({ offerId: id('offer') });
@@ -242,6 +287,9 @@ type ToolFields<
   Schema extends z.ZodObject,
   Ids extends string = never,
 > = Exclude<keyof z.infer<Schema>, Ids>;
+export type ListOffersInputMatchesApi = Assert<
+  Equals<ToolFields<typeof listOffersInput>, keyof ListOffersQuery>
+>;
 export type CreateOfferInputMatchesApi = Assert<
   Equals<ToolFields<typeof createOfferInput>, keyof CreateOfferRequest>
 >;

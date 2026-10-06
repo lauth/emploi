@@ -1,17 +1,68 @@
 import type {
   CreateOfferRequest,
+  ListOffersQuery,
   Offer,
+  OfferSortField,
   Page,
+  SortOrder,
   UpdateOfferRequest,
 } from '@emploi/shared';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { fromDateOnly } from '../common/date-only.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { DEFAULT_ORDERS } from './offer-list-options.js';
 import { toOffer } from './offer.mapper.js';
 
 /** Prisma error code: the record to update or delete does not exist. */
 const RECORD_NOT_FOUND = 'P2025';
+
+/** A list query with its defaults applied (sort, limit and offset are always set). */
+export type OfferListQuery = ListOffersQuery &
+  Required<Pick<ListOffersQuery, 'sort' | 'limit' | 'offset'>>;
+
+/** Text fields searched by `q`. */
+const SEARCHED_FIELDS = ['title', 'company', 'location'] as const;
+
+function offerFilter(query: OfferListQuery): Prisma.OfferWhereInput {
+  const { q, appliedFrom, appliedTo } = query;
+  return {
+    ...(q
+      ? {
+          OR: SEARCHED_FIELDS.map((field) => ({
+            [field]: { contains: q, mode: 'insensitive' },
+          })),
+        }
+      : {}),
+    // Blank query values arrive as null (TrimToNull): test truthiness.
+    ...(appliedFrom || appliedTo
+      ? {
+          appliedAt: {
+            ...(appliedFrom ? { gte: fromDateOnly(appliedFrom) } : {}),
+            ...(appliedTo ? { lte: fromDateOnly(appliedTo) } : {}),
+          },
+        }
+      : {}),
+  };
+}
+
+/** Sort field first (missing values last), then newest records, so pages are stable. */
+function offerOrder(
+  sort: OfferSortField,
+  order: SortOrder,
+): Prisma.OfferOrderByWithRelationInput[] {
+  const nullable: Record<OfferSortField, boolean> = {
+    appliedAt: true,
+    company: true,
+    createdAt: false,
+    title: false,
+  };
+  return [
+    { [sort]: nullable[sort] ? { sort: order, nulls: 'last' } : order },
+    { createdAt: 'desc' },
+    { id: 'desc' },
+  ];
+}
 
 @Injectable()
 export class OffersService {
@@ -31,17 +82,27 @@ export class OffersService {
     return toOffer(created);
   }
 
-  /** Newest first. */
-  async list(limit: number, offset: number): Promise<Page<Offer>> {
+  /** Filtered, sorted and paginated (adrs/0020-offer-list-filters-sorting-and-pagination.md). */
+  async list(query: OfferListQuery): Promise<Page<Offer>> {
+    const where = offerFilter(query);
     const [models, total] = await this.prisma.$transaction([
       this.prisma.offer.findMany({
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        take: limit,
-        skip: offset,
+        where,
+        orderBy: offerOrder(
+          query.sort,
+          query.order ?? DEFAULT_ORDERS[query.sort],
+        ),
+        take: query.limit,
+        skip: query.offset,
       }),
-      this.prisma.offer.count(),
+      this.prisma.offer.count({ where }),
     ]);
-    return { items: models.map(toOffer), total, limit, offset };
+    return {
+      items: models.map(toOffer),
+      total,
+      limit: query.limit,
+      offset: query.offset,
+    };
   }
 
   async get(id: string): Promise<Offer> {

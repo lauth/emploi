@@ -26,6 +26,12 @@ model Offer {
 
   interviewSteps InterviewStep[]
 
+  // `title` and `company` use the ICU collation "und-x-icu" so text sorts
+  // properly (accents, case). Prisma can't express collations: it is set in the
+  // migration 20261006180726_offer_list_sorting (adrs/0020-offer-list-filters-sorting-and-pagination.md).
+
+  /// Default order of the list: most recent application first.
+  @@index([appliedAt(sort: Desc), createdAt(sort: Desc), id(sort: Desc)])
   @@index([createdAt(sort: Desc), id(sort: Desc)])
   @@map("offers")
 }

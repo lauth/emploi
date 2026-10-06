@@ -2,6 +2,7 @@ import type {
   CreateInterviewStepRequest,
   CreateOfferRequest,
   InterviewStep,
+  ListOffersQuery,
   Offer,
   Page,
   UpdateInterviewStepRequest,
@@ -21,9 +22,20 @@ export class ApiError extends Error {
   }
 }
 
+/** Query string of the set values; the API applies its defaults to the others. */
+function searchParams(query: ListOffersQuery): string {
+  const params = new URLSearchParams();
+  for (const [name, value] of Object.entries(query)) {
+    if (value !== undefined && value !== '') {
+      params.set(name, String(value));
+    }
+  }
+  return params.toString();
+}
+
 /** The emploi REST API, as used by the MCP tools. */
 export interface EmploiApi {
-  listOffers(query: { limit: number; offset: number }): Promise<Page<Offer>>;
+  listOffers(query: ListOffersQuery): Promise<Page<Offer>>;
   getOffer(offerId: string): Promise<Offer>;
   createOffer(body: CreateOfferRequest): Promise<Offer>;
   updateOffer(offerId: string, body: UpdateOfferRequest): Promise<Offer>;
@@ -103,14 +115,7 @@ export function createHttpApi(
   }
 
   return {
-    listOffers: ({ limit, offset }) =>
-      json(
-        'GET',
-        `/offers?${new URLSearchParams({
-          limit: String(limit),
-          offset: String(offset),
-        }).toString()}`,
-      ),
+    listOffers: (query) => json('GET', `/offers?${searchParams(query)}`),
     getOffer: (offerId) => json('GET', offer(offerId)),
     createOffer: (body) => json('POST', '/offers', body),
     updateOffer: (offerId, body) => json('PATCH', offer(offerId), body),

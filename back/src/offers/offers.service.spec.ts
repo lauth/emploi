@@ -86,20 +86,97 @@ describe('OffersService', () => {
   });
 
   describe('list', () => {
-    it('returns a page, newest first', async () => {
+    const defaults = { sort: 'appliedAt', limit: 20, offset: 0 } as const;
+
+    beforeEach(() => {
       prisma.offer.findMany.mockResolvedValue([model]);
       prisma.offer.count.mockResolvedValue(21);
+    });
 
-      const page = await service.list(20, 0);
+    it('returns a page by most recent application, missing dates last', async () => {
+      const page = await service.list(defaults);
 
       expect(prisma.offer.findMany).toHaveBeenCalledWith({
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        where: {},
+        orderBy: [
+          { appliedAt: { sort: 'desc', nulls: 'last' } },
+          { createdAt: 'desc' },
+          { id: 'desc' },
+        ],
         take: 20,
         skip: 0,
       });
+      expect(prisma.offer.count).toHaveBeenCalledWith({ where: {} });
       expect(page).toMatchObject({ total: 21, limit: 20, offset: 0 });
       expect(page.items).toHaveLength(1);
     });
+
+    it('searches the title, company and location, ignoring case', async () => {
+      await service.list({ ...defaults, q: 'acme' });
+
+      const where = {
+        OR: [
+          { title: { contains: 'acme', mode: 'insensitive' } },
+          { company: { contains: 'acme', mode: 'insensitive' } },
+          { location: { contains: 'acme', mode: 'insensitive' } },
+        ],
+      };
+      expect(prisma.offer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where }),
+      );
+      // The total counts the filtered offers, not all of them.
+      expect(prisma.offer.count).toHaveBeenCalledWith({ where });
+    });
+
+    it('filters by application period, inclusive', async () => {
+      await service.list({
+        ...defaults,
+        appliedFrom: '2026-09-01',
+        appliedTo: '2026-09-30',
+      });
+
+      expect(prisma.offer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            appliedAt: {
+              gte: new Date('2026-09-01T00:00:00.000Z'),
+              lte: new Date('2026-09-30T00:00:00.000Z'),
+            },
+          },
+        }),
+      );
+    });
+
+    it('ignores blank filters', async () => {
+      await service.list({
+        ...defaults,
+        q: null,
+        appliedFrom: null,
+      } as unknown as typeof defaults);
+
+      expect(prisma.offer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} }),
+      );
+    });
+
+    it.each([
+      ['title', undefined, { title: 'asc' }],
+      ['title', 'desc', { title: 'desc' }],
+      ['company', undefined, { company: { sort: 'asc', nulls: 'last' } }],
+      ['createdAt', undefined, { createdAt: 'desc' }],
+      ['appliedAt', 'asc', { appliedAt: { sort: 'asc', nulls: 'last' } }],
+    ] as const)(
+      'sorts by %s %s (default order per field)',
+      async (sort, order, first) => {
+        await service.list({ ...defaults, sort, order });
+
+        expect(prisma.offer.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            orderBy: [first, { createdAt: 'desc' }, { id: 'desc' }],
+          }),
+        );
+      },
+    );
   });
 
   describe('get', () => {

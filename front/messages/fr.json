@@ -40,12 +40,36 @@
       "empty": "Aucune offre pour l’instant. Ajoutez la première offre à laquelle vous avez répondu.",
       "emptyPage": "Aucune offre sur cette page.",
       "firstPage": "Revenir à la première page",
+      "noMatch": "Aucune offre ne correspond à ces filtres.",
+      "count": "{total, plural, one {# offre} other {# offres}}",
+      "countFiltered": "{total, plural, one {# offre correspond} other {# offres correspondent}} aux filtres",
       "appliedOn": "Candidature le {date}",
       "addedOn": "Ajoutée le {date}",
       "pagination": "Pagination",
       "previous": "Page précédente",
       "next": "Page suivante",
-      "page": "Page {page, number} sur {pages, number}"
+      "page": "Page {page, number} sur {pages, number}",
+      "filters": {
+        "label": "Filtrer et trier les offres",
+        "q": "Rechercher",
+        "qHint": "Dans l’intitulé, l’entreprise ou le lieu",
+        "appliedFrom": "Candidature à partir du",
+        "appliedTo": "Candidature jusqu’au",
+        "sort": "Trier par",
+        "size": "Offres par page",
+        "apply": "Appliquer",
+        "reset": "Réinitialiser",
+        "sortOptions": {
+          "appliedAt-desc": "Candidature, plus récente d’abord",
+          "appliedAt-asc": "Candidature, plus ancienne d’abord",
+          "createdAt-desc": "Ajout, plus récent d’abord",
+          "createdAt-asc": "Ajout, plus ancien d’abord",
+          "title-desc": "Intitulé, de Z à A",
+          "title-asc": "Intitulé, de A à Z",
+          "company-desc": "Entreprise, de Z à A",
+          "company-asc": "Entreprise, de A à Z"
+        }
+      }
     },
     "new": {
       "title": "Ajouter une offre",

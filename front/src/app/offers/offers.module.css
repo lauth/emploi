@@ -29,6 +29,38 @@
   gap: var(--space-3);
 }
 
+/* Filters */
+
+/* One column on small screens; on wider ones, search and actions span both
+   columns, with the period and the sort/page size side by side. */
+.filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: end;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+@media (min-width: 40rem) {
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filterSearch,
+  .filterActions {
+    grid-column: 1 / -1;
+  }
+}
+
+.filterActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
 /* List */
 
 .list {

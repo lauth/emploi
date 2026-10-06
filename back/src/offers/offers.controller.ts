@@ -51,11 +51,15 @@ export class OffersController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List offers, newest first' })
+  @ApiOperation({
+    summary: 'List offers: filtered, sorted and paginated',
+    description:
+      'Most recent application first by default. Filters combine with AND; offers without a value for the sort field come last.',
+  })
   @ApiOkResponse({ type: OfferPageDto })
   @ApiInvalidRequest()
   list(@Query() query: ListOffersQueryDto): Promise<Page<Offer>> {
-    return this.offers.list(query.limit, query.offset);
+    return this.offers.list(query);
   }
 
   @Get(':id')

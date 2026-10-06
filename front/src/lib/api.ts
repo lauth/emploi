@@ -3,6 +3,7 @@ import type {
   CreateInterviewStepRequest,
   CreateOfferRequest,
   InterviewStep,
+  ListOffersQuery,
   Offer,
   Page,
   UpdateInterviewStepRequest,
@@ -69,15 +70,15 @@ async function readMessages(response: Response): Promise<string[]> {
 // Reads are used while rendering: `connection()` makes the page render at
 // request time instead of being prerendered at build time without an API.
 
-export async function listOffers(query: {
-  limit: number;
-  offset: number;
-}): Promise<Page<Offer>> {
+/** Filtered, sorted and paginated offers; unset parameters use the API defaults. */
+export async function listOffers(query: ListOffersQuery): Promise<Page<Offer>> {
   await connection();
-  const params = new URLSearchParams({
-    limit: String(query.limit),
-    offset: String(query.offset),
-  });
+  const params = new URLSearchParams();
+  for (const [name, value] of Object.entries(query)) {
+    if (value !== undefined && value !== '') {
+      params.set(name, String(value));
+    }
+  }
   return json(await send(`/offers?${params.toString()}`));
 }
 

@@ -7,6 +7,9 @@ export interface Page<T> {
   offset: number;
 }
 
+/** Direction of a sort. */
+export type SortOrder = 'asc' | 'desc';
+
 /** Query parameters of a list endpoint using offset pagination. */
 export interface PageQuery {
   /** 1 to 100, default 20. */

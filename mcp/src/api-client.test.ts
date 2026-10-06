@@ -31,6 +31,25 @@ describe('createHttpApi', () => {
     );
   });
 
+  it('sends only the set list parameters', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ items: [], total: 0, limit: 20, offset: 0 }),
+    );
+
+    await api.listOffers({
+      limit: 20,
+      offset: 0,
+      q: 'dév',
+      sort: 'title',
+      order: undefined,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${BASE}/offers?limit=20&offset=0&q=d%C3%A9v&sort=title`,
+      expect.objectContaining({ method: 'GET' }),
+    );
+  });
+
   it('sends JSON bodies', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}, 201));
 

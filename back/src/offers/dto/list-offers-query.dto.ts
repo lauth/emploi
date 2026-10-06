@@ -1,9 +1,32 @@
-import type { PageQuery } from '@emploi/shared';
+import type {
+  ListOffersQuery,
+  OfferSortField,
+  SortOrder,
+} from '@emploi/shared';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
+import { DATE_ONLY_PATTERN } from '../../common/date-only.js';
+import { TrimToNull } from '../../common/transforms.js';
+import { IsNotBefore } from '../../common/validators.js';
+import {
+  DEFAULT_SORT,
+  OFFER_SORT_FIELDS,
+  SORT_ORDERS,
+} from '../offer-list-options.js';
 
-export class ListOffersQueryDto implements PageQuery {
+/** Query of `GET /offers` (adrs/0020-offer-list-filters-sorting-and-pagination.md). */
+export class ListOffersQueryDto implements ListOffersQuery {
   @ApiPropertyOptional({
     // Explicit: properties without a type annotation carry no type metadata.
     type: 'integer',
@@ -30,4 +53,68 @@ export class ListOffersQueryDto implements PageQuery {
   @IsInt()
   @Min(0)
   offset = 0;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'Text contained in the title, company or location, ignoring case. Blank is ignored.',
+    maxLength: 200,
+    example: 'backend',
+  })
+  @TrimToNull()
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  q?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date',
+    description: 'Only offers applied on or after this day, `YYYY-MM-DD`.',
+    example: '2026-09-01',
+  })
+  @TrimToNull()
+  @IsOptional()
+  @Matches(DATE_ONLY_PATTERN, {
+    message: 'appliedFrom must be a YYYY-MM-DD date',
+  })
+  @IsDateString({ strict: true })
+  appliedFrom?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date',
+    description:
+      'Only offers applied on or before this day, `YYYY-MM-DD`. Not before `appliedFrom`.',
+    example: '2026-09-30',
+  })
+  @TrimToNull()
+  @IsOptional()
+  @Matches(DATE_ONLY_PATTERN, {
+    message: 'appliedTo must be a YYYY-MM-DD date',
+  })
+  @IsDateString({ strict: true })
+  @IsNotBefore('appliedFrom')
+  appliedTo?: string;
+
+  @ApiPropertyOptional({
+    enum: OFFER_SORT_FIELDS,
+    enumName: 'OfferSortField',
+    default: DEFAULT_SORT,
+    description:
+      'Sort field. Offers with no value for it (no application date, no company) come last.',
+  })
+  @IsOptional()
+  @IsIn(OFFER_SORT_FIELDS)
+  sort: OfferSortField = DEFAULT_SORT;
+
+  @ApiPropertyOptional({
+    enum: SORT_ORDERS,
+    enumName: 'SortOrder',
+    description:
+      'Sort direction. Default: `desc` for dates (most recent first), `asc` for text.',
+  })
+  @IsOptional()
+  @IsIn(SORT_ORDERS)
+  order?: SortOrder;
 }

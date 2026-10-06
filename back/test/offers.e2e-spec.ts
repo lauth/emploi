@@ -182,12 +182,74 @@ describe('Offers (e2e)', () => {
       );
     });
 
-    it.each(['limit=0', 'limit=101', 'offset=-1', 'limit=abc', 'sort=title'])(
-      'rejects %s',
-      async (query) => {
-        await request(app.getHttpServer()).get(`/offers?${query}`).expect(400);
-      },
-    );
+    it('filters and sorts from the query', async () => {
+      prisma.offer.findMany.mockResolvedValue([]);
+      prisma.offer.count.mockResolvedValue(0);
+
+      await request(app.getHttpServer())
+        .get(
+          '/offers?q=%20acme%20&appliedFrom=2026-09-01&appliedTo=2026-09-30&sort=title&order=desc',
+        )
+        .expect(200);
+
+      expect(prisma.offer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              { title: { contains: 'acme', mode: 'insensitive' } },
+              { company: { contains: 'acme', mode: 'insensitive' } },
+              { location: { contains: 'acme', mode: 'insensitive' } },
+            ],
+            appliedAt: {
+              gte: new Date('2026-09-01T00:00:00.000Z'),
+              lte: new Date('2026-09-30T00:00:00.000Z'),
+            },
+          },
+          orderBy: [{ title: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
+        }),
+      );
+    });
+
+    it('sorts by most recent application by default, missing dates last', async () => {
+      prisma.offer.findMany.mockResolvedValue([]);
+      prisma.offer.count.mockResolvedValue(0);
+
+      await request(app.getHttpServer()).get('/offers?q=').expect(200);
+
+      expect(prisma.offer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {},
+          orderBy: [
+            { appliedAt: { sort: 'desc', nulls: 'last' } },
+            { createdAt: 'desc' },
+            { id: 'desc' },
+          ],
+        }),
+      );
+    });
+
+    it.each([
+      ['limit=0', 'limit'],
+      ['limit=101', 'limit'],
+      ['offset=-1', 'offset'],
+      ['limit=abc', 'limit'],
+      ['sort=salary', 'sort'],
+      ['order=up', 'order'],
+      ['appliedFrom=2026-02-30', 'appliedFrom'],
+      ['appliedTo=28/09/2026', 'appliedTo'],
+      [
+        'appliedFrom=2026-09-30&appliedTo=2026-09-01',
+        'appliedTo must not be before appliedFrom',
+      ],
+      [`q=${'x'.repeat(201)}`, 'q'],
+      ['status=passed', 'status'],
+    ])('rejects %s', async (query, message) => {
+      const response = await request(app.getHttpServer())
+        .get(`/offers?${query}`)
+        .expect(400);
+
+      expect(JSON.stringify(response.body)).toContain(message);
+    });
   });
 
   describe('GET /offers/:id', () => {

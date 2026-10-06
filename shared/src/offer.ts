@@ -1,4 +1,28 @@
-// Offers API (adrs/0011-offer-data-model-and-api.md, adrs/0014-offer-company-optional.md).
+// Offers API (adrs/0011-offer-data-model-and-api.md, adrs/0014-offer-company-optional.md,
+// adrs/0020-offer-list-filters-sorting-and-pagination.md).
+
+import type { PageQuery, SortOrder } from './pagination.js';
+
+/**
+ * Fields the offer list can be sorted by. Each side derives its runtime list
+ * from a `Record<OfferSortField, …>`, so a new field breaks the build until
+ * both handle it.
+ */
+export type OfferSortField = 'appliedAt' | 'createdAt' | 'title' | 'company';
+
+/** Query of `GET /offers`: filters, sort and page. */
+export interface ListOffersQuery extends PageQuery {
+  /** Contained in the title, company or location, ignoring case. */
+  q?: string;
+  /** Applied on or after this day, `YYYY-MM-DD`. */
+  appliedFrom?: string;
+  /** Applied on or before this day, `YYYY-MM-DD`. */
+  appliedTo?: string;
+  /** Default `appliedAt`. */
+  sort?: OfferSortField;
+  /** Default: `desc` for dates, `asc` for text. Missing values always come last. */
+  order?: SortOrder;
+}
 
 /** A job offer the user responded to, as returned by the API. */
 export interface Offer {

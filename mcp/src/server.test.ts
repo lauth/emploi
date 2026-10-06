@@ -164,6 +164,34 @@ describe('emploi MCP server', () => {
     expect(text(result)).toContain('Développeur backend');
   });
 
+  it('passes search, period and sort to the API', async () => {
+    api.listOffers.mockResolvedValue({
+      items: [],
+      total: 0,
+      limit: 10,
+      offset: 0,
+    });
+
+    await call('list_offers', {
+      limit: 10,
+      q: ' backend ',
+      appliedFrom: '2026-09-01',
+      appliedTo: '2026-09-30',
+      sort: 'title',
+      order: 'desc',
+    });
+
+    expect(api.listOffers).toHaveBeenCalledWith({
+      limit: 10,
+      offset: 0,
+      q: 'backend',
+      appliedFrom: '2026-09-01',
+      appliedTo: '2026-09-30',
+      sort: 'title',
+      order: 'desc',
+    });
+  });
+
   it('gets an offer with its steps', async () => {
     api.getOffer.mockResolvedValue(offer);
     api.listInterviewSteps.mockResolvedValue([step]);
@@ -250,6 +278,8 @@ describe('emploi MCP server', () => {
     ['get_offer', { offerId: 'not-an-id' }],
     ['add_interview_step', { offerId: OFFER_ID, title: 'Call', status: 'won' }],
     ['list_offers', { limit: 500 }],
+    ['list_offers', { sort: 'salary' }],
+    ['list_offers', { appliedFrom: '01/09/2026' }],
   ])('rejects invalid input to %s: %j', async (name, args) => {
     const result = await call(name, args);
 

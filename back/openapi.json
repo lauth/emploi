@@ -109,6 +109,7 @@
         ]
       },
       "get": {
+        "description": "Most recent application first by default. Filters combine with AND; offers without a value for the sort field come last.",
         "operationId": "OffersController_list",
         "parameters": [
           {
@@ -132,6 +133,57 @@
               "minimum": 0,
               "default": 0,
               "type": "integer"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Text contained in the title, company or location, ignoring case. Blank is ignored.",
+            "schema": {
+              "maxLength": 200,
+              "example": "backend",
+              "type": "string"
+            }
+          },
+          {
+            "name": "appliedFrom",
+            "required": false,
+            "in": "query",
+            "description": "Only offers applied on or after this day, `YYYY-MM-DD`.",
+            "schema": {
+              "format": "date",
+              "example": "2026-09-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "appliedTo",
+            "required": false,
+            "in": "query",
+            "description": "Only offers applied on or before this day, `YYYY-MM-DD`. Not before `appliedFrom`.",
+            "schema": {
+              "format": "date",
+              "example": "2026-09-30",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Sort field. Offers with no value for it (no application date, no company) come last.",
+            "schema": {
+              "$ref": "#/components/schemas/OfferSortField"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction. Default: `desc` for dates (most recent first), `asc` for text.",
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
             }
           }
         ],
@@ -164,7 +216,7 @@
             }
           }
         },
-        "summary": "List offers, newest first",
+        "summary": "List offers: filtered, sorted and paginated",
         "tags": [
           "offers"
         ]
@@ -996,6 +1048,22 @@
           "appliedAt",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "OfferSortField": {
+        "type": "string",
+        "enum": [
+          "appliedAt",
+          "createdAt",
+          "title",
+          "company"
+        ]
+      },
+      "SortOrder": {
+        "type": "string",
+        "enum": [
+          "asc",
+          "desc"
         ]
       },
       "OfferPageDto": {

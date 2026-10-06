@@ -10,6 +10,7 @@ import { createServer } from './server.ts';
 // on purpose below.
 
 interface OpenApiOperation {
+  parameters?: { name: string; in: 'path' | 'query' | 'header' | 'cookie' }[];
   requestBody?: {
     content: Record<string, { schema: { $ref: string } }>;
   };
@@ -62,6 +63,12 @@ function apiOperations(): [string, OpenApiOperation][] {
           ],
       ),
   );
+}
+
+function queryParameters(operation: OpenApiOperation): string[] {
+  return (operation.parameters ?? [])
+    .filter((parameter) => parameter.in === 'query')
+    .map((parameter) => parameter.name);
 }
 
 function bodyFields(operation: OpenApiOperation): string[] {
@@ -119,6 +126,21 @@ describe('MCP coverage of the API (back/openapi.json)', () => {
         // A failure here means the API accepts a field the tool can't send:
         // add it to the tool's input schema in src/schemas.ts.
         expect(tools.get(coverage.tool)?.sort(), name).toEqual(fields.sort());
+      }
+    }
+  });
+
+  it('lets each tool use every query parameter of its operation', async () => {
+    const tools = await toolInputFields();
+
+    for (const [name, operation] of apiOperations()) {
+      const coverage = COVERAGE[name];
+      if (coverage && 'tool' in coverage) {
+        // A failure here means the API takes a filter, sort or page parameter
+        // the tool doesn't offer: add it to the tool's input schema.
+        expect(tools.get(coverage.tool), name).toEqual(
+          expect.arrayContaining(queryParameters(operation)),
+        );
       }
     }
   });

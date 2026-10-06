@@ -12,8 +12,10 @@ export type {
 } from './interview-step.js';
 export type {
   CreateOfferRequest,
+  ListOffersQuery,
   Offer,
   OfferFieldLimits,
+  OfferSortField,
   UpdateOfferRequest,
 } from './offer.js';
-export type { Page, PageQuery } from './pagination.js';
+export type { Page, PageQuery, SortOrder } from './pagination.js';

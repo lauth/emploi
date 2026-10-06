@@ -1,4 +1,6 @@
 pnpm-lock.yaml
+# Local Claude Code settings: personal, ignored by git.
+.claude/
 back/openapi.json
 **/dist
 **/.next
