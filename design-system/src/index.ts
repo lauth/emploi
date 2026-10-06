@@ -36,3 +36,15 @@ export {
   type TextAreaFieldProps,
 } from './components/field/text-area-field';
 export { TextField, type TextFieldProps } from './components/field/text-field';
+export {
+  Popover,
+  popoverCloseProps,
+  type PopoverProps,
+} from './components/popover/popover';
+export {
+  headerCellClassName,
+  sortableHeaderClassName,
+  Table,
+  type TableProps,
+} from './components/table/table';
+export { visuallyHidden } from './utils/visually-hidden';

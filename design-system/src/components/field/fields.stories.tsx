@@ -30,6 +30,23 @@ export const WithHint: Story = {
 
 export const Required: Story = { args: { required: true } };
 
+/** Compact toolbars: the label is read by screen readers but not shown. */
+export const LabelHidden: Story = {
+  args: {
+    label: 'Rechercher une offre',
+    labelHidden: true,
+    type: 'search',
+    placeholder: 'Intitulé, entreprise ou lieu…',
+  },
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getByRole('searchbox', {
+        name: 'Rechercher une offre',
+      }),
+    ).toBeInTheDocument();
+  },
+};
+
 export const WithError: Story = {
   args: { defaultValue: '   ', error: 'Champ obligatoire' },
   play: async ({ canvasElement }) => {

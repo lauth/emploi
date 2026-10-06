@@ -29,7 +29,7 @@ export default async function EditInterviewStepPage({ params }: Props) {
   const t = await getTranslations('steps.edit');
 
   return (
-    <>
+    <div className="readable">
       <h1>{t('title')}</h1>
       <InterviewStepForm
         action={updateInterviewStepAction.bind(null, step.offerId, step.id)}
@@ -37,7 +37,7 @@ export default async function EditInterviewStepPage({ params }: Props) {
         submitLabel={t('submit')}
         cancelHref={`/offers/${step.offerId}`}
       />
-    </>
+    </div>
   );
 }
 

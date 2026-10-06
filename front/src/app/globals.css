@@ -29,8 +29,15 @@ p + p {
   text-decoration: none;
 }
 
+/* Pages use the width of the screen (lists, tables); reading pages and forms
+   wrap their content in .readable to keep lines short. */
 .site-main {
-  max-width: 48rem;
+  max-width: 120rem;
   margin: 0 auto;
-  padding: var(--space-6) var(--space-4) 4rem;
+  padding: var(--space-5) clamp(var(--space-4), 3vw, var(--space-6)) 4rem;
+}
+
+.readable {
+  max-width: 48rem;
+  margin-inline: auto;
 }

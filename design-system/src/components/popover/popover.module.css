@@ -1,0 +1,22 @@
+.panel {
+  max-width: min(24rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  color: var(--color-text);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.15);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-normal);
+  white-space: normal;
+}
+
+/* Below its button where anchor positioning exists; the browser's default
+   (centred in the viewport) elsewhere. */
+@supports (position-area: bottom) {
+  .panel {
+    margin: var(--space-1) 0 0;
+    position-area: bottom span-right;
+    position-try-fallbacks: flip-inline, flip-block;
+  }
+}

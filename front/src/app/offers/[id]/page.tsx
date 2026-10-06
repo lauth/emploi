@@ -63,7 +63,7 @@ export default async function OfferPage({ params }: PageProps<'/offers/[id]'>) {
   ];
 
   return (
-    <article>
+    <article className="readable">
       <p>
         <Link href="/offers">{t('offers.detail.back')}</Link>
       </p>

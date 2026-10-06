@@ -11,7 +11,7 @@ export default function ErrorPage({
 }) {
   const t = useTranslations('error');
   return (
-    <>
+    <div className="readable">
       <h1>{t('title')}</h1>
       <p>{t('text')}</p>
       <p>
@@ -19,6 +19,6 @@ export default function ErrorPage({
           {t('retry')}
         </button>
       </p>
-    </>
+    </div>
   );
 }

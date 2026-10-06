@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function NewOfferPage() {
   const t = await getTranslations('offers.new');
   return (
-    <>
+    <div className="readable">
       <h1>{t('title')}</h1>
       <OfferForm
         action={createOfferAction}
@@ -20,6 +20,6 @@ export default async function NewOfferPage() {
         submitLabel={t('submit')}
         cancelHref="/offers"
       />
-    </>
+    </div>
   );
 }

@@ -9,13 +9,18 @@ import { z } from 'zod';
 // /offers?q=…&appliedFrom=…&appliedTo=…&sort=title-asc&page=2&size=50
 // Anything invalid in the URL falls back to its default instead of erroring.
 
-/** Records list every sort field and order: a new one breaks the build until handled. */
-const SORT_FIELDS: Record<OfferSortField, true> = {
-  appliedAt: true,
-  createdAt: true,
-  title: true,
-  company: true,
+/**
+ * Natural direction of each sort field, used when a column header is clicked
+ * for the first time: most recent dates first, text A to Z (as the API).
+ * Records list every sort field and order: a new one breaks the build until handled.
+ */
+const FIELD_ORDERS: Record<OfferSortField, SortOrder> = {
+  appliedAt: 'desc',
+  createdAt: 'desc',
+  title: 'asc',
+  company: 'asc',
 };
+const SORT_FIELDS = FIELD_ORDERS;
 const ORDERS: Record<SortOrder, true> = { desc: true, asc: true };
 
 /** A sort choice of the list, e.g. `appliedAt-desc`. */
@@ -121,21 +126,69 @@ export function toApiQuery(query: OfferListQuery): ListOffersQuery {
   };
 }
 
+type OfferListKey = keyof OfferListQuery;
+
+/** The URL parameters of a list state, default values left out. */
+function nonDefaultEntries(query: OfferListQuery): [OfferListKey, string][] {
+  return (Object.keys(DEFAULT_OFFER_LIST_QUERY) as OfferListKey[]).flatMap(
+    (key): [OfferListKey, string][] => {
+      const value = query[key];
+      return value !== DEFAULT_OFFER_LIST_QUERY[key] && value !== ''
+        ? [[key, String(value)]]
+        : [];
+    },
+  );
+}
+
 /** URL of the list in a state; default values are left out to keep URLs short. */
 export function offerListHref(
   query: OfferListQuery,
   changes: Partial<OfferListQuery> = {},
 ): string {
-  const next = { ...query, ...changes };
-  const params = new URLSearchParams();
-  for (const key of Object.keys(
-    DEFAULT_OFFER_LIST_QUERY,
-  ) as (keyof OfferListQuery)[]) {
-    const value = next[key];
-    if (value !== DEFAULT_OFFER_LIST_QUERY[key] && value !== '') {
-      params.set(key, String(value));
-    }
-  }
-  const search = params.toString();
+  const search = new URLSearchParams(
+    nonDefaultEntries({ ...query, ...changes }),
+  ).toString();
   return search ? `/offers?${search}` : '/offers';
+}
+
+/**
+ * Hidden inputs a GET form needs to keep the rest of the list state: the form
+ * sends only its own fields, so the others ride along as `[name, value]`
+ * pairs. `fields` are the ones the form edits itself; the page always resets
+ * to 1, since the results change.
+ */
+export function keptFields(
+  query: OfferListQuery,
+  fields: OfferListKey[],
+): [OfferListKey, string][] {
+  return nonDefaultEntries(query).filter(
+    ([key]) => key !== 'page' && !fields.includes(key),
+  );
+}
+
+/** `aria-sort` of a column: the direction when the list is sorted by it. */
+export function sortState(
+  query: OfferListQuery,
+  field: OfferSortField,
+): 'ascending' | 'descending' | 'none' {
+  const [sort, order] = query.sort.split('-');
+  if (sort !== field) {
+    return 'none';
+  }
+  return order === 'asc' ? 'ascending' : 'descending';
+}
+
+/**
+ * Sort after clicking a column header: the other direction when the list is
+ * already sorted by it, its natural direction otherwise.
+ */
+export function nextSort(
+  query: OfferListQuery,
+  field: OfferSortField,
+): OfferSortOption {
+  const state = sortState(query, field);
+  if (state === 'none') {
+    return `${field}-${FIELD_ORDERS[field]}`;
+  }
+  return `${field}-${state === 'ascending' ? 'desc' : 'asc'}`;
 }

@@ -10,6 +10,7 @@ export interface TextAreaFieldProps
 /** A labelled `<textarea>` for long text. */
 export function TextAreaField({
   label,
+  labelHidden,
   hint,
   error,
   id,
@@ -19,6 +20,7 @@ export function TextAreaField({
   return (
     <FieldShell
       label={label}
+      labelHidden={labelHidden}
       hint={hint}
       error={error}
       id={id}

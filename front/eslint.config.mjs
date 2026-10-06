@@ -31,8 +31,9 @@ export default defineConfig([
           // Props are mostly technical (classes, URLs, ids); translated ones
           // (labels, placeholders) are checked by review and browser tests.
           ignoreProps: true,
-          // Typographic separators, not words.
-          allowedStrings: ['—', '·'],
+          // Typographic signs, not words ("×" closes a filter chip, its
+          // accessible name is translated).
+          allowedStrings: ['—', '·', '×'],
         },
       ],
     },

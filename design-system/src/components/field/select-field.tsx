@@ -20,6 +20,7 @@ export interface SelectFieldProps
 /** A labelled `<select>`. */
 export function SelectField({
   label,
+  labelHidden,
   hint,
   error,
   id,
@@ -30,6 +31,7 @@ export function SelectField({
   return (
     <FieldShell
       label={label}
+      labelHidden={labelHidden}
       hint={hint}
       error={error}
       id={id}

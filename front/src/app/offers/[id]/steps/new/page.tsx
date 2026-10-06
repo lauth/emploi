@@ -26,7 +26,7 @@ export default async function NewInterviewStepPage({
   const t = await getTranslations('steps.new');
 
   return (
-    <>
+    <div className="readable">
       <h1>{t('title')}</h1>
       <p>{offer.title}</p>
       <InterviewStepForm
@@ -35,6 +35,6 @@ export default async function NewInterviewStepPage({
         submitLabel={t('submit')}
         cancelHref={`/offers/${offer.id}`}
       />
-    </>
+    </div>
   );
 }

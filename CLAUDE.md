@@ -12,7 +12,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Implemented:
 
 - Offers (CRUD, ADR-0011; only the title is required, ADR-0014): `back/src/offers`, `front/src/app/offers`.
-- Offer list filters, sorting and pagination (ADR-0020): `GET /offers?q=&appliedFrom=&appliedTo=&sort=&order=&limit=&offset=`, most recent application first by default, missing values last. The front keeps the list state in the URL (`src/lib/offer-list-query.ts`: `?q=…&sort=title-asc&page=2&size=50`, invalid values fall back to defaults) and filters with a `next/form` GET form (`src/app/offers/offer-filters.tsx`).
+- Offer list filters, sorting and pagination (ADR-0020): `GET /offers?q=&appliedFrom=&appliedTo=&sort=&order=&limit=&offset=`, most recent application first by default, missing values last. The front keeps the list state in the URL (`src/lib/offer-list-query.ts`: `?q=…&sort=title-asc&page=2&size=50`, invalid values fall back to defaults).
+- Offer list as a table (ADR-0021): full screen width (`.site-main`; reading pages and forms wrap their content in `.readable`). Column headers are sort links with `aria-sort` (`sortState`/`nextSort`), the application date header opens the period filter in a `Popover`; a compact `next/form` search sits next to the title (`src/app/offers/offer-search.tsx`, `offer-table.tsx`). GET forms keep the rest of the state with hidden inputs from `keptFields`.
 - Interview steps (ADR-0015): nested resource `/offers/:offerId/steps` with a `PUT …/order` to reorder; `back/src/interview-steps`, shown on the offer page (`front/src/app/offers/[id]/interview-steps.tsx`, forms and actions in `front/src/app/offers/[id]/steps`).
 
 Not yet: an overall status per offer derived from its steps.
@@ -122,7 +123,7 @@ First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make 
 
 ## Design system (`design-system/`)
 
-- The front builds its UI from `@emploi/design-system`: `Button` (and `buttonClassName()` to style a Next `Link` as a button), `TextField`, `TextAreaField`, `SelectField`, `Badge`, `Card`, `Alert`, `DescriptionList`. Front CSS modules only lay out pages (grids, spacing); don't restyle components there. A missing basic element becomes a design system component first.
+- The front builds its UI from `@emploi/design-system`: `Button` (and `buttonClassName()` to style a Next `Link` as a button), `TextField`, `TextAreaField`, `SelectField` (fields accept `labelHidden` for compact toolbars), `Badge`, `Card`, `Alert`, `DescriptionList`, `Table` (with `sortableHeaderClassName`, `headerCellClassName`), `Popover` (native HTML popover, `popoverCloseProps`), and `visuallyHidden`. Front CSS modules only lay out pages (grids, spacing); don't restyle components there. A missing basic element becomes a design system component first.
 - Styles use the tokens of `src/styles/tokens.css` (`--color-*`, `--space-*`, `--font-*`, `--radius-*`), never raw values; light and dark themes follow `prefers-color-scheme`. The app imports `@emploi/design-system/styles.css` once, in the root layout.
 - Components are presentational: React and CSS Modules only, no Next.js, no data, **no text** (everything through props, so the front translates it; `react/jsx-no-literals` enforces it). Fields always have a visible label and wire `aria-invalid` / `aria-describedby` to their hint and error.
 - Each component has stories (`*.stories.tsx`: every variant and state, `play` functions for behaviour) and, for logic, unit tests (`*.test.tsx`). `src/stories.test.tsx` runs every story as a Vitest test, with axe accessibility checks that fail on violations, so `make check` covers Storybook too.

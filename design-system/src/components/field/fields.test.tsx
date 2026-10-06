@@ -14,6 +14,14 @@ describe('TextField', () => {
     expect(input).not.toHaveAttribute('aria-describedby');
   });
 
+  it('can hide its label visually and keep it for screen readers', () => {
+    render(<TextField label="Rechercher une offre" labelHidden />);
+
+    const input = screen.getByLabelText('Rechercher une offre');
+    expect(input).toBeInTheDocument();
+    expect(screen.getByText('Rechercher une offre').className).not.toBe('');
+  });
+
   it('uses the given id', () => {
     render(<TextField label="Lieu" id="location" />);
 

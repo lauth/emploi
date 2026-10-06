@@ -38,8 +38,8 @@ test('adds an offer from the form', async ({ page, offers }) => {
   await expect(page.getByText('React et TypeScript.')).toBeVisible();
 
   await page.getByRole('link', { name: '← Toutes les offres' }).click();
-  const card = page.getByRole('listitem').filter({ hasText: title });
-  await expect(card).toContainText('Candidature le 1 oct. 2026');
+  const row = page.getByRole('row').filter({ hasText: title });
+  await expect(row.getByRole('cell').nth(3)).toHaveText('1 oct. 2026');
 });
 
 test('shows the server validation errors in French and keeps the input', async ({
@@ -136,7 +136,8 @@ test('lists the newest offers first', async ({ page, offers }) => {
   await page.goto('/offers');
 
   const titles = await page
-    .getByRole('listitem')
+    .getByRole('table')
+    .getByRole('cell')
     .getByRole('link')
     .allTextContents();
   expect(titles.indexOf(newer.title)).toBeGreaterThanOrEqual(0);

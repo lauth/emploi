@@ -1,11 +1,74 @@
 import {
   DEFAULT_OFFER_LIST_QUERY,
   hasFilters,
+  keptFields,
+  nextSort,
   OFFER_SORT_OPTIONS,
   offerListHref,
   parseOfferListQuery,
+  sortState,
   toApiQuery,
 } from './offer-list-query';
+
+describe('sortState', () => {
+  it('gives the aria-sort of each column', () => {
+    const query = { ...DEFAULT_OFFER_LIST_QUERY, sort: 'title-asc' as const };
+
+    expect(sortState(query, 'title')).toBe('ascending');
+    expect(sortState(query, 'appliedAt')).toBe('none');
+    expect(sortState(DEFAULT_OFFER_LIST_QUERY, 'appliedAt')).toBe('descending');
+  });
+});
+
+describe('nextSort', () => {
+  it.each([
+    ['title', 'title-asc'],
+    ['company', 'company-asc'],
+    ['createdAt', 'createdAt-desc'],
+  ] as const)(
+    'sorts by %s in its natural direction on the first click',
+    (field, expected) => {
+      expect(nextSort(DEFAULT_OFFER_LIST_QUERY, field)).toBe(expected);
+    },
+  );
+
+  it('reverses the column the list is sorted by', () => {
+    expect(nextSort(DEFAULT_OFFER_LIST_QUERY, 'appliedAt')).toBe(
+      'appliedAt-asc',
+    );
+    expect(
+      nextSort({ ...DEFAULT_OFFER_LIST_QUERY, sort: 'title-asc' }, 'title'),
+    ).toBe('title-desc');
+  });
+});
+
+describe('keptFields', () => {
+  it('keeps the other settings but not the page', () => {
+    const query = {
+      ...DEFAULT_OFFER_LIST_QUERY,
+      q: 'backend',
+      appliedFrom: '2026-09-01',
+      sort: 'title-asc' as const,
+      page: 3,
+      size: 50 as const,
+    };
+
+    expect(keptFields(query, ['q'])).toEqual([
+      ['appliedFrom', '2026-09-01'],
+      ['sort', 'title-asc'],
+      ['size', '50'],
+    ]);
+    expect(keptFields(query, ['appliedFrom', 'appliedTo'])).toEqual([
+      ['q', 'backend'],
+      ['sort', 'title-asc'],
+      ['size', '50'],
+    ]);
+  });
+
+  it('is empty for the defaults', () => {
+    expect(keptFields(DEFAULT_OFFER_LIST_QUERY, ['q'])).toEqual([]);
+  });
+});
 
 describe('parseOfferListQuery', () => {
   it('defaults to the most recent application first, page 1 of 20', () => {

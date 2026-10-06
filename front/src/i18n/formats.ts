@@ -10,5 +10,7 @@ export const formats = {
      * formatted in UTC so the day never shifts. "28 sept. 2026".
      */
     dateOnly: { dateStyle: 'medium', timeZone: 'UTC' },
+    /** The day of a moment, in the configured time zone: "3 oct. 2026". */
+    day: { dateStyle: 'medium' },
   },
 } satisfies Formats;

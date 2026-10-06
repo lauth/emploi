@@ -10,6 +10,7 @@ export interface TextFieldProps
 /** A labelled `<input>`: text, url, date, email… */
 export function TextField({
   label,
+  labelHidden,
   hint,
   error,
   id,
@@ -19,6 +20,7 @@ export function TextField({
   return (
     <FieldShell
       label={label}
+      labelHidden={labelHidden}
       hint={hint}
       error={error}
       id={id}

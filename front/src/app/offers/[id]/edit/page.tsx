@@ -29,7 +29,7 @@ export default async function EditOfferPage({
   const t = await getTranslations('offers.edit');
 
   return (
-    <>
+    <div className="readable">
       <h1>{t('title')}</h1>
       <OfferForm
         action={updateOfferAction.bind(null, offer.id)}
@@ -37,7 +37,7 @@ export default async function EditOfferPage({
         submitLabel={t('submit')}
         cancelHref={`/offers/${offer.id}`}
       />
-    </>
+    </div>
   );
 }
 

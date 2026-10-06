@@ -13,6 +13,11 @@ export function formatDate(format: Formatter, dateOnly: string): string {
   return format.dateTime(new Date(`${dateOnly}T00:00:00.000Z`), 'dateOnly');
 }
 
+/** The day of an ISO 8601 timestamp, in the configured time zone: "3 oct. 2026". */
+export function formatDay(format: Formatter, iso: string): string {
+  return format.dateTime(new Date(iso), 'day');
+}
+
 /** "Acme · Lyon", leaving out what's missing; `null` when both are. */
 export function formatCompanyAndLocation(offer: {
   company: string | null;
