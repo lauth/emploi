@@ -17,6 +17,7 @@ const model: OfferModel = {
   location: null,
   description: null,
   appliedAt: null,
+  status: 'applied',
   createdAt: new Date('2026-10-01T08:30:00.000Z'),
   updatedAt: new Date('2026-10-01T08:30:00.000Z'),
 };
@@ -147,11 +148,22 @@ describe('OffersService', () => {
       );
     });
 
+    it('filters by status', async () => {
+      await service.list({ ...defaults, status: ['applied', 'interviewing'] });
+
+      expect(prisma.offer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { status: { in: ['applied', 'interviewing'] } },
+        }),
+      );
+    });
+
     it('ignores blank filters', async () => {
       await service.list({
         ...defaults,
         q: null,
         appliedFrom: null,
+        status: [],
       } as unknown as typeof defaults);
 
       expect(prisma.offer.findMany).toHaveBeenCalledWith(
@@ -165,6 +177,7 @@ describe('OffersService', () => {
       ['company', undefined, { company: { sort: 'asc', nulls: 'last' } }],
       ['createdAt', undefined, { createdAt: 'desc' }],
       ['appliedAt', 'asc', { appliedAt: { sort: 'asc', nulls: 'last' } }],
+      ['status', undefined, { status: 'asc' }],
     ] as const)(
       'sorts by %s %s (default order per field)',
       async (sort, order, first) => {
@@ -208,6 +221,7 @@ describe('OffersService', () => {
           location: undefined,
           description: undefined,
           appliedAt: undefined,
+          status: undefined,
         },
       });
     });

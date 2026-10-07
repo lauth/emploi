@@ -73,10 +73,16 @@ async function readMessages(response: Response): Promise<string[]> {
 /** Filtered, sorted and paginated offers; unset parameters use the API defaults. */
 export async function listOffers(query: ListOffersQuery): Promise<Page<Offer>> {
   await connection();
+  // Arrays repeat the parameter (`status=a&status=b`).
   const params = new URLSearchParams();
-  for (const [name, value] of Object.entries(query)) {
-    if (value !== undefined && value !== '') {
-      params.set(name, String(value));
+  for (const [name, value] of Object.entries(query) as [
+    string,
+    string | number | string[] | undefined,
+  ][]) {
+    for (const item of Array.isArray(value) ? value : [value]) {
+      if (item !== undefined && item !== '') {
+        params.append(name, String(item));
+      }
     }
   }
   return json(await send(`/offers?${params.toString()}`));

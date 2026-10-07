@@ -1,5 +1,5 @@
 import type { ApiPropertyOptions } from '@nestjs/swagger';
-import { OFFER_LIMITS } from './offer-limits.js';
+import { OFFER_LIMITS, OFFER_STATUSES } from './offer-limits.js';
 
 /** OpenAPI description of each offer field, shared by request and response DTOs. */
 export const OFFER_PROPERTIES = {
@@ -43,5 +43,15 @@ export const OFFER_PROPERTIES = {
     format: 'date',
     description: 'Day the user responded to the offer, `YYYY-MM-DD`.',
     example: '2026-09-28',
+  },
+  status: {
+    enum: OFFER_STATUSES,
+    enumName: 'OfferStatus',
+    description:
+      'Where the application stands, chosen by the user: `applied`: sent, no answer yet; ' +
+      '`interviewing`: interviews under way; `offered`: the company made an offer; ' +
+      '`accepted`: the user accepted it; `rejected`: the company said no; ' +
+      '`ghosted`: no answer after a long time; `withdrawn`: the user withdrew.',
+    example: 'interviewing',
   },
 } satisfies Record<string, ApiPropertyOptions>;

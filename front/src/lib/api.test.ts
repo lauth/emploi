@@ -19,6 +19,7 @@ const offer: Offer = {
   location: null,
   description: null,
   appliedAt: null,
+  status: 'applied',
   createdAt: '2026-10-01T08:30:00.000Z',
   updatedAt: '2026-10-01T08:30:00.000Z',
 };
@@ -55,6 +56,23 @@ describe('listOffers', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       'http://back/offers?limit=20&offset=40',
       expect.objectContaining({ cache: 'no-store' }),
+    );
+  });
+
+  it('repeats the status parameter for each status', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ items: [], total: 0, limit: 20, offset: 0 }),
+    );
+
+    await listOffers({
+      limit: 20,
+      offset: 0,
+      status: ['applied', 'interviewing'],
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://back/offers?limit=20&offset=0&status=applied&status=interviewing',
+      expect.anything(),
     );
   });
 });

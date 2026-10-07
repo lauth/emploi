@@ -16,6 +16,7 @@ export type {
   Offer,
   OfferFieldLimits,
   OfferSortField,
+  OfferStatus,
   UpdateOfferRequest,
 } from './offer.js';
 export type { Page, PageQuery, SortOrder } from './pagination.js';

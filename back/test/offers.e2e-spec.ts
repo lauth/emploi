@@ -19,6 +19,7 @@ const model: OfferModel = {
   location: null,
   description: null,
   appliedAt: new Date('2026-09-28T00:00:00.000Z'),
+  status: 'applied',
   createdAt: new Date('2026-10-01T08:30:00.000Z'),
   updatedAt: new Date('2026-10-01T08:30:00.000Z'),
 };
@@ -82,6 +83,7 @@ describe('Offers (e2e)', () => {
         location: null,
         description: null,
         appliedAt: '2026-09-28',
+        status: 'applied',
         createdAt: '2026-10-01T08:30:00.000Z',
         updatedAt: '2026-10-01T08:30:00.000Z',
       });
@@ -143,6 +145,8 @@ describe('Offers (e2e)', () => {
         { title: 'Dev', company: 'Acme', salary: 50000 },
         'salary',
       ],
+      ['an unknown status', { title: 'Dev', status: 'hired' }, 'status'],
+      ['a null status', { title: 'Dev', status: null }, 'status'],
     ])('rejects %s', async (_case, body, field) => {
       const response = await request(app.getHttpServer())
         .post('/offers')
@@ -210,6 +214,20 @@ describe('Offers (e2e)', () => {
       );
     });
 
+    it.each([
+      ['status=offered', ['offered']],
+      ['status=applied&status=interviewing', ['applied', 'interviewing']],
+    ])('filters by status: %s', async (query, statuses) => {
+      prisma.offer.findMany.mockResolvedValue([]);
+      prisma.offer.count.mockResolvedValue(0);
+
+      await request(app.getHttpServer()).get(`/offers?${query}`).expect(200);
+
+      expect(prisma.offer.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { status: { in: statuses } } }),
+      );
+    });
+
     it('sorts by most recent application by default, missing dates last', async () => {
       prisma.offer.findMany.mockResolvedValue([]);
       prisma.offer.count.mockResolvedValue(0);
@@ -243,6 +261,7 @@ describe('Offers (e2e)', () => {
       ],
       [`q=${'x'.repeat(201)}`, 'q'],
       ['status=passed', 'status'],
+      ['status=applied&status=hired', 'status'],
     ])('rejects %s', async (query, message) => {
       const response = await request(app.getHttpServer())
         .get(`/offers?${query}`)
@@ -310,12 +329,30 @@ describe('Offers (e2e)', () => {
       });
     });
 
-    it('rejects null for a required field', async () => {
-      await request(app.getHttpServer())
+    it('changes the status', async () => {
+      prisma.offer.update.mockResolvedValue({ ...model, status: 'offered' });
+
+      const response = await request(app.getHttpServer())
         .patch(`/offers/${ID}`)
-        .send({ title: null })
-        .expect(400);
+        .send({ status: 'offered' })
+        .expect(200);
+
+      expect(response.body).toMatchObject({ status: 'offered' });
+      expect(prisma.offer.update).toHaveBeenCalledWith({
+        where: { id: ID },
+        data: expect.objectContaining({ status: 'offered' }) as unknown,
+      });
     });
+
+    it.each([{ title: null }, { status: null }])(
+      'rejects null for a field that cannot be cleared: %j',
+      async (body) => {
+        await request(app.getHttpServer())
+          .patch(`/offers/${ID}`)
+          .send(body)
+          .expect(400);
+      },
+    );
 
     it('answers 404 for an unknown id', async () => {
       prisma.offer.update.mockRejectedValue(recordNotFound);

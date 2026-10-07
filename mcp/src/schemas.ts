@@ -8,6 +8,7 @@ import type {
   Offer,
   OfferFieldLimits,
   OfferSortField,
+  OfferStatus,
   ReorderInterviewStepsRequest,
   SortOrder,
   UpdateInterviewStepRequest,
@@ -46,6 +47,26 @@ const STATUSES = Object.keys(STATUS_DESCRIPTIONS) as [
   ...InterviewStepStatus[],
 ];
 
+/** Statuses of an offer, in the order of a search (sorting by status follows it). */
+export const OFFER_STATUS_DESCRIPTIONS: Record<OfferStatus, string> = {
+  applied: 'sent, no answer yet',
+  interviewing: 'interviews under way',
+  offered: 'the company made an offer',
+  accepted: 'the user accepted the offer',
+  rejected: 'the company said no',
+  ghosted: 'no answer after a long time',
+  withdrawn: 'the user withdrew',
+};
+
+const OFFER_STATUSES = Object.keys(OFFER_STATUS_DESCRIPTIONS) as [
+  OfferStatus,
+  ...OfferStatus[],
+];
+
+const offerStatusHelp = Object.entries(OFFER_STATUS_DESCRIPTIONS)
+  .map(([status, meaning]) => `${status}: ${meaning}`)
+  .join('; ');
+
 // Records list every sort field and order: a new one in the shared types
 // breaks the build until it is handled here.
 const SORT_FIELD_RECORD: Record<OfferSortField, true> = {
@@ -53,6 +74,7 @@ const SORT_FIELD_RECORD: Record<OfferSortField, true> = {
   createdAt: true,
   title: true,
   company: true,
+  status: true,
 };
 const SORT_FIELDS = Object.keys(SORT_FIELD_RECORD) as [
   OfferSortField,
@@ -100,6 +122,11 @@ const offerFields = {
     .max(OFFER_LIMITS.description)
     .describe('Text of the offer.'),
   appliedAt: dateOnly('Day the user responded to the offer.'),
+  status: z
+    .enum(OFFER_STATUSES)
+    .describe(
+      `Where the application stands, set by the user (not derived from the steps). ${offerStatusHelp}.`,
+    ),
 };
 
 const stepFields = {
@@ -148,17 +175,24 @@ export const listOffersInput = z.object({
   appliedTo: dateOnly(
     'Only offers applied on or before this day (not before appliedFrom).',
   ).optional(),
+  status: z
+    .array(z.enum(OFFER_STATUSES))
+    .min(1)
+    .optional()
+    .describe(
+      `Only offers with one of these statuses; all when absent. ${offerStatusHelp}.`,
+    ),
   sort: z
     .enum(SORT_FIELDS)
     .optional()
     .describe(
-      'Sort field, default appliedAt (application date). Offers with no value for it come last.',
+      'Sort field, default appliedAt (application date). Offers with no value for it come last. Status sorts in the order of a search, applied first.',
     ),
   order: z
     .enum(SORT_ORDERS)
     .optional()
     .describe(
-      'Sort direction. Default: desc for dates (most recent first), asc for title and company.',
+      'Sort direction. Default: desc for dates (most recent first), asc for title, company and status.',
     ),
 });
 
@@ -171,6 +205,7 @@ export const createOfferInput = z.object({
   location: offerFields.location.optional(),
   description: offerFields.description.optional(),
   appliedAt: offerFields.appliedAt.optional(),
+  status: offerFields.status.optional().describe('Defaults to applied.'),
 });
 
 /** Absent fields are left unchanged; `null` clears an optional field. */
@@ -182,6 +217,7 @@ export const updateOfferInput = z.object({
   location: offerFields.location.nullable().optional(),
   description: offerFields.description.nullable().optional(),
   appliedAt: offerFields.appliedAt.nullable().optional(),
+  status: offerFields.status.optional(),
 });
 
 export const addStepInput = z.object({
@@ -229,6 +265,7 @@ const offerSchema = z.object({
   location: z.string().nullable(),
   description: z.string().nullable(),
   appliedAt: z.string().nullable().describe('YYYY-MM-DD'),
+  status: z.enum(OFFER_STATUSES),
   createdAt: z.string().describe('ISO 8601 timestamp'),
   updatedAt: z.string().describe('ISO 8601 timestamp'),
 });

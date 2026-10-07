@@ -49,5 +49,6 @@ function toFormValues(offer: Offer): OfferFormValues {
     location: offer.location ?? '',
     description: offer.description ?? '',
     appliedAt: offer.appliedAt ?? '',
+    status: offer.status,
   };
 }

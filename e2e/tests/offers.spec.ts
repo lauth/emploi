@@ -39,7 +39,7 @@ test('adds an offer from the form', async ({ page, offers }) => {
 
   await page.getByRole('link', { name: '← Toutes les offres' }).click();
   const row = page.getByRole('row').filter({ hasText: title });
-  await expect(row.getByRole('cell').nth(3)).toHaveText('1 oct. 2026');
+  await expect(row.getByRole('cell').nth(4)).toHaveText('1 oct. 2026');
 });
 
 test('shows the server validation errors in French and keeps the input', async ({
@@ -105,6 +105,27 @@ test('edits an offer and clears optional fields', async ({ page, offers }) => {
     page.getByRole('link', { name: 'https://jobs.example.com/42' }),
   ).toHaveCount(0);
   await expect(page.getByText('Modifiée le')).toBeVisible();
+});
+
+test('changes the status of an offer and shows it in the list', async ({
+  page,
+  offers,
+}) => {
+  const offer = await offers.create();
+
+  await page.goto(`/offers/${offer.id}`);
+  await expect(page.getByText('Candidature envoyée')).toBeVisible();
+  await page.getByRole('link', { name: 'Modifier', exact: true }).click();
+  await expect(page.getByLabel('Statut')).toHaveValue('applied');
+  await page.getByLabel('Statut').selectOption({ label: 'Offre reçue' });
+  await page.getByRole('button', { name: 'Enregistrer' }).click();
+
+  await expect(page).toHaveURL(`/offers/${offer.id}`);
+  await expect(page.getByText('Offre reçue')).toBeVisible();
+
+  await page.goto(`/offers?q=${encodeURIComponent(offer.title)}`);
+  const row = page.getByRole('row').filter({ hasText: offer.title });
+  await expect(row.getByRole('cell').nth(3)).toHaveText('Offre reçue');
 });
 
 test('asks for confirmation before deleting', async ({ page, offers }) => {

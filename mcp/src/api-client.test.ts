@@ -40,12 +40,13 @@ describe('createHttpApi', () => {
       limit: 20,
       offset: 0,
       q: 'dév',
+      status: ['applied', 'interviewing'],
       sort: 'title',
       order: undefined,
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      `${BASE}/offers?limit=20&offset=0&q=d%C3%A9v&sort=title`,
+      `${BASE}/offers?limit=20&offset=0&q=d%C3%A9v&status=applied&status=interviewing&sort=title`,
       expect.objectContaining({ method: 'GET' }),
     );
   });

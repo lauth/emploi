@@ -56,14 +56,24 @@
         "title-desc": "intitulé, de Z à A",
         "title-asc": "intitulé, de A à Z",
         "company-desc": "entreprise, de Z à A",
-        "company-asc": "entreprise, de A à Z"
+        "company-asc": "entreprise, de A à Z",
+        "status-asc": "statut, de la candidature envoyée à l’abandon",
+        "status-desc": "statut, de l’abandon à la candidature envoyée"
       },
       "columns": {
         "title": "Intitulé",
         "company": "Entreprise",
         "location": "Lieu",
+        "status": "Statut",
         "appliedAt": "Candidature",
         "createdAt": "Ajoutée le"
+      },
+      "statusFilter": {
+        "triggerLabel": "Filtrer par statut",
+        "triggerLabelActive": "Filtrer par statut (filtre actif)",
+        "legend": "Statuts affichés",
+        "chip": "{count, plural, one {Statut : {statuses}} other {Statuts : {statuses}}}",
+        "remove": "Retirer le filtre : {statuses}"
       },
       "search": {
         "region": "Rechercher dans les offres",
@@ -72,15 +82,17 @@
         "submit": "Rechercher",
         "reset": "Réinitialiser"
       },
-      "period": {
+      "filter": {
         "trigger": "Filtrer",
+        "apply": "Appliquer",
+        "cancel": "Annuler"
+      },
+      "period": {
         "triggerLabel": "Filtrer par date de candidature",
         "triggerLabelActive": "Filtrer par date de candidature (filtre actif)",
         "heading": "Période de candidature",
         "from": "À partir du",
         "to": "Jusqu’au",
-        "apply": "Appliquer",
-        "cancel": "Annuler",
         "both": "Candidature du {from} au {to}",
         "fromOnly": "Candidature depuis le {from}",
         "toOnly": "Candidature jusqu’au {to}",
@@ -118,7 +130,17 @@
       "url": "Lien vers l’offre",
       "location": "Lieu",
       "appliedAt": "Date de candidature",
+      "status": "Statut",
       "description": "Description"
+    },
+    "status": {
+      "applied": "Candidature envoyée",
+      "interviewing": "Entretiens en cours",
+      "offered": "Offre reçue",
+      "accepted": "Acceptée",
+      "rejected": "Refusée",
+      "ghosted": "Sans réponse",
+      "withdrawn": "Abandonnée"
     },
     "errors": {
       "notFound": "Cette offre n’existe plus.",

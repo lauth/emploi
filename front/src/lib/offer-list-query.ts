@@ -1,9 +1,11 @@
 import type {
   ListOffersQuery,
   OfferSortField,
+  OfferStatus,
   SortOrder,
 } from '@emploi/shared';
 import { z } from 'zod';
+import { OFFER_STATUSES } from './offer-form';
 
 // State of the offer list, kept in the URL (adrs/0020-offer-list-filters-sorting-and-pagination.md):
 // /offers?q=…&appliedFrom=…&appliedTo=…&sort=title-asc&page=2&size=50
@@ -19,6 +21,7 @@ const FIELD_ORDERS: Record<OfferSortField, SortOrder> = {
   createdAt: 'desc',
   title: 'asc',
   company: 'asc',
+  status: 'asc',
 };
 const SORT_FIELDS = FIELD_ORDERS;
 const ORDERS: Record<SortOrder, true> = { desc: true, asc: true };
@@ -46,6 +49,8 @@ export interface OfferListQuery {
   q: string;
   appliedFrom: string;
   appliedTo: string;
+  /** Statuses kept, in the order of `OFFER_STATUSES`; empty keeps them all. */
+  status: OfferStatus[];
   sort: OfferSortOption;
   page: number;
   size: PageSize;
@@ -55,6 +60,7 @@ export const DEFAULT_OFFER_LIST_QUERY: OfferListQuery = {
   q: '',
   appliedFrom: '',
   appliedTo: '',
+  status: [],
   sort: DEFAULT_SORT_OPTION,
   page: 1,
   size: DEFAULT_PAGE_SIZE,
@@ -71,10 +77,23 @@ const orDefault = <T>(schema: z.ZodType<T>, fallback: T) =>
 
 const dateOnly = z.iso.date();
 
+/**
+ * `?status=a&status=b`: the known statuses, each once, in the order of the
+ * list; unknown values are dropped.
+ */
+const statuses = z.preprocess(
+  (value: SearchParam) => {
+    const given = new Set(value === undefined ? [] : [value].flat());
+    return OFFER_STATUSES.filter((status) => given.has(status));
+  },
+  z.array(z.enum(OFFER_STATUSES)),
+);
+
 const schema = z.object({
   q: orDefault(z.string().trim().max(200), ''),
   appliedFrom: orDefault(dateOnly, ''),
   appliedTo: orDefault(dateOnly, ''),
+  status: statuses,
   sort: orDefault(z.enum(OFFER_SORT_OPTIONS), DEFAULT_SORT_OPTION),
   page: orDefault(z.coerce.number().int().min(1).max(100000), 1),
   size: orDefault(
@@ -107,9 +126,11 @@ export function parseOfferListQuery(
   return query;
 }
 
-/** True when the list is narrowed by a search or a period. */
+/** True when the list is narrowed by a search, a period or statuses. */
 export function hasFilters(query: OfferListQuery): boolean {
-  return Boolean(query.q || query.appliedFrom || query.appliedTo);
+  return Boolean(
+    query.q || query.appliedFrom || query.appliedTo || query.status.length,
+  );
 }
 
 /** The API query of a list state. */
@@ -123,16 +144,23 @@ export function toApiQuery(query: OfferListQuery): ListOffersQuery {
     ...(query.q ? { q: query.q } : {}),
     ...(query.appliedFrom ? { appliedFrom: query.appliedFrom } : {}),
     ...(query.appliedTo ? { appliedTo: query.appliedTo } : {}),
+    ...(query.status.length ? { status: query.status } : {}),
   };
 }
 
 type OfferListKey = keyof OfferListQuery;
 
-/** The URL parameters of a list state, default values left out. */
+/**
+ * The URL parameters of a list state, default values left out; a list
+ * repeats its parameter (`status=a&status=b`).
+ */
 function nonDefaultEntries(query: OfferListQuery): [OfferListKey, string][] {
   return (Object.keys(DEFAULT_OFFER_LIST_QUERY) as OfferListKey[]).flatMap(
     (key): [OfferListKey, string][] => {
       const value = query[key];
+      if (Array.isArray(value)) {
+        return value.map((item) => [key, item]);
+      }
       return value !== DEFAULT_OFFER_LIST_QUERY[key] && value !== ''
         ? [[key, String(value)]]
         : [];

@@ -21,6 +21,7 @@ model Offer {
   description String?
   /// Day the user responded to the offer (no time part).
   appliedAt   DateTime? @map("applied_at") @db.Date
+  status      OfferStatus @default(applied)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -34,6 +35,28 @@ model Offer {
   @@index([appliedAt(sort: Desc), createdAt(sort: Desc), id(sort: Desc)])
   @@index([createdAt(sort: Desc), id(sort: Desc)])
   @@map("offers")
+}
+
+/// Where the application for an offer stands, chosen by the user
+/// (adrs/0022-offer-status.md). Declared in the order of a search: PostgreSQL
+/// sorts enum values in this order.
+enum OfferStatus {
+  /// Sent, no answer yet.
+  applied
+  /// Interviews under way.
+  interviewing
+  /// The company made an offer.
+  offered
+  /// The user accepted the offer.
+  accepted
+  /// The company said no.
+  rejected
+  /// No answer after a long time.
+  ghosted
+  /// The user withdrew.
+  withdrawn
+
+  @@map("offer_status")
 }
 
 /// Where an interview step stands (adrs/0015-interview-step-data-model-and-api.md).

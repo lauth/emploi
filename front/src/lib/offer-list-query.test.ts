@@ -58,6 +58,18 @@ describe('keptFields', () => {
       ['sort', 'title-asc'],
       ['size', '50'],
     ]);
+    expect(
+      keptFields({ ...query, status: ['applied', 'offered'] }, ['status']),
+    ).not.toContainEqual(['status', 'applied']);
+    expect(
+      keptFields({ ...query, status: ['applied', 'offered'] }, ['q']),
+    ).toEqual([
+      ['appliedFrom', '2026-09-01'],
+      ['status', 'applied'],
+      ['status', 'offered'],
+      ['sort', 'title-asc'],
+      ['size', '50'],
+    ]);
     expect(keptFields(query, ['appliedFrom', 'appliedTo'])).toEqual([
       ['q', 'backend'],
       ['sort', 'title-asc'],
@@ -76,6 +88,7 @@ describe('parseOfferListQuery', () => {
       q: '',
       appliedFrom: '',
       appliedTo: '',
+      status: [],
       sort: 'appliedAt-desc',
       page: 1,
       size: 20,
@@ -88,6 +101,7 @@ describe('parseOfferListQuery', () => {
         q: '  backend ',
         appliedFrom: '2026-09-01',
         appliedTo: '2026-09-30',
+        status: 'offered',
         sort: 'title-asc',
         page: '3',
         size: '50',
@@ -96,6 +110,7 @@ describe('parseOfferListQuery', () => {
       q: 'backend',
       appliedFrom: '2026-09-01',
       appliedTo: '2026-09-30',
+      status: ['offered'],
       sort: 'title-asc',
       page: 3,
       size: 50,
@@ -123,6 +138,14 @@ describe('parseOfferListQuery', () => {
     expect(parseOfferListQuery({ page: ['2', '5'] }).page).toBe(2);
   });
 
+  it('reads repeated statuses in list order, once each, dropping unknown ones', () => {
+    expect(
+      parseOfferListQuery({
+        status: ['rejected', 'hired', 'applied', 'rejected'],
+      }).status,
+    ).toEqual(['applied', 'rejected']);
+  });
+
   it('reads a period entered backwards the right way round', () => {
     expect(
       parseOfferListQuery({
@@ -144,6 +167,8 @@ describe('OFFER_SORT_OPTIONS', () => {
       'title-asc',
       'company-desc',
       'company-asc',
+      'status-desc',
+      'status-asc',
     ]);
   });
 });
@@ -163,6 +188,12 @@ describe('hasFilters', () => {
       ).toBe(true);
     },
   );
+
+  it('is true with statuses', () => {
+    expect(
+      hasFilters({ ...DEFAULT_OFFER_LIST_QUERY, status: ['applied'] }),
+    ).toBe(true);
+  });
 });
 
 describe('toApiQuery', () => {
@@ -172,6 +203,7 @@ describe('toApiQuery', () => {
         ...DEFAULT_OFFER_LIST_QUERY,
         q: 'backend',
         appliedFrom: '2026-09-01',
+        status: ['applied', 'interviewing'],
         sort: 'company-asc',
         page: 3,
         size: 10,
@@ -183,6 +215,7 @@ describe('toApiQuery', () => {
       order: 'asc',
       q: 'backend',
       appliedFrom: '2026-09-01',
+      status: ['applied', 'interviewing'],
     });
   });
 
@@ -215,5 +248,13 @@ describe('offerListHref', () => {
     expect(offerListHref({ ...query, page: 2 }, { page: 1 })).toBe(
       '/offers?q=d%C3%A9v&sort=title-asc&size=50',
     );
+  });
+
+  it('repeats the status parameter', () => {
+    expect(
+      offerListHref(DEFAULT_OFFER_LIST_QUERY, {
+        status: ['applied', 'interviewing'],
+      }),
+    ).toBe('/offers?status=applied&status=interviewing');
   });
 });

@@ -22,12 +22,20 @@ export class ApiError extends Error {
   }
 }
 
-/** Query string of the set values; the API applies its defaults to the others. */
-function searchParams(query: ListOffersQuery): string {
+/**
+ * Query string of the set values; the API applies its defaults to the others.
+ * Arrays repeat the parameter (`status=a&status=b`).
+ */
+export function searchParams(query: ListOffersQuery): string {
   const params = new URLSearchParams();
-  for (const [name, value] of Object.entries(query)) {
-    if (value !== undefined && value !== '') {
-      params.set(name, String(value));
+  for (const [name, value] of Object.entries(query) as [
+    string,
+    string | number | string[] | undefined,
+  ][]) {
+    for (const item of Array.isArray(value) ? value : [value]) {
+      if (item !== undefined && item !== '') {
+        params.append(name, String(item));
+      }
     }
   }
   return params.toString();

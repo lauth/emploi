@@ -13,19 +13,29 @@ import styles from './offers.module.css';
 
 /**
  * Compact search bar above the offer list: one field and its button, the
- * period filter in use (removable), and a reset link when the list is
- * filtered. A GET form (next/form): the state stays in the URL.
+ * period and status filters in use (removable), and a reset link when the
+ * list is filtered. A GET form (next/form): the state stays in the URL.
  */
 export async function OfferSearch({ query }: { query: OfferListQuery }) {
   const t = await getTranslations('offers.list');
   const format = await getFormatter();
   const period = periodText(query, (date) => formatDate(format, date), t);
+  const tStatus = await getTranslations('offers.status');
+  const statuses =
+    query.status.length > 0
+      ? format.list(query.status.map((status) => tStatus(status)))
+      : null;
 
   return (
     <search aria-label={t('search.region')} className={styles.toolbar}>
       <Form action="/offers" className={styles.searchForm}>
         {keptFields(query, ['q']).map(([name, value]) => (
-          <input key={name} type="hidden" name={name} value={value} />
+          <input
+            key={`${name}=${value}`}
+            type="hidden"
+            name={name}
+            value={value}
+          />
         ))}
         <TextField
           id="q"
@@ -56,12 +66,24 @@ export async function OfferSearch({ query }: { query: OfferListQuery }) {
         </Link>
       )}
 
+      {statuses && (
+        <Link
+          href={offerListHref(query, { status: [], page: 1 })}
+          className={buttonClassName({ size: 'sm' })}
+          aria-label={t('statusFilter.remove', { statuses })}
+        >
+          {t('statusFilter.chip', { count: query.status.length, statuses })}
+          <span aria-hidden="true">×</span>
+        </Link>
+      )}
+
       {hasFilters(query) && (
         <Link
           href={offerListHref(query, {
             q: '',
             appliedFrom: '',
             appliedTo: '',
+            status: [],
             page: 1,
           })}
           className={styles.reset}

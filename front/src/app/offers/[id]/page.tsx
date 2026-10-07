@@ -8,6 +8,7 @@ import { formatDate, formatDateTime } from '@/lib/format';
 import { deleteOfferAction } from '../actions';
 import { CompanyAndLocation } from '../company-and-location';
 import { ConfirmButton } from '../confirm-button';
+import { OfferStatusBadge } from '../offer-status-badge';
 import styles from '../offers.module.css';
 import { InterviewSteps } from './interview-steps';
 import { loadOffer } from './load-offer';
@@ -30,6 +31,11 @@ export default async function OfferPage({ params }: PageProps<'/offers/[id]'>) {
   const format = await getFormatter();
 
   const details = [
+    {
+      key: 'status',
+      term: t('offers.fields.status'),
+      description: <OfferStatusBadge status={offer.status} />,
+    },
     {
       key: 'link',
       term: t('offers.detail.link'),

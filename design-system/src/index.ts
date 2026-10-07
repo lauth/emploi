@@ -21,6 +21,10 @@ export {
 } from './components/button/button';
 export { Card, type CardProps } from './components/card/card';
 export {
+  CheckboxGroup,
+  type CheckboxGroupProps,
+} from './components/checkbox-group/checkbox-group';
+export {
   DescriptionList,
   type DescriptionListItem,
   type DescriptionListProps,

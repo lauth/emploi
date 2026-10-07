@@ -10,6 +10,7 @@ describe('toOffer', () => {
     location: 'Lyon',
     description: 'Node.js and PostgreSQL',
     appliedAt: new Date('2026-09-28T00:00:00.000Z'),
+    status: 'interviewing',
     createdAt: new Date('2026-10-01T08:30:00.000Z'),
     updatedAt: new Date('2026-10-02T09:45:00.000Z'),
   };
@@ -23,6 +24,7 @@ describe('toOffer', () => {
       location: 'Lyon',
       description: 'Node.js and PostgreSQL',
       appliedAt: '2026-09-28',
+      status: 'interviewing',
       createdAt: '2026-10-01T08:30:00.000Z',
       updatedAt: '2026-10-02T09:45:00.000Z',
     });

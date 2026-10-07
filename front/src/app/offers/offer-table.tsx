@@ -1,5 +1,6 @@
 import {
   Button,
+  CheckboxGroup,
   headerCellClassName,
   Popover,
   popoverCloseProps,
@@ -12,6 +13,7 @@ import Form from 'next/form';
 import Link from 'next/link';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { formatDate, formatDay } from '@/lib/format';
+import { OFFER_STATUSES } from '@/lib/offer-form';
 import {
   keptFields,
   nextSort,
@@ -19,14 +21,16 @@ import {
   sortState,
   type OfferListQuery,
 } from '@/lib/offer-list-query';
+import { OfferStatusBadge } from './offer-status-badge';
 import styles from './offers.module.css';
 
 const PERIOD_POPOVER = 'applied-period';
+const STATUS_POPOVER = 'status-filter';
 
 /**
  * The offers as a table. Sortable column headers are links to the list sorted
- * by that column (clicking again reverses it); the application date header
- * also opens the period filter.
+ * by that column (clicking again reverses it); the status and application
+ * date headers also open their filter.
  */
 export async function OfferTable({
   query,
@@ -36,8 +40,10 @@ export async function OfferTable({
   offers: Offer[];
 }) {
   const t = await getTranslations('offers.list');
+  const tStatus = await getTranslations('offers.status');
   const format = await getFormatter();
   const periodActive = Boolean(query.appliedFrom || query.appliedTo);
+  const statusActive = query.status.length > 0;
 
   const sortLink = (field: OfferSortField) => (
     <Link
@@ -59,12 +65,55 @@ export async function OfferTable({
             {sortLink('company')}
           </th>
           <th scope="col">{t('columns.location')}</th>
+          <th scope="col" aria-sort={sortState(query, 'status')}>
+            <div className={headerCellClassName}>
+              {sortLink('status')}
+              <Popover
+                id={STATUS_POPOVER}
+                label={t('filter.trigger')}
+                triggerLabel={
+                  statusActive
+                    ? t('statusFilter.triggerLabelActive')
+                    : t('statusFilter.triggerLabel')
+                }
+                active={statusActive}
+              >
+                <Form action="/offers" className={styles.periodForm}>
+                  {keptFields(query, ['status']).map(([name, value]) => (
+                    <input
+                      key={`${name}=${value}`}
+                      type="hidden"
+                      name={name}
+                      value={value}
+                    />
+                  ))}
+                  <CheckboxGroup
+                    legend={t('statusFilter.legend')}
+                    name="status"
+                    options={OFFER_STATUSES.map((status) => ({
+                      value: status,
+                      label: tStatus(status),
+                    }))}
+                    defaultValue={query.status}
+                  />
+                  <div className={styles.actions}>
+                    <Button type="submit" variant="primary" size="sm">
+                      {t('filter.apply')}
+                    </Button>
+                    <Button size="sm" {...popoverCloseProps(STATUS_POPOVER)}>
+                      {t('filter.cancel')}
+                    </Button>
+                  </div>
+                </Form>
+              </Popover>
+            </div>
+          </th>
           <th scope="col" aria-sort={sortState(query, 'appliedAt')}>
             <div className={headerCellClassName}>
               {sortLink('appliedAt')}
               <Popover
                 id={PERIOD_POPOVER}
-                label={t('period.trigger')}
+                label={t('filter.trigger')}
                 triggerLabel={
                   periodActive
                     ? t('period.triggerLabelActive')
@@ -77,7 +126,7 @@ export async function OfferTable({
                   {keptFields(query, ['appliedFrom', 'appliedTo']).map(
                     ([name, value]) => (
                       <input
-                        key={name}
+                        key={`${name}=${value}`}
                         type="hidden"
                         name={name}
                         value={value}
@@ -100,10 +149,10 @@ export async function OfferTable({
                   />
                   <div className={styles.actions}>
                     <Button type="submit" variant="primary" size="sm">
-                      {t('period.apply')}
+                      {t('filter.apply')}
                     </Button>
                     <Button size="sm" {...popoverCloseProps(PERIOD_POPOVER)}>
-                      {t('period.cancel')}
+                      {t('filter.cancel')}
                     </Button>
                   </div>
                 </Form>
@@ -123,6 +172,9 @@ export async function OfferTable({
             </td>
             <td>{offer.company ?? '—'}</td>
             <td>{offer.location ?? '—'}</td>
+            <td className={styles.statusCell}>
+              <OfferStatusBadge status={offer.status} />
+            </td>
             <td className={styles.dateCell}>
               {offer.appliedAt ? formatDate(format, offer.appliedAt) : '—'}
             </td>

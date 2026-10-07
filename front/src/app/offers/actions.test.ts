@@ -26,9 +26,13 @@ vi.mock('@/lib/api', async (importOriginal) => ({
 const ID = '0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d';
 const initial = initialOfferFormState(EMPTY_OFFER_FORM);
 
+/** Form data as the browser sends it: the status select always has a value. */
 function form(fields: Record<string, string>): FormData {
   const formData = new FormData();
-  for (const [name, value] of Object.entries(fields)) {
+  for (const [name, value] of Object.entries({
+    status: 'applied',
+    ...fields,
+  })) {
     formData.set(name, value);
   }
   return formData;
@@ -62,6 +66,7 @@ describe('createOfferAction', () => {
       location: null,
       description: null,
       appliedAt: null,
+      status: 'applied',
     });
     expect(revalidatePath).toHaveBeenCalledWith('/offers');
   });
@@ -113,13 +118,13 @@ describe('updateOfferAction', () => {
       updateOfferAction(
         ID,
         initial,
-        form({ title: 'Dev', company: 'Acme', url: '' }),
+        form({ title: 'Dev', company: 'Acme', url: '', status: 'offered' }),
       ),
     ).rejects.toThrow(`redirect:/offers/${ID}`);
 
     expect(updateOffer).toHaveBeenCalledWith(
       ID,
-      expect.objectContaining({ url: null }),
+      expect.objectContaining({ url: null, status: 'offered' }),
     );
   });
 

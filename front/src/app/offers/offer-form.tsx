@@ -1,11 +1,12 @@
 'use client';
 
-import { TextAreaField, TextField } from '@emploi/design-system';
+import { SelectField, TextAreaField, TextField } from '@emploi/design-system';
 import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 import {
   initialOfferFormState,
   OFFER_LIMITS,
+  OFFER_STATUSES,
   type OfferFormState,
   type OfferFormValues,
 } from '@/lib/offer-form';
@@ -38,6 +39,7 @@ export function OfferForm({
   );
   const { values } = state;
   const t = useTranslations('offers.fields');
+  const tStatus = useTranslations('offers.status');
 
   return (
     <form action={formAction} className={styles.form}>
@@ -91,6 +93,18 @@ export function OfferForm({
           error={fieldError(state, 'appliedAt')}
         />
       </div>
+
+      <SelectField
+        id="status"
+        name="status"
+        label={t('status')}
+        defaultValue={values.status}
+        options={OFFER_STATUSES.map((status) => ({
+          value: status,
+          label: tStatus(status),
+        }))}
+        error={fieldError(state, 'status')}
+      />
 
       <TextAreaField
         id="description"

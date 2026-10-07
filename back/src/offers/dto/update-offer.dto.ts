@@ -1,7 +1,8 @@
-import type { UpdateOfferRequest } from '@emploi/shared';
+import type { OfferStatus, UpdateOfferRequest } from '@emploi/shared';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -13,7 +14,7 @@ import { DATE_ONLY_PATTERN } from '../../common/date-only.js';
 import { Trim, TrimToNull } from '../../common/transforms.js';
 import { IfPresent } from '../../common/validators.js';
 import { OFFER_PROPERTIES } from '../offer-api-properties.js';
-import { OFFER_LIMITS } from '../offer-limits.js';
+import { OFFER_LIMITS, OFFER_STATUSES } from '../offer-limits.js';
 
 /**
  * Partial update: absent fields are left unchanged, `null` clears an optional
@@ -68,4 +69,9 @@ export class UpdateOfferDto implements UpdateOfferRequest {
   })
   @IsDateString({ strict: true })
   appliedAt?: string | null;
+
+  @ApiPropertyOptional(OFFER_PROPERTIES.status)
+  @IfPresent()
+  @IsIn(OFFER_STATUSES)
+  status?: OfferStatus;
 }

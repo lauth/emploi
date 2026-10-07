@@ -169,10 +169,35 @@
             }
           },
           {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Only offers with one of these statuses; repeat the parameter for several (`?status=applied&status=interviewing`). All when absent.",
+            "schema": {
+              "example": [
+                "applied",
+                "interviewing"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "applied",
+                  "interviewing",
+                  "offered",
+                  "accepted",
+                  "rejected",
+                  "ghosted",
+                  "withdrawn"
+                ]
+              }
+            }
+          },
+          {
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "Sort field. Offers with no value for it (no application date, no company) come last.",
+            "description": "Sort field. Offers with no value for it (no application date, no company) come last. Statuses sort in the order of a search, `applied` first.",
             "schema": {
               "$ref": "#/components/schemas/OfferSortField"
             }
@@ -930,6 +955,19 @@
           "message"
         ]
       },
+      "OfferStatus": {
+        "type": "string",
+        "enum": [
+          "applied",
+          "interviewing",
+          "offered",
+          "accepted",
+          "rejected",
+          "ghosted",
+          "withdrawn"
+        ],
+        "description": "Where the application stands, chosen by the user: `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew."
+      },
       "CreateOfferDto": {
         "type": "object",
         "properties": {
@@ -973,6 +1011,16 @@
             "format": "date",
             "description": "Day the user responded to the offer, `YYYY-MM-DD`.",
             "example": "2026-09-28"
+          },
+          "status": {
+            "description": "Where the application stands, chosen by the user: `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew.",
+            "example": "interviewing",
+            "default": "applied",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OfferStatus"
+              }
+            ]
           }
         },
         "required": [
@@ -1027,6 +1075,15 @@
             "description": "Day the user responded to the offer, `YYYY-MM-DD`.",
             "example": "2026-09-28"
           },
+          "status": {
+            "description": "Where the application stands, chosen by the user: `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew.",
+            "example": "interviewing",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OfferStatus"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -1046,6 +1103,7 @@
           "location",
           "description",
           "appliedAt",
+          "status",
           "createdAt",
           "updatedAt"
         ]
@@ -1056,7 +1114,8 @@
           "appliedAt",
           "createdAt",
           "title",
-          "company"
+          "company",
+          "status"
         ]
       },
       "SortOrder": {
@@ -1137,6 +1196,15 @@
             "format": "date",
             "description": "Day the user responded to the offer, `YYYY-MM-DD`.",
             "example": "2026-09-28"
+          },
+          "status": {
+            "description": "Where the application stands, chosen by the user: `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew.",
+            "example": "interviewing",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OfferStatus"
+              }
+            ]
           }
         }
       },

@@ -38,6 +38,7 @@ describe('parseOfferForm', () => {
         location: null,
         description: null,
         appliedAt: '2026-09-28',
+        status: 'applied',
       },
     });
   });
@@ -71,6 +72,8 @@ describe('parseOfferForm', () => {
       'appliedAt',
       'invalidDate',
     ],
+    ['an unknown status', { status: 'hired' }, 'status', 'invalidChoice'],
+    ['a missing status', { status: '' }, 'status', 'invalidChoice'],
   ])('rejects %s', (_case, override, field, message) => {
     const result = parseOfferForm({ ...valid, ...override }, keys);
 
@@ -117,6 +120,7 @@ describe('readOfferForm', () => {
       ...EMPTY_OFFER_FORM,
       title: 'Dev',
       company: 'Acme',
+      status: '',
     });
   });
 });

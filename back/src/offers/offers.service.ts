@@ -25,8 +25,9 @@ export type OfferListQuery = ListOffersQuery &
 const SEARCHED_FIELDS = ['title', 'company', 'location'] as const;
 
 function offerFilter(query: OfferListQuery): Prisma.OfferWhereInput {
-  const { q, appliedFrom, appliedTo } = query;
+  const { q, appliedFrom, appliedTo, status } = query;
   return {
+    ...(status?.length ? { status: { in: status } } : {}),
     ...(q
       ? {
           OR: SEARCHED_FIELDS.map((field) => ({
@@ -56,6 +57,7 @@ function offerOrder(
     company: true,
     createdAt: false,
     title: false,
+    status: false,
   };
   return [
     { [sort]: nullable[sort] ? { sort: order, nulls: 'last' } : order },
@@ -77,6 +79,8 @@ export class OffersService {
         location: input.location ?? null,
         description: input.description ?? null,
         appliedAt: input.appliedAt ? fromDateOnly(input.appliedAt) : null,
+        // Absent: the database default (`applied`).
+        status: input.status,
       },
     });
     return toOffer(created);
@@ -127,6 +131,7 @@ export class OffersService {
             input.appliedAt === undefined || input.appliedAt === null
               ? input.appliedAt
               : fromDateOnly(input.appliedAt),
+          status: input.status,
         },
       });
       return toOffer(updated);

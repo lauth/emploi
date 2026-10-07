@@ -120,6 +120,50 @@ test('filters by application period from the column header', async ({
   await expect(listedTitles(page)).toHaveCount(3);
 });
 
+test('filters by status from the column header', async ({ page, offers }) => {
+  const token = randomUUID().slice(0, 8);
+  await offers.create({ title: `Envoyée ${token}` });
+  await offers.create({
+    title: `Entretiens ${token}`,
+    status: 'interviewing',
+  });
+  await offers.create({ title: `Refusée ${token}`, status: 'rejected' });
+
+  await page.goto(`/offers?q=${token}`);
+  await page.getByRole('button', { name: 'Filtrer par statut' }).click();
+  const statuses = page.getByRole('group', { name: 'Statuts affichés' });
+  await statuses.getByLabel('Candidature envoyée').check();
+  await statuses.getByLabel('Entretiens en cours').check();
+  await page.getByRole('button', { name: 'Appliquer' }).click();
+
+  await expect(page).toHaveURL(/status=applied&status=interviewing/);
+  await expect(listedTitles(page)).toHaveCount(2);
+
+  // Sorted by status: in the order of a search; the filter is kept.
+  await columnHeader(page, 'Statut')
+    .getByRole('link', { name: 'Statut' })
+    .click();
+
+  await expect(page).toHaveURL(
+    /status=applied&status=interviewing.*sort=status-asc/,
+  );
+  await expect(listedTitles(page)).toHaveText([
+    `Envoyée ${token}`,
+    `Entretiens ${token}`,
+  ]);
+  await expect(
+    page.getByRole('button', { name: 'Filtrer par statut (filtre actif)' }),
+  ).toBeVisible();
+
+  await page
+    .getByRole('link', {
+      name: 'Retirer le filtre : Candidature envoyée et Entretiens en cours',
+    })
+    .click();
+
+  await expect(listedTitles(page)).toHaveCount(3);
+});
+
 test('paginates and keeps the filters from page to page', async ({
   page,
   offers,

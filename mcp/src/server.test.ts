@@ -20,6 +20,7 @@ const offer: Offer = {
   location: 'Lyon',
   description: null,
   appliedAt: '2026-09-28',
+  status: 'interviewing',
   createdAt: '2026-10-01T08:30:00.000Z',
   updatedAt: '2026-10-01T08:30:00.000Z',
 };

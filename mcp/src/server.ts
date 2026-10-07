@@ -21,8 +21,9 @@ import {
 /** Given to the model when it connects: what emploi is and how the tools fit together. */
 const INSTRUCTIONS = `emploi records the user's job search: the job offers they responded to, and for each offer the steps of its interview process.
 
-- Offers: list_offers gives their ids, most recent application first by default; it can search (q), filter by application period and sort, one page at a time. get_offer returns an offer with its interview steps.
+- Offers: list_offers gives their ids, most recent application first by default; it can search (q), filter by application period and by status, and sort, one page at a time. get_offer returns an offer with its interview steps.
 - Only the title of an offer is required; company, link, location, description and the day the user applied (appliedAt) are optional.
+- Each offer has a status the user sets (applied by default, then interviewing, offered, accepted, rejected, ghosted or withdrawn). It is not derived from the steps: when the user reports news (an interview, an offer, a refusal), update it with update_offer.
 - Interview steps are an ordered, free-form list per offer (phone screen, technical test, onsite…), each with a title, an optional date, a status and notes. New steps are added last; reorder_interview_steps sets the whole order.
 - Dates are days in YYYY-MM-DD format. Updates are partial: omitted fields are left unchanged, null clears an optional field.
 - Deleting an offer also deletes its interview steps. Deletions cannot be undone: confirm with the user first.`;
@@ -87,7 +88,7 @@ export function createServer(api: EmploiApi): McpServer {
     {
       title: 'List job offers',
       description:
-        'Lists the job offers the user responded to, one page at a time. By default the most recent application comes first; offers without an application date come last. Can search text in the title, company and location (q), keep an application period (appliedFrom, appliedTo) and sort by application date, date recorded, title or company. The result gives the total, to page through with offset.',
+        'Lists the job offers the user responded to, one page at a time. By default the most recent application comes first; offers without an application date come last. Can search text in the title, company and location (q), keep an application period (appliedFrom, appliedTo), keep some statuses (status, e.g. ["applied", "interviewing"] for the applications still open) and sort by application date, date recorded, title, company or status. The result gives the total, to page through with offset.',
       inputSchema: listOffersInput,
       outputSchema: offerPageOutput,
       annotations: { readOnlyHint: true, openWorldHint: false },

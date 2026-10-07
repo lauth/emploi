@@ -1,11 +1,14 @@
 import type {
   ListOffersQuery,
   OfferSortField,
+  OfferStatus,
   SortOrder,
 } from '@emploi/shared';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsDateString,
   IsIn,
   IsInt,
@@ -17,8 +20,9 @@ import {
   Min,
 } from 'class-validator';
 import { DATE_ONLY_PATTERN } from '../../common/date-only.js';
-import { TrimToNull } from '../../common/transforms.js';
+import { ToArray, TrimToNull } from '../../common/transforms.js';
 import { IsNotBefore } from '../../common/validators.js';
+import { OFFER_STATUSES } from '../offer-limits.js';
 import {
   DEFAULT_SORT,
   OFFER_SORT_FIELDS,
@@ -98,11 +102,25 @@ export class ListOffersQueryDto implements ListOffersQuery {
   appliedTo?: string;
 
   @ApiPropertyOptional({
+    type: 'array',
+    items: { type: 'string', enum: OFFER_STATUSES },
+    description:
+      'Only offers with one of these statuses; repeat the parameter for several (`?status=applied&status=interviewing`). All when absent.',
+    example: ['applied', 'interviewing'],
+  })
+  @ToArray()
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(OFFER_STATUSES.length)
+  @IsIn(OFFER_STATUSES, { each: true })
+  status?: OfferStatus[];
+
+  @ApiPropertyOptional({
     enum: OFFER_SORT_FIELDS,
     enumName: 'OfferSortField',
     default: DEFAULT_SORT,
     description:
-      'Sort field. Offers with no value for it (no application date, no company) come last.',
+      'Sort field. Offers with no value for it (no application date, no company) come last. Statuses sort in the order of a search, `applied` first.',
   })
   @IsOptional()
   @IsIn(OFFER_SORT_FIELDS)

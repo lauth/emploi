@@ -26,6 +26,7 @@ const values: OfferFormValues = {
   location: 'Lyon',
   description: 'Node.js',
   appliedAt: '2026-09-28',
+  status: 'interviewing',
 };
 
 function renderForm(

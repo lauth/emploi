@@ -1,7 +1,8 @@
-import type { CreateOfferRequest } from '@emploi/shared';
+import type { CreateOfferRequest, OfferStatus } from '@emploi/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -11,8 +12,13 @@ import {
 } from 'class-validator';
 import { DATE_ONLY_PATTERN } from '../../common/date-only.js';
 import { Trim, TrimToNull } from '../../common/transforms.js';
+import { IfPresent } from '../../common/validators.js';
 import { OFFER_PROPERTIES } from '../offer-api-properties.js';
-import { OFFER_LIMITS } from '../offer-limits.js';
+import {
+  DEFAULT_OFFER_STATUS,
+  OFFER_LIMITS,
+  OFFER_STATUSES,
+} from '../offer-limits.js';
 
 export class CreateOfferDto implements CreateOfferRequest {
   @ApiProperty(OFFER_PROPERTIES.title)
@@ -58,4 +64,13 @@ export class CreateOfferDto implements CreateOfferRequest {
   })
   @IsDateString({ strict: true })
   appliedAt?: string | null;
+
+  /** Absent means `applied`; `null` is rejected. */
+  @ApiPropertyOptional({
+    ...OFFER_PROPERTIES.status,
+    default: DEFAULT_OFFER_STATUS,
+  })
+  @IfPresent()
+  @IsIn(OFFER_STATUSES)
+  status?: OfferStatus;
 }

@@ -12,6 +12,7 @@ export function toOffer(model: OfferModel): Offer {
     location: model.location,
     description: model.description,
     appliedAt: model.appliedAt === null ? null : toDateOnly(model.appliedAt),
+    status: model.status,
     createdAt: model.createdAt.toISOString(),
     updatedAt: model.updatedAt.toISOString(),
   };

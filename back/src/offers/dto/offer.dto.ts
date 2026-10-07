@@ -1,4 +1,4 @@
-import type { Offer, Page } from '@emploi/shared';
+import type { Offer, OfferStatus, Page } from '@emploi/shared';
 import { ApiProperty } from '@nestjs/swagger';
 import { OFFER_PROPERTIES } from '../offer-api-properties.js';
 
@@ -27,6 +27,9 @@ export class OfferDto implements Offer {
 
   @ApiProperty(OFFER_PROPERTIES.appliedAt)
   appliedAt: string | null;
+
+  @ApiProperty(OFFER_PROPERTIES.status)
+  status: OfferStatus;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-01T08:30:00.000Z' })
   createdAt: string;

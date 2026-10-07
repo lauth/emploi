@@ -1,14 +1,30 @@
 // Offers API (adrs/0011-offer-data-model-and-api.md, adrs/0014-offer-company-optional.md,
-// adrs/0020-offer-list-filters-sorting-and-pagination.md).
+// adrs/0020-offer-list-filters-sorting-and-pagination.md, adrs/0022-offer-status.md).
 
 import type { PageQuery, SortOrder } from './pagination.js';
+
+/**
+ * Where the application for an offer stands, chosen by the user. Listed in
+ * the order of a search (sorting by status follows it). Each side derives
+ * its runtime list from a `Record<OfferStatus, …>`, so a new status breaks
+ * the build until both handle it.
+ */
+export type OfferStatus =
+  | 'applied'
+  | 'interviewing'
+  | 'offered'
+  | 'accepted'
+  | 'rejected'
+  | 'ghosted'
+  | 'withdrawn';
 
 /**
  * Fields the offer list can be sorted by. Each side derives its runtime list
  * from a `Record<OfferSortField, …>`, so a new field breaks the build until
  * both handle it.
  */
-export type OfferSortField = 'appliedAt' | 'createdAt' | 'title' | 'company';
+export type OfferSortField =
+  'appliedAt' | 'createdAt' | 'title' | 'company' | 'status';
 
 /** Query of `GET /offers`: filters, sort and page. */
 export interface ListOffersQuery extends PageQuery {
@@ -18,6 +34,8 @@ export interface ListOffersQuery extends PageQuery {
   appliedFrom?: string;
   /** Applied on or before this day, `YYYY-MM-DD`. */
   appliedTo?: string;
+  /** Only offers with one of these statuses; all when absent. */
+  status?: OfferStatus[];
   /** Default `appliedAt`. */
   sort?: OfferSortField;
   /** Default: `desc` for dates, `asc` for text. Missing values always come last. */
@@ -35,6 +53,7 @@ export interface Offer {
   description: string | null;
   /** Day the user responded, `YYYY-MM-DD`. */
   appliedAt: string | null;
+  status: OfferStatus;
   /** ISO 8601 timestamp. */
   createdAt: string;
   /** ISO 8601 timestamp. */
@@ -50,6 +69,8 @@ export interface CreateOfferRequest {
   description?: string | null;
   /** `YYYY-MM-DD`. */
   appliedAt?: string | null;
+  /** Default `applied`. */
+  status?: OfferStatus;
 }
 
 /**
@@ -64,6 +85,7 @@ export interface UpdateOfferRequest {
   description?: string | null;
   /** `YYYY-MM-DD`. */
   appliedAt?: string | null;
+  status?: OfferStatus;
 }
 
 /** Maximum lengths enforced by the API. */
