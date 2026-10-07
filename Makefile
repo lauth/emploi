@@ -8,6 +8,7 @@ CLUSTER   := emploi
 NAMESPACE := emploi
 KUBECTL   := kubectl --context k3d-$(CLUSTER) --namespace $(NAMESPACE)
 CERT_DIR  := .certs
+NEXT_ACTIONS_KEY := .secrets/next-server-actions.key
 API_URL   := https://api.emploi.localhost
 
 .PHONY: help
@@ -177,10 +178,18 @@ certs: $(CERT_DIR)/emploi.pem ## Generate the mkcert certificate and store it as
 		--cert $(CERT_DIR)/emploi.pem --key $(CERT_DIR)/emploi-key.pem \
 		--dry-run=client --output yaml | $(KUBECTL) apply -f -
 
+# Fixed key for Next.js Server Actions, so their ids stay the same from one
+# build to the next and pages opened before a deploy keep working
+# (adrs/0023-stable-server-action-ids.md). Generated once, never committed.
+$(NEXT_ACTIONS_KEY):
+	mkdir -p $(dir $@)
+	umask 077 && openssl rand -base64 32 > $@
+
 .PHONY: images
-images: ## Build the back and front images and import them into the cluster
+images: $(NEXT_ACTIONS_KEY) ## Build the back and front images and import them into the cluster
 	docker build --file back/Dockerfile --tag emploi-back:dev .
-	docker build --file front/Dockerfile --tag emploi-front:dev .
+	docker build --file front/Dockerfile --tag emploi-front:dev \
+		--secret id=next_actions_key,src=$(NEXT_ACTIONS_KEY) .
 	k3d image import --cluster $(CLUSTER) emploi-back:dev emploi-front:dev
 
 .PHONY: deploy

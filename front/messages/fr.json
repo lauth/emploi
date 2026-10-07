@@ -15,7 +15,8 @@
   "error": {
     "title": "Une erreur est survenue",
     "text": "La page n’a pas pu être chargée. L’API est peut-être indisponible.",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "updated": "L’application vient d’être mise à jour : rechargement de la page…"
   },
   "form": {
     "saving": "Enregistrement…",
