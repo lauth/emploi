@@ -7,7 +7,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -21,15 +20,12 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiInvalidRequest, ApiNotFound } from '../common/api-docs.js';
+import { ParseIdPipe } from '../problems/validation.js';
 import { CreateOfferDto } from './dto/create-offer.dto.js';
 import { ListOffersQueryDto } from './dto/list-offers-query.dto.js';
 import { OfferDto, OfferPageDto } from './dto/offer.dto.js';
 import { UpdateOfferDto } from './dto/update-offer.dto.js';
 import { OffersService } from './offers.service.js';
-
-const OFFER_NOT_FOUND = 'No offer with this id.';
-const OFFER_NOT_FOUND_MESSAGE =
-  'Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found';
 
 const OFFER_ID = ApiParam({
   name: 'id',
@@ -67,8 +63,8 @@ export class OffersController {
   @OFFER_ID
   @ApiOkResponse({ type: OfferDto })
   @ApiInvalidRequest()
-  @ApiNotFound(OFFER_NOT_FOUND, OFFER_NOT_FOUND_MESSAGE)
-  get(@Param('id', ParseUUIDPipe) id: string): Promise<Offer> {
+  @ApiNotFound('offer')
+  get(@Param('id', ParseIdPipe) id: string): Promise<Offer> {
     return this.offers.get(id);
   }
 
@@ -81,9 +77,9 @@ export class OffersController {
   @OFFER_ID
   @ApiOkResponse({ type: OfferDto })
   @ApiInvalidRequest()
-  @ApiNotFound(OFFER_NOT_FOUND, OFFER_NOT_FOUND_MESSAGE)
+  @ApiNotFound('offer')
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', ParseIdPipe) id: string,
     @Body() body: UpdateOfferDto,
   ): Promise<Offer> {
     return this.offers.update(id, body);
@@ -95,8 +91,8 @@ export class OffersController {
   @OFFER_ID
   @ApiNoContentResponse({ description: 'Deleted.' })
   @ApiInvalidRequest()
-  @ApiNotFound(OFFER_NOT_FOUND, OFFER_NOT_FOUND_MESSAGE)
-  remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  @ApiNotFound('offer')
+  remove(@Param('id', ParseIdPipe) id: string): Promise<void> {
     return this.offers.remove(id);
   }
 }

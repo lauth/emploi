@@ -6,21 +6,38 @@ import type {
   ListOffersQuery,
   Offer,
   Page,
+  ProblemDetails,
+  ProblemType,
   UpdateInterviewStepRequest,
   UpdateOfferRequest,
 } from '@emploi/shared';
 import { connection } from 'next/server';
 import { serverEnv } from './env';
 
-/** Error answered by the API, with its validation messages when there are some. */
+/**
+ * Error answered by the API: its RFC 9457 Problem Details
+ * (adrs/0024-problem-details-errors.md), or `null` when the response wasn't
+ * one (e.g. a proxy error page). Logged, never shown to the user.
+ */
 export class ApiError extends Error {
   constructor(
     readonly status: number,
-    readonly messages: string[],
+    readonly problem: ProblemDetails | null = null,
   ) {
-    super(`API error ${String(status)}: ${messages.join('; ')}`);
+    super(`API error ${String(status)}: ${describeProblem(problem)}`);
     this.name = 'ApiError';
   }
+}
+
+/** "detail (/title: isNotEmpty; …)" for logs. */
+function describeProblem(problem: ProblemDetails | null): string {
+  if (problem === null) {
+    return 'no details';
+  }
+  const errors = (problem.errors ?? [])
+    .map(({ name, code }) => `${name}: ${code}`)
+    .join('; ');
+  return errors ? `${problem.detail} (${errors})` : problem.detail;
 }
 
 async function send(path: string, init: RequestInit = {}): Promise<Response> {
@@ -35,7 +52,7 @@ async function send(path: string, init: RequestInit = {}): Promise<Response> {
     },
   });
   if (!response.ok) {
-    throw new ApiError(response.status, await readMessages(response));
+    throw new ApiError(response.status, await readProblem(response));
   }
   return response;
 }
@@ -48,23 +65,36 @@ async function json<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
-/** NestJS error bodies: `{ message: string | string[], error, statusCode }`. */
-async function readMessages(response: Response): Promise<string[]> {
-  try {
-    const body: unknown = await response.json();
-    if (typeof body === 'object' && body !== null && 'message' in body) {
-      const { message } = body;
-      if (typeof message === 'string') {
-        return [message];
-      }
-      if (Array.isArray(message)) {
-        return message.filter((item) => typeof item === 'string');
-      }
-    }
-  } catch {
-    // Not JSON: fall through to the status text.
+/** The Problem Details of an error response, or `null` when it isn't one. */
+async function readProblem(response: Response): Promise<ProblemDetails | null> {
+  if (
+    !response.headers
+      .get('content-type')
+      ?.startsWith('application/problem+json')
+  ) {
+    return null;
   }
-  return [response.statusText];
+  try {
+    return (await response.json()) as ProblemDetails;
+  } catch {
+    return null;
+  }
+}
+
+const PROBLEM_TYPES: Record<ProblemType, string> = {
+  'validation-error': '/problems/validation-error',
+  'malformed-request': '/problems/malformed-request',
+  'resource-not-found': '/problems/resource-not-found',
+  'route-not-found': '/problems/route-not-found',
+  'service-unavailable': '/problems/service-unavailable',
+  'internal-error': '/problems/internal-error',
+};
+
+/** True when the API answered this kind of problem. */
+export function isProblem(error: unknown, type: ProblemType): boolean {
+  return (
+    error instanceof ApiError && error.problem?.type === PROBLEM_TYPES[type]
+  );
 }
 
 // Reads are used while rendering: `connection()` makes the page render at
@@ -88,11 +118,19 @@ export async function listOffers(query: ListOffersQuery): Promise<Page<Offer>> {
   return json(await send(`/offers?${params.toString()}`));
 }
 
-/** True when the API says the resource doesn't exist (400: not a valid id). */
+/**
+ * True when the API says the resource doesn't exist, or that an id in the
+ * path isn't one at all (an id from a URL typed by hand).
+ */
 export function isNotFound(error: unknown): boolean {
-  return (
-    error instanceof ApiError && (error.status === 404 || error.status === 400)
-  );
+  if (isProblem(error, 'resource-not-found')) {
+    return true;
+  }
+  const errors =
+    error instanceof ApiError && isProblem(error, 'validation-error')
+      ? (error.problem?.errors ?? [])
+      : [];
+  return errors.length > 0 && errors.every((invalid) => invalid.in === 'path');
 }
 
 async function nullIfNotFound<T>(request: Promise<T>): Promise<T | null> {

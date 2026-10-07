@@ -1,9 +1,11 @@
-import type { Offer } from '@emploi/shared';
+import type { Offer, ProblemDetails } from '@emploi/shared';
+import { problem } from '@/test/problems';
 import {
   ApiError,
   createOffer,
   getInterviewStep,
   getOffer,
+  isProblem,
   listInterviewSteps,
   listOffers,
   reorderInterviewSteps,
@@ -30,6 +32,13 @@ function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+function problemResponse(body: ProblemDetails): Response {
+  return new Response(JSON.stringify(body), {
+    status: body.status,
+    headers: { 'Content-Type': 'application/problem+json' },
   });
 }
 
@@ -84,16 +93,25 @@ describe('getOffer', () => {
     await expect(getOffer(offer.id)).resolves.toEqual(offer);
   });
 
-  it.each([404, 400])(
-    'returns null when the API answers %i',
-    async (status) => {
-      fetchMock.mockResolvedValue(
-        jsonResponse({ message: 'Not found', statusCode: status }, status),
-      );
+  it.each([
+    ['the offer does not exist', problem('resource-not-found')],
+    [
+      'the id is not one',
+      problem('validation-error', {
+        errors: [{ in: 'path', name: 'id', code: 'isUuid', detail: 'x' }],
+      }),
+    ],
+  ])('returns null when %s', async (_case, body) => {
+    fetchMock.mockResolvedValue(problemResponse(body));
 
-      await expect(getOffer('unknown')).resolves.toBeNull();
-    },
-  );
+    await expect(getOffer('unknown')).resolves.toBeNull();
+  });
+
+  it('throws on a route-not-found: the client is wrong, not the id', async () => {
+    fetchMock.mockResolvedValue(problemResponse(problem('route-not-found')));
+
+    await expect(getOffer(offer.id)).rejects.toBeInstanceOf(ApiError);
+  });
 
   it('throws on other errors', async () => {
     fetchMock.mockResolvedValue(new Response('boom', { status: 500 }));
@@ -120,17 +138,18 @@ describe('createOffer', () => {
     );
   });
 
-  it('exposes the validation messages of the API', async () => {
-    fetchMock.mockResolvedValue(
-      jsonResponse(
+  it('exposes the problem details of the API', async () => {
+    const body = problem('validation-error', {
+      errors: [
         {
-          message: ['title should not be empty', 'url must be a URL address'],
-          error: 'Bad Request',
-          statusCode: 400,
+          in: 'body',
+          name: '/title',
+          code: 'isNotEmpty',
+          detail: 'title should not be empty',
         },
-        400,
-      ),
-    );
+      ],
+    });
+    fetchMock.mockResolvedValue(problemResponse(body));
 
     const error: unknown = await createOffer({
       title: '',
@@ -138,9 +157,22 @@ describe('createOffer', () => {
     }).catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(ApiError);
-    expect(error).toMatchObject({
-      status: 400,
-      messages: ['title should not be empty', 'url must be a URL address'],
+    expect(error).toMatchObject({ status: 400, problem: body });
+    expect(isProblem(error, 'validation-error')).toBe(true);
+    expect(String(error)).toContain('/title: isNotEmpty');
+  });
+
+  it('has no problem details when the response is not one', async () => {
+    fetchMock.mockResolvedValue(
+      new Response('<html>Bad Gateway</html>', {
+        status: 502,
+        headers: { 'Content-Type': 'text/html' },
+      }),
+    );
+
+    await expect(createOffer({ title: 'Dev' })).rejects.toMatchObject({
+      status: 502,
+      problem: null,
     });
   });
 });
@@ -159,7 +191,9 @@ describe('interview steps', () => {
 
   it('returns null for a step of another offer', async () => {
     fetchMock.mockResolvedValue(
-      jsonResponse({ message: 'Not found', statusCode: 404 }, 404),
+      problemResponse(
+        problem('resource-not-found', { resource: 'interview-step' }),
+      ),
     );
 
     await expect(getInterviewStep(offer.id, 'step')).resolves.toBeNull();

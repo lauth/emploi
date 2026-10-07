@@ -1,14 +1,16 @@
 import type { HealthStatus } from '@emploi/shared';
-import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import {
   ApiOkResponse,
   ApiOperation,
   ApiProperty,
-  ApiServiceUnavailableResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiErrorDto } from '../common/api-docs.js';
+import { ApiUnavailable } from '../common/api-docs.js';
+import { ProblemException } from '../problems/problem.exception.js';
 import { HealthService } from './health.service.js';
+
+const DATABASE_UNREACHABLE = 'The database is unreachable. Try again later.';
 
 /** Response shape, for the OpenAPI document. */
 class HealthStatusDto implements HealthStatus {
@@ -34,18 +36,10 @@ export class HealthController {
   @Get('ready')
   @ApiOperation({ summary: 'Readiness: the database is reachable' })
   @ApiOkResponse({ type: HealthStatusDto })
-  @ApiServiceUnavailableResponse({
-    type: ApiErrorDto,
-    description: 'The database is unreachable.',
-    example: {
-      statusCode: 503,
-      message: 'Database unreachable',
-      error: 'Service Unavailable',
-    } satisfies ApiErrorDto,
-  })
+  @ApiUnavailable('The database is unreachable.', DATABASE_UNREACHABLE)
   async ready(): Promise<HealthStatus> {
     if (!(await this.health.isDatabaseReachable())) {
-      throw new ServiceUnavailableException('Database unreachable');
+      throw new ProblemException('service-unavailable', DATABASE_UNREACHABLE);
     }
     return { status: 'ok' };
   }

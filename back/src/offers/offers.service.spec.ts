@@ -1,4 +1,3 @@
-import { NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import {
   Prisma,
@@ -8,6 +7,12 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { OffersService } from './offers.service.js';
 
 const ID = '0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d';
+
+/** The `resource-not-found` problem raised for a missing offer. */
+const OFFER_NOT_FOUND = {
+  problemType: 'resource-not-found',
+  extras: { resource: 'offer' },
+};
 
 const model: OfferModel = {
   id: ID,
@@ -199,10 +204,10 @@ describe('OffersService', () => {
       await expect(service.get(ID)).resolves.toMatchObject({ id: ID });
     });
 
-    it('throws NotFoundException for an unknown id', async () => {
+    it('raises resource-not-found for an unknown id', async () => {
       prisma.offer.findUnique.mockResolvedValue(null);
 
-      await expect(service.get(ID)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.get(ID)).rejects.toMatchObject(OFFER_NOT_FOUND);
     });
   });
 
@@ -240,11 +245,11 @@ describe('OffersService', () => {
       );
     });
 
-    it('throws NotFoundException for an unknown id', async () => {
+    it('raises resource-not-found for an unknown id', async () => {
       prisma.offer.update.mockRejectedValue(recordNotFound());
 
-      await expect(service.update(ID, { title: 'x' })).rejects.toBeInstanceOf(
-        NotFoundException,
+      await expect(service.update(ID, { title: 'x' })).rejects.toMatchObject(
+        OFFER_NOT_FOUND,
       );
     });
 
@@ -265,12 +270,10 @@ describe('OffersService', () => {
       expect(prisma.offer.delete).toHaveBeenCalledWith({ where: { id: ID } });
     });
 
-    it('throws NotFoundException for an unknown id', async () => {
+    it('raises resource-not-found for an unknown id', async () => {
       prisma.offer.delete.mockRejectedValue(recordNotFound());
 
-      await expect(service.remove(ID)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(service.remove(ID)).rejects.toMatchObject(OFFER_NOT_FOUND);
     });
   });
 });

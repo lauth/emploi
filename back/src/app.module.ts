@@ -1,11 +1,11 @@
-import { Module, ValidationPipe } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_PIPE } from '@nestjs/core';
 import { validateEnv } from './config/env.validation.js';
 import { HealthModule } from './health/health.module.js';
 import { InterviewStepsModule } from './interview-steps/interview-steps.module.js';
 import { OffersModule } from './offers/offers.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { ProblemsModule } from './problems/problems.module.js';
 
 @Module({
   imports: [
@@ -15,20 +15,11 @@ import { PrismaModule } from './prisma/prisma.module.js';
       validate: validateEnv,
     }),
     PrismaModule,
+    // Global validation pipe and exception filter (errors as Problem Details).
+    ProblemsModule,
     HealthModule,
     OffersModule,
     InterviewStepsModule,
-  ],
-  providers: [
-    {
-      // Registered here rather than in main.ts so e2e tests get the same validation.
-      provide: APP_PIPE,
-      useValue: new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    },
   ],
 })
 export class AppModule {}

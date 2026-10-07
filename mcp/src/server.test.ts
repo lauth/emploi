@@ -1,4 +1,4 @@
-import type { InterviewStep, Offer } from '@emploi/shared';
+import type { InterviewStep, Offer, ProblemDetails } from '@emploi/shared';
 // Both halves of an in-memory pair must come from the same package (SDK v2).
 import {
   Client,
@@ -291,15 +291,66 @@ describe('emploi MCP server', () => {
   });
 
   it('turns API errors into tool errors the model can read', async () => {
-    api.getOffer.mockRejectedValue(
-      new ApiError(404, [`Offer ${OFFER_ID} not found`]),
-    );
+    const notFound: ProblemDetails = {
+      type: '/problems/resource-not-found',
+      title: 'Resource not found',
+      status: 404,
+      detail: `No offer has the id ${OFFER_ID}. List offers (GET /offers) to get valid ids.`,
+      instance: `/offers/${OFFER_ID}`,
+      resource: 'offer',
+    };
+    api.getOffer.mockRejectedValue(new ApiError(404, notFound));
     api.listInterviewSteps.mockResolvedValue([]);
 
     const result = await call('get_offer', { offerId: OFFER_ID });
 
     expect(result.isError).toBe(true);
-    expect(text(result)).toBe(`Not found: Offer ${OFFER_ID} not found`);
+    expect(text(result)).toContain(
+      `Resource not found (HTTP 404): No offer has the id ${OFFER_ID}.`,
+    );
+    expect(text(result)).toContain('"type": "/problems/resource-not-found"');
+  });
+
+  it('lists each invalid value with the accepted values', async () => {
+    api.updateOffer.mockRejectedValue(
+      new ApiError(400, {
+        type: '/problems/validation-error',
+        title: 'Invalid request',
+        status: 400,
+        detail:
+          '1 value is invalid: see `errors`, fix it and send the request again.',
+        instance: `/offers/${OFFER_ID}`,
+        errors: [
+          {
+            in: 'body',
+            name: '/status',
+            code: 'isIn',
+            detail:
+              'status must be one of the following values: applied, offered',
+            allowed: ['applied', 'offered'],
+          },
+        ],
+      }),
+    );
+
+    const result = await call('update_offer', {
+      offerId: OFFER_ID,
+      status: 'offered',
+    });
+
+    expect(result.isError).toBe(true);
+    expect(text(result)).toContain(
+      '- status (isIn): status must be one of the following values: applied, offered (allowed values: applied, offered)',
+    );
+  });
+
+  it('reports an API error without details', async () => {
+    api.listOffers.mockRejectedValue(new ApiError(502, null));
+
+    const result = await call('list_offers');
+
+    expect(result.isError).toBe(true);
+    expect(text(result)).toContain('HTTP 502 and no details');
   });
 
   it('only passes the documented fields to the model', async () => {

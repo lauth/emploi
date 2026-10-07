@@ -1,8 +1,9 @@
 import type { Offer } from '@emploi/shared';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { ApiError, createOffer, deleteOffer, updateOffer } from '@/lib/api';
+import { createOffer, deleteOffer, updateOffer } from '@/lib/api';
 import { EMPTY_OFFER_FORM, initialOfferFormState } from '@/lib/offer-form';
+import { problemError, validationError } from '@/test/problems';
 import {
   createOfferAction,
   deleteOfferAction,
@@ -78,9 +79,13 @@ describe('createOfferAction', () => {
   });
 
   it('shows a translated message, not the API one, when the API rejects the data', async () => {
-    const rejection = new ApiError(400, [
-      'title must be shorter than or equal to 200 characters',
-    ]);
+    const rejection = validationError({
+      in: 'body',
+      name: '/title',
+      code: 'maxLength',
+      detail: 'title must be shorter than or equal to 200 characters',
+      maxLength: 200,
+    });
     vi.mocked(createOffer).mockRejectedValue(rejection);
 
     const state = await createOfferAction(
@@ -129,7 +134,9 @@ describe('updateOfferAction', () => {
   });
 
   it('reports an offer deleted in the meantime', async () => {
-    vi.mocked(updateOffer).mockRejectedValue(new ApiError(404, ['Not found']));
+    vi.mocked(updateOffer).mockRejectedValue(
+      problemError('resource-not-found', { resource: 'offer' }),
+    );
 
     const state = await updateOfferAction(
       ID,
@@ -150,13 +157,15 @@ describe('deleteOfferAction', () => {
   });
 
   it('treats an offer already deleted as success', async () => {
-    vi.mocked(deleteOffer).mockRejectedValue(new ApiError(404, ['Not found']));
+    vi.mocked(deleteOffer).mockRejectedValue(
+      problemError('resource-not-found', { resource: 'offer' }),
+    );
 
     await expect(deleteOfferAction(ID)).rejects.toThrow('redirect:/offers');
   });
 
   it('rethrows other errors', async () => {
-    const failure = new ApiError(500, ['Internal server error']);
+    const failure = problemError('internal-error');
     vi.mocked(deleteOffer).mockRejectedValue(failure);
 
     await expect(deleteOfferAction(ID)).rejects.toBe(failure);

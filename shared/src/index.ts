@@ -20,3 +20,10 @@ export type {
   UpdateOfferRequest,
 } from './offer.js';
 export type { Page, PageQuery, SortOrder } from './pagination.js';
+export type {
+  InvalidParam,
+  InvalidParamLocation,
+  ProblemDetails,
+  ProblemType,
+  ProblemTypeDescription,
+} from './problem.js';

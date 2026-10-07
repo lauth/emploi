@@ -7,7 +7,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Patch,
   Post,
   Put,
@@ -21,18 +20,12 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiInvalidRequest, ApiNotFound } from '../common/api-docs.js';
+import { ParseIdPipe } from '../problems/validation.js';
 import { CreateInterviewStepDto } from './dto/create-interview-step.dto.js';
 import { InterviewStepDto } from './dto/interview-step.dto.js';
 import { ReorderInterviewStepsDto } from './dto/reorder-interview-steps.dto.js';
 import { UpdateInterviewStepDto } from './dto/update-interview-step.dto.js';
 import { InterviewStepsService } from './interview-steps.service.js';
-
-const OFFER_NOT_FOUND = 'No offer with this id.';
-const OFFER_NOT_FOUND_MESSAGE =
-  'Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found';
-const STEP_NOT_FOUND = 'No such step for this offer.';
-const STEP_NOT_FOUND_MESSAGE =
-  'Interview step 0199a7a4-3c2e-7b6a-9c1d-00000000000a not found for offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d';
 
 const OFFER_ID = ApiParam({
   name: 'offerId',
@@ -55,9 +48,9 @@ export class InterviewStepsController {
   @ApiOperation({ summary: 'List the steps of an offer, in order' })
   @ApiOkResponse({ type: [InterviewStepDto] })
   @ApiInvalidRequest()
-  @ApiNotFound(OFFER_NOT_FOUND, OFFER_NOT_FOUND_MESSAGE)
+  @ApiNotFound('offer')
   list(
-    @Param('offerId', ParseUUIDPipe) offerId: string,
+    @Param('offerId', ParseIdPipe) offerId: string,
   ): Promise<InterviewStep[]> {
     return this.steps.list(offerId);
   }
@@ -66,9 +59,9 @@ export class InterviewStepsController {
   @ApiOperation({ summary: 'Add a step after the existing ones' })
   @ApiCreatedResponse({ type: InterviewStepDto })
   @ApiInvalidRequest()
-  @ApiNotFound(OFFER_NOT_FOUND, OFFER_NOT_FOUND_MESSAGE)
+  @ApiNotFound('offer')
   create(
-    @Param('offerId', ParseUUIDPipe) offerId: string,
+    @Param('offerId', ParseIdPipe) offerId: string,
     @Body() body: CreateInterviewStepDto,
   ): Promise<InterviewStep> {
     return this.steps.create(offerId, body);
@@ -85,9 +78,9 @@ export class InterviewStepsController {
     description: 'The steps in their new order.',
   })
   @ApiInvalidRequest()
-  @ApiNotFound(OFFER_NOT_FOUND, OFFER_NOT_FOUND_MESSAGE)
+  @ApiNotFound('offer')
   reorder(
-    @Param('offerId', ParseUUIDPipe) offerId: string,
+    @Param('offerId', ParseIdPipe) offerId: string,
     @Body() body: ReorderInterviewStepsDto,
   ): Promise<InterviewStep[]> {
     return this.steps.reorder(offerId, body.stepIds);
@@ -98,10 +91,10 @@ export class InterviewStepsController {
   @STEP_ID
   @ApiOkResponse({ type: InterviewStepDto })
   @ApiInvalidRequest()
-  @ApiNotFound(STEP_NOT_FOUND, STEP_NOT_FOUND_MESSAGE)
+  @ApiNotFound('interview-step')
   get(
-    @Param('offerId', ParseUUIDPipe) offerId: string,
-    @Param('stepId', ParseUUIDPipe) stepId: string,
+    @Param('offerId', ParseIdPipe) offerId: string,
+    @Param('stepId', ParseIdPipe) stepId: string,
   ): Promise<InterviewStep> {
     return this.steps.get(offerId, stepId);
   }
@@ -115,10 +108,10 @@ export class InterviewStepsController {
   @STEP_ID
   @ApiOkResponse({ type: InterviewStepDto })
   @ApiInvalidRequest()
-  @ApiNotFound(STEP_NOT_FOUND, STEP_NOT_FOUND_MESSAGE)
+  @ApiNotFound('interview-step')
   update(
-    @Param('offerId', ParseUUIDPipe) offerId: string,
-    @Param('stepId', ParseUUIDPipe) stepId: string,
+    @Param('offerId', ParseIdPipe) offerId: string,
+    @Param('stepId', ParseIdPipe) stepId: string,
     @Body() body: UpdateInterviewStepDto,
   ): Promise<InterviewStep> {
     return this.steps.update(offerId, stepId, body);
@@ -130,10 +123,10 @@ export class InterviewStepsController {
   @STEP_ID
   @ApiNoContentResponse({ description: 'Deleted.' })
   @ApiInvalidRequest()
-  @ApiNotFound(STEP_NOT_FOUND, STEP_NOT_FOUND_MESSAGE)
+  @ApiNotFound('interview-step')
   remove(
-    @Param('offerId', ParseUUIDPipe) offerId: string,
-    @Param('stepId', ParseUUIDPipe) stepId: string,
+    @Param('offerId', ParseIdPipe) offerId: string,
+    @Param('stepId', ParseIdPipe) stepId: string,
   ): Promise<void> {
     return this.steps.remove(offerId, stepId);
   }

@@ -5,20 +5,25 @@ import type {
   ListOffersQuery,
   Offer,
   Page,
+  ProblemDetails,
   UpdateInterviewStepRequest,
   UpdateOfferRequest,
 } from '@emploi/shared';
 
-/** Error answered by the API, with its messages (validation problems, not found…). */
+/**
+ * Error answered by the API: its RFC 9457 Problem Details
+ * (adrs/0024-problem-details-errors.md), or `null` when the response wasn't
+ * one (e.g. a proxy error page).
+ */
 export class ApiError extends Error {
   readonly status: number;
-  readonly messages: string[];
+  readonly problem: ProblemDetails | null;
 
-  constructor(status: number, messages: string[]) {
-    super(messages.join('; '));
+  constructor(status: number, problem: ProblemDetails | null) {
+    super(problem?.detail ?? `HTTP ${String(status)}`);
     this.name = 'ApiError';
     this.status = status;
-    this.messages = messages;
+    this.problem = problem;
   }
 }
 
@@ -65,23 +70,20 @@ export interface EmploiApi {
   deleteInterviewStep(offerId: string, stepId: string): Promise<void>;
 }
 
-/** NestJS error bodies: `{ message: string | string[], error, statusCode }`. */
-async function readMessages(response: Response): Promise<string[]> {
-  try {
-    const body: unknown = await response.json();
-    if (typeof body === 'object' && body !== null && 'message' in body) {
-      const { message } = body;
-      if (typeof message === 'string') {
-        return [message];
-      }
-      if (Array.isArray(message)) {
-        return message.filter((item) => typeof item === 'string');
-      }
-    }
-  } catch {
-    // Not JSON: fall through to the status text.
+/** The Problem Details of an error response, or `null` when it isn't one. */
+async function readProblem(response: Response): Promise<ProblemDetails | null> {
+  if (
+    !response.headers
+      .get('content-type')
+      ?.startsWith('application/problem+json')
+  ) {
+    return null;
   }
-  return [`${String(response.status)} ${response.statusText}`.trim()];
+  try {
+    return (await response.json()) as ProblemDetails;
+  } catch {
+    return null;
+  }
 }
 
 /** An `EmploiApi` over HTTP, using `fetch`. */
@@ -108,7 +110,7 @@ export function createHttpApi(
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     if (!response.ok) {
-      throw new ApiError(response.status, await readMessages(response));
+      throw new ApiError(response.status, await readProblem(response));
     }
     return response;
   }

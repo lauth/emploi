@@ -80,6 +80,8 @@ describe('OpenAPI documentation (e2e)', () => {
       'GET /offers/{id}',
       'GET /offers/{offerId}/steps',
       'GET /offers/{offerId}/steps/{stepId}',
+      'GET /problems',
+      'GET /problems/{type}',
       'PATCH /offers/{id}',
       'PATCH /offers/{offerId}/steps/{stepId}',
       'POST /offers',
@@ -97,12 +99,31 @@ describe('OpenAPI documentation (e2e)', () => {
   });
 
   it('documents the validation errors of every route that takes input', () => {
+    // Not validated: an unknown problem type is a missing page (404).
+    const lookups = ['GET /problems/{type}'];
     for (const [name, operation] of operations(document)) {
       const takesInput =
         (operation.parameters?.length ?? 0) > 0 ||
         operation.requestBody !== undefined;
-      if (takesInput) {
+      if (takesInput && !lookups.includes(name)) {
         expect(operation.responses, name).toHaveProperty('400');
+      }
+    }
+  });
+
+  // adrs/0024-problem-details-errors.md
+  it('documents every error response as Problem Details', () => {
+    for (const [name, operation] of operations(document)) {
+      for (const [status, response] of Object.entries(operation.responses)) {
+        if (Number(status) >= 400) {
+          expect(response, `${name} ${status}`).toMatchObject({
+            content: {
+              'application/problem+json': {
+                schema: { $ref: '#/components/schemas/ProblemDetailsDto' },
+              },
+            },
+          });
+        }
       }
     }
   });

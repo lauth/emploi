@@ -1,4 +1,3 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import {
   Prisma,
@@ -10,6 +9,16 @@ import { InterviewStepsService } from './interview-steps.service.js';
 const OFFER_ID = '0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d';
 const STEP_A = '0199a7a4-3c2e-7b6a-9c1d-00000000000a';
 const STEP_B = '0199a7a4-3c2e-7b6a-9c1d-00000000000b';
+
+/** The `resource-not-found` problems raised for a missing offer or step. */
+const OFFER_NOT_FOUND = {
+  problemType: 'resource-not-found',
+  extras: { resource: 'offer' },
+};
+const STEP_NOT_FOUND = {
+  problemType: 'resource-not-found',
+  extras: { resource: 'interview-step' },
+};
 
 function step(id: string, position: number): InterviewStepModel {
   return {
@@ -79,11 +88,11 @@ describe('InterviewStepsService', () => {
       });
     });
 
-    it('throws NotFoundException for an unknown offer', async () => {
+    it('raises resource-not-found for an unknown offer', async () => {
       prisma.offer.findUnique.mockResolvedValue(null);
 
-      await expect(service.list(OFFER_ID)).rejects.toBeInstanceOf(
-        NotFoundException,
+      await expect(service.list(OFFER_ID)).rejects.toMatchObject(
+        OFFER_NOT_FOUND,
       );
     });
   });
@@ -92,8 +101,8 @@ describe('InterviewStepsService', () => {
     it('only finds the step within its offer', async () => {
       prisma.interviewStep.findFirst.mockResolvedValue(null);
 
-      await expect(service.get(OFFER_ID, STEP_A)).rejects.toBeInstanceOf(
-        NotFoundException,
+      await expect(service.get(OFFER_ID, STEP_A)).rejects.toMatchObject(
+        STEP_NOT_FOUND,
       );
       expect(prisma.interviewStep.findFirst).toHaveBeenCalledWith({
         where: { id: STEP_A, offerId: OFFER_ID },
@@ -144,12 +153,12 @@ describe('InterviewStepsService', () => {
       });
     });
 
-    it('throws NotFoundException for an unknown offer', async () => {
+    it('raises resource-not-found for an unknown offer', async () => {
       prisma.offer.findUnique.mockResolvedValue(null);
 
       await expect(
         service.create(OFFER_ID, { title: 'Phone screen' }),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      ).rejects.toMatchObject(OFFER_NOT_FOUND);
       expect(prisma.interviewStep.create).not.toHaveBeenCalled();
     });
   });
@@ -171,21 +180,21 @@ describe('InterviewStepsService', () => {
       });
     });
 
-    it('throws NotFoundException for an unknown step', async () => {
+    it('raises resource-not-found for an unknown step', async () => {
       prisma.interviewStep.update.mockRejectedValue(recordNotFound());
 
       await expect(
         service.update(OFFER_ID, STEP_A, { title: 'x' }),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      ).rejects.toMatchObject(STEP_NOT_FOUND);
     });
   });
 
   describe('remove', () => {
-    it('throws NotFoundException for an unknown step', async () => {
+    it('raises resource-not-found for an unknown step', async () => {
       prisma.interviewStep.delete.mockRejectedValue(recordNotFound());
 
-      await expect(service.remove(OFFER_ID, STEP_A)).rejects.toBeInstanceOf(
-        NotFoundException,
+      await expect(service.remove(OFFER_ID, STEP_A)).rejects.toMatchObject(
+        STEP_NOT_FOUND,
       );
     });
   });
@@ -223,9 +232,12 @@ describe('InterviewStepsService', () => {
         [STEP_A, STEP_B, '0199a7a4-3c2e-7b6a-9c1d-0000000000ff'],
       ],
     ])('rejects %s', async (_case, stepIds) => {
-      await expect(service.reorder(OFFER_ID, stepIds)).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      await expect(service.reorder(OFFER_ID, stepIds)).rejects.toMatchObject({
+        problemType: 'validation-error',
+        extras: {
+          errors: [{ in: 'body', name: '/stepIds', code: 'everyStepOnce' }],
+        },
+      });
       expect(prisma.interviewStep.update).not.toHaveBeenCalled();
     });
   });

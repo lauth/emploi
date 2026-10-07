@@ -1,8 +1,8 @@
 import type { InterviewStep } from '@emploi/shared';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { problemError, validationError } from '@/test/problems';
 import {
-  ApiError,
   createInterviewStep,
   deleteInterviewStep,
   listInterviewSteps,
@@ -86,7 +86,7 @@ describe('createInterviewStepAction', () => {
 
   it('reports an offer deleted in the meantime', async () => {
     vi.mocked(createInterviewStep).mockRejectedValue(
-      new ApiError(404, ['Not found']),
+      problemError('resource-not-found', { resource: 'offer' }),
     );
 
     const state = await createInterviewStepAction(
@@ -137,7 +137,12 @@ describe('updateInterviewStepAction', () => {
 
   it('shows a translated message, not the API one, when the API rejects the data', async () => {
     vi.mocked(updateInterviewStep).mockRejectedValue(
-      new ApiError(400, ['status must be one of the following values']),
+      validationError({
+        in: 'body',
+        name: '/status',
+        code: 'isIn',
+        detail: 'status must be one of the following values',
+      }),
     );
 
     const state = await updateInterviewStepAction(
@@ -164,7 +169,7 @@ describe('deleteInterviewStepAction', () => {
 
   it('treats a step already deleted as success', async () => {
     vi.mocked(deleteInterviewStep).mockRejectedValue(
-      new ApiError(404, ['Not found']),
+      problemError('resource-not-found', { resource: 'interview-step' }),
     );
 
     await expect(deleteInterviewStepAction(OFFER_ID, 'a')).resolves.toBe(
@@ -173,7 +178,7 @@ describe('deleteInterviewStepAction', () => {
   });
 
   it('rethrows other errors', async () => {
-    const failure = new ApiError(500, ['Internal server error']);
+    const failure = problemError('internal-error');
     vi.mocked(deleteInterviewStep).mockRejectedValue(failure);
 
     await expect(deleteInterviewStepAction(OFFER_ID, 'a')).rejects.toBe(
@@ -206,12 +211,31 @@ describe('moveInterviewStepAction', () => {
 
   it('refreshes the page when the steps changed in the meantime', async () => {
     vi.mocked(reorderInterviewSteps).mockRejectedValue(
-      new ApiError(400, ['stepIds must list every step of the offer']),
+      validationError({
+        in: 'body',
+        name: '/stepIds',
+        code: 'everyStepOnce',
+        detail: 'stepIds must list every step of the offer exactly once',
+      }),
     );
 
     await moveInterviewStepAction(OFFER_ID, 'b', 'down');
 
     expect(revalidatePath).toHaveBeenCalledWith(`/offers/${OFFER_ID}`);
+  });
+
+  it('rethrows other validation errors', async () => {
+    const rejection = validationError({
+      in: 'body',
+      name: '/stepIds/0',
+      code: 'isUuid',
+      detail: 'each value in stepIds must be a UUID',
+    });
+    vi.mocked(reorderInterviewSteps).mockRejectedValue(rejection);
+
+    await expect(moveInterviewStepAction(OFFER_ID, 'b', 'down')).rejects.toBe(
+      rejection,
+    );
   });
 
   it('rejects an invalid direction', async () => {

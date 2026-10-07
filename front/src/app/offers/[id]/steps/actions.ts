@@ -5,9 +5,11 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { saveErrorMessages, validationTranslator } from '@/lib/action-helpers';
 import {
+  ApiError,
   createInterviewStep,
   deleteInterviewStep,
   isNotFound,
+  isProblem,
   listInterviewSteps,
   reorderInterviewSteps,
   updateInterviewStep,
@@ -103,11 +105,23 @@ export async function moveInterviewStepAction(
   } catch (error) {
     // The offer or the steps changed in the meantime (deleted, added in
     // another tab): the refreshed page shows the current order.
-    if (!isNotFound(error)) {
+    if (!isNotFound(error) && !isOutdatedStepOrder(error)) {
       throw error;
     }
   }
   revalidatePath(`/offers/${offerId}`);
+}
+
+/** The API refused a new order that doesn't list the current steps. */
+function isOutdatedStepOrder(error: unknown): boolean {
+  return (
+    error instanceof ApiError &&
+    isProblem(error, 'validation-error') &&
+    (error.problem?.errors ?? []).some(
+      (invalid) =>
+        invalid.name === '/stepIds' && invalid.code === 'everyStepOnce',
+    )
+  );
 }
 
 async function errorMessages(error: unknown): Promise<string[]> {

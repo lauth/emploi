@@ -1,6 +1,87 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/problems": {
+      "get": {
+        "operationId": "ProblemsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProblemTypeDescriptionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the kinds of error the API answers with",
+        "tags": [
+          "problems"
+        ]
+      }
+    },
+    "/problems/{type}": {
+      "get": {
+        "operationId": "ProblemsController_get",
+        "parameters": [
+          {
+            "name": "type",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "validation-error",
+                "malformed-request",
+                "resource-not-found",
+                "route-not-found",
+                "service-unavailable",
+                "internal-error"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemTypeDescriptionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No kind of problem has this name (`route-not-found`).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/route-not-found",
+                  "title": "No such endpoint",
+                  "status": 404,
+                  "detail": "No kind of problem is called \"oops\". The kinds are: validation-error, ….",
+                  "instance": "/problems/oops"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Describe a kind of error: when it happens and how to fix it",
+        "tags": [
+          "problems"
+        ]
+      }
+    },
     "/health/live": {
       "get": {
         "operationId": "HealthController_live",
@@ -41,14 +122,16 @@
           "503": {
             "description": "The database is unreachable.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 503,
-                  "message": "Database unreachable",
-                  "error": "Service Unavailable"
+                  "type": "/problems/service-unavailable",
+                  "title": "Service unavailable",
+                  "status": 503,
+                  "detail": "The database is unreachable. Try again later.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d"
                 }
               }
             }
@@ -86,18 +169,36 @@
             }
           },
           "400": {
-            "description": "Invalid request: malformed id, body or query.",
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 400,
-                  "message": [
-                    "title should not be empty"
-                  ],
-                  "error": "Bad Request"
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
                 }
               }
             }
@@ -224,18 +325,36 @@
             }
           },
           "400": {
-            "description": "Invalid request: malformed id, body or query.",
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 400,
-                  "message": [
-                    "title should not be empty"
-                  ],
-                  "error": "Bad Request"
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
                 }
               }
             }
@@ -274,33 +393,54 @@
             }
           },
           "400": {
-            "description": "Invalid request: malformed id, body or query.",
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 400,
-                  "message": [
-                    "title should not be empty"
-                  ],
-                  "error": "Bad Request"
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "No offer with this id.",
+            "description": "No offer with this id (`resource-not-found`).",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 404,
-                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
-                  "error": "Not Found"
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "No offer has the id 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d. It may have been deleted; list offers (GET /offers) to get valid ids.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "offer"
                 }
               }
             }
@@ -348,33 +488,54 @@
             }
           },
           "400": {
-            "description": "Invalid request: malformed id, body or query.",
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 400,
-                  "message": [
-                    "title should not be empty"
-                  ],
-                  "error": "Bad Request"
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "No offer with this id.",
+            "description": "No offer with this id (`resource-not-found`).",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 404,
-                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
-                  "error": "Not Found"
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "No offer has the id 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d. It may have been deleted; list offers (GET /offers) to get valid ids.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "offer"
                 }
               }
             }
@@ -404,33 +565,54 @@
             "description": "Deleted."
           },
           "400": {
-            "description": "Invalid request: malformed id, body or query.",
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 400,
-                  "message": [
-                    "title should not be empty"
-                  ],
-                  "error": "Bad Request"
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "No offer with this id.",
+            "description": "No offer with this id (`resource-not-found`).",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 404,
-                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
-                  "error": "Not Found"
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "No offer has the id 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d. It may have been deleted; list offers (GET /offers) to get valid ids.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "offer"
                 }
               }
             }
@@ -472,33 +654,54 @@
             }
           },
           "400": {
-            "description": "Invalid request: malformed id, body or query.",
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 400,
-                  "message": [
-                    "title should not be empty"
-                  ],
-                  "error": "Bad Request"
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "No offer with this id.",
+            "description": "No offer with this id (`resource-not-found`).",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 404,
-                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
-                  "error": "Not Found"
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "No offer has the id 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d. It may have been deleted; list offers (GET /offers) to get valid ids.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "offer"
                 }
               }
             }
@@ -545,33 +748,54 @@
             }
           },
           "400": {
-            "description": "Invalid request: malformed id, body or query.",
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 400,
-                  "message": [
-                    "title should not be empty"
-                  ],
-                  "error": "Bad Request"
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "No offer with this id.",
+            "description": "No offer with this id (`resource-not-found`).",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 404,
-                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
-                  "error": "Not Found"
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "No offer has the id 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d. It may have been deleted; list offers (GET /offers) to get valid ids.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "offer"
                 }
               }
             }
@@ -624,33 +848,54 @@
             }
           },
           "400": {
-            "description": "Invalid request: malformed id, body or query.",
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 400,
-                  "message": [
-                    "title should not be empty"
-                  ],
-                  "error": "Bad Request"
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "No offer with this id.",
+            "description": "No offer with this id (`resource-not-found`).",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 404,
-                  "message": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d not found",
-                  "error": "Not Found"
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "No offer has the id 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d. It may have been deleted; list offers (GET /offers) to get valid ids.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "offer"
                 }
               }
             }
@@ -699,33 +944,54 @@
             }
           },
           "400": {
-            "description": "Invalid request: malformed id, body or query.",
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 400,
-                  "message": [
-                    "title should not be empty"
-                  ],
-                  "error": "Bad Request"
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "No such step for this offer.",
+            "description": "The offer has no step with this id, or there is no such offer (`resource-not-found`, `resource` says which).",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 404,
-                  "message": "Interview step 0199a7a4-3c2e-7b6a-9c1d-00000000000a not found for offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
-                  "error": "Not Found"
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d has no interview step with the id 0199a7a4-3c2e-7b6a-9c1d-00000000000a. List its steps (GET /offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d/steps) to get valid ids.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "interview-step"
                 }
               }
             }
@@ -783,33 +1049,54 @@
             }
           },
           "400": {
-            "description": "Invalid request: malformed id, body or query.",
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 400,
-                  "message": [
-                    "title should not be empty"
-                  ],
-                  "error": "Bad Request"
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "No such step for this offer.",
+            "description": "The offer has no step with this id, or there is no such offer (`resource-not-found`, `resource` says which).",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 404,
-                  "message": "Interview step 0199a7a4-3c2e-7b6a-9c1d-00000000000a not found for offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
-                  "error": "Not Found"
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d has no interview step with the id 0199a7a4-3c2e-7b6a-9c1d-00000000000a. List its steps (GET /offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d/steps) to get valid ids.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "interview-step"
                 }
               }
             }
@@ -849,33 +1136,54 @@
             "description": "Deleted."
           },
           "400": {
-            "description": "Invalid request: malformed id, body or query.",
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 400,
-                  "message": [
-                    "title should not be empty"
-                  ],
-                  "error": "Bad Request"
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
                 }
               }
             }
           },
           "404": {
-            "description": "No such step for this offer.",
+            "description": "The offer has no step with this id, or there is no such offer (`resource-not-found`, `resource` says which).",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
                 },
                 "example": {
-                  "statusCode": 404,
-                  "message": "Interview step 0199a7a4-3c2e-7b6a-9c1d-00000000000a not found for offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
-                  "error": "Not Found"
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d has no interview step with the id 0199a7a4-3c2e-7b6a-9c1d-00000000000a. List its steps (GET /offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d/steps) to get valid ids.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "interview-step"
                 }
               }
             }
@@ -890,7 +1198,7 @@
   },
   "info": {
     "title": "emploi API",
-    "description": "Job search history: the job offers the user responded to and the steps of their interview processes. Validation errors answer 400 with the list of problems in `message`.",
+    "description": "Job search history: the job offers the user responded to and the steps of their interview processes.\n\nErrors are RFC 9457 Problem Details (`application/problem+json`): `type` names the kind of problem (`GET` it, e.g. `/problems/validation-error`, for what it means and how to fix the request), `detail` says what happened and what to do, and a `validation-error` lists every invalid value in `errors`, with its location, the rule broken and, when they help, the accepted values.",
     "version": "1.0",
     "contact": {}
   },
@@ -906,11 +1214,134 @@
     {
       "name": "health",
       "description": "Probes used by Kubernetes."
+    },
+    {
+      "name": "problems",
+      "description": "The kinds of error the API answers with, and how to fix the request."
     }
   ],
   "servers": [],
   "components": {
     "schemas": {
+      "ProblemTypeDescriptionDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "/problems/validation-error"
+          },
+          "title": {
+            "type": "string",
+            "example": "Invalid request"
+          },
+          "status": {
+            "type": "integer",
+            "example": 400
+          },
+          "description": {
+            "type": "string",
+            "description": "When it happens and how to fix the request."
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "description"
+        ]
+      },
+      "InvalidParamDto": {
+        "type": "object",
+        "properties": {
+          "in": {
+            "type": "string",
+            "enum": [
+              "body",
+              "query",
+              "path"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "JSON Pointer (RFC 6901) into the body, e.g. `/title`, or the query or path parameter name.",
+            "example": "/title"
+          },
+          "code": {
+            "type": "string",
+            "description": "Rule broken, stable: e.g. `isNotEmpty`, `maxLength`, `isIn`, `isUuid`, `whitelistValidation` (unknown field: remove it).",
+            "example": "isNotEmpty"
+          },
+          "detail": {
+            "type": "string",
+            "example": "title should not be empty"
+          },
+          "allowed": {
+            "description": "For `isIn`: the accepted values.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxLength": {
+            "type": "integer",
+            "description": "For `maxLength`: the maximum number of characters."
+          }
+        },
+        "required": [
+          "in",
+          "name",
+          "code",
+          "detail"
+        ]
+      },
+      "ProblemDetailsDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Kind of problem: `/problems/<kind>`, relative to the API (`GET` it for what it means and how to fix the request), or `about:blank`.",
+            "example": "/problems/validation-error"
+          },
+          "title": {
+            "type": "string",
+            "description": "Summary of the kind of problem."
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code."
+          },
+          "detail": {
+            "type": "string",
+            "description": "What happened this time, and what to do about it."
+          },
+          "instance": {
+            "type": "string",
+            "description": "Path of the request that failed."
+          },
+          "errors": {
+            "description": "`validation-error`: every invalid value.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvalidParamDto"
+            }
+          },
+          "resource": {
+            "type": "string",
+            "enum": [
+              "offer",
+              "interview-step"
+            ],
+            "description": "`resource-not-found`: the kind of resource not found."
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "instance"
+        ]
+      },
       "HealthStatusDto": {
         "type": "object",
         "properties": {
@@ -923,36 +1354,6 @@
         },
         "required": [
           "status"
-        ]
-      },
-      "ApiErrorDto": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number"
-          },
-          "message": {
-            "description": "One message, or one per validation problem.",
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            ]
-          },
-          "error": {
-            "type": "string",
-            "description": "HTTP reason phrase."
-          }
-        },
-        "required": [
-          "statusCode",
-          "message"
         ]
       },
       "OfferStatus": {

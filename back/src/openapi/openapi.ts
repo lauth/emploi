@@ -14,8 +14,13 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
     .setTitle('emploi API')
     .setDescription(
       'Job search history: the job offers the user responded to and the ' +
-        'steps of their interview processes. Validation errors answer 400 ' +
-        'with the list of problems in `message`.',
+        'steps of their interview processes.\n\n' +
+        'Errors are RFC 9457 Problem Details (`application/problem+json`): ' +
+        '`type` names the kind of problem (`GET` it, e.g. `/problems/validation-error`, ' +
+        'for what it means and how to fix the request), `detail` says what ' +
+        'happened and what to do, and a `validation-error` lists every invalid ' +
+        'value in `errors`, with its location, the rule broken and, when they ' +
+        'help, the accepted values.',
     )
     .setVersion('1.0')
     .addTag('offers', 'Job offers the user responded to.')
@@ -24,6 +29,10 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
       'Steps of the interview process of an offer, in the order chosen by the user.',
     )
     .addTag('health', 'Probes used by Kubernetes.')
+    .addTag(
+      'problems',
+      'The kinds of error the API answers with, and how to fix the request.',
+    )
     .build();
   return SwaggerModule.createDocument(app, config);
 }

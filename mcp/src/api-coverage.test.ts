@@ -44,6 +44,12 @@ const COVERAGE: Record<string, { tool: string } | { excluded: string }> = {
   },
   'GET /health/live': { excluded: 'Kubernetes probe, not a user operation' },
   'GET /health/ready': { excluded: 'Kubernetes probe, not a user operation' },
+  'GET /problems': {
+    excluded: 'error documentation: tool errors already include each problem',
+  },
+  'GET /problems/{type}': {
+    excluded: 'error documentation: tool errors already include each problem',
+  },
 };
 
 /** Path parameters, which tools take as arguments too but aren't body fields. */

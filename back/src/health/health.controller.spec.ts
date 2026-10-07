@@ -1,4 +1,3 @@
-import { ServiceUnavailableException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { HealthController } from './health.controller.js';
 import { HealthService } from './health.service.js';
@@ -29,8 +28,8 @@ describe('HealthController', () => {
   it('is not ready when the database is unreachable', async () => {
     health.isDatabaseReachable.mockResolvedValue(false);
 
-    await expect(controller.ready()).rejects.toBeInstanceOf(
-      ServiceUnavailableException,
-    );
+    await expect(controller.ready()).rejects.toMatchObject({
+      problemType: 'service-unavailable',
+    });
   });
 });

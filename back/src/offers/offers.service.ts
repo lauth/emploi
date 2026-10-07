@@ -7,10 +7,11 @@ import type {
   SortOrder,
   UpdateOfferRequest,
 } from '@emploi/shared';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { fromDateOnly } from '../common/date-only.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { offerNotFound } from '../problems/problem.exception.js';
 import { DEFAULT_ORDERS } from './offer-list-options.js';
 import { toOffer } from './offer.mapper.js';
 
@@ -154,8 +155,4 @@ function isRecordNotFound(error: unknown): boolean {
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === RECORD_NOT_FOUND
   );
-}
-
-function offerNotFound(id: string): NotFoundException {
-  return new NotFoundException(`Offer ${id} not found`);
 }

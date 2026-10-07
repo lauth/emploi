@@ -36,6 +36,36 @@ function result(data: Record<string, unknown>): CallToolResult {
   };
 }
 
+/**
+ * An API error for the model: a summary, one line per invalid value (with the
+ * accepted values), then the RFC 9457 Problem Details as JSON
+ * (adrs/0024-problem-details-errors.md). Body fields have the names of the
+ * tool's arguments.
+ */
+function describeApiError(error: ApiError): string {
+  const { problem } = error;
+  if (problem === null) {
+    return `The emploi API failed with HTTP ${String(error.status)} and no details. Is the local cluster running? (make up)`;
+  }
+  const invalid = (problem.errors ?? []).map((param) => {
+    const argument = param.in === 'body' ? param.name.slice(1) : param.name;
+    const hints = [
+      param.allowed ? `allowed values: ${param.allowed.join(', ')}` : null,
+      param.maxLength === undefined
+        ? null
+        : `at most ${String(param.maxLength)} characters`,
+    ].filter((hint) => hint !== null);
+    return `- ${argument} (${param.code}): ${param.detail}${hints.length > 0 ? ` (${hints.join('; ')})` : ''}`;
+  });
+  return [
+    `${problem.title} (HTTP ${String(problem.status)}): ${problem.detail}`,
+    ...invalid,
+    '',
+    'Problem details (RFC 9457):',
+    JSON.stringify(problem, null, 2),
+  ].join('\n');
+}
+
 /** API errors become tool errors the model can read and act on. */
 function failure(error: unknown): CallToolResult {
   let text: string;
@@ -44,13 +74,7 @@ function failure(error: unknown): CallToolResult {
     // the back changed and this server wasn't updated.
     text = `The emploi API returned an unexpected response; the MCP server may need an update.\n${z.prettifyError(error)}`;
   } else if (error instanceof ApiError) {
-    const reason =
-      error.status === 404
-        ? 'Not found'
-        : error.status === 400
-          ? 'Rejected by the emploi API'
-          : `emploi API error ${String(error.status)}`;
-    text = `${reason}: ${error.messages.join('; ')}`;
+    text = describeApiError(error);
   } else {
     const cause = error instanceof Error ? error.message : String(error);
     text = `Could not reach the emploi API (${cause}). Is the local cluster running? (make up)`;

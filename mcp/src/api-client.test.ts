@@ -1,3 +1,4 @@
+import type { ProblemDetails } from '@emploi/shared';
 import { ApiError, createHttpApi } from './api-client.ts';
 
 const BASE = 'https://api.example.test';
@@ -88,16 +89,27 @@ describe('createHttpApi', () => {
     await expect(api.deleteOffer(OFFER_ID)).resolves.toBeUndefined();
   });
 
-  it('exposes the API messages of an error', async () => {
-    fetchMock.mockResolvedValue(
-      jsonResponse(
+  it('exposes the problem details of an error', async () => {
+    const problem: ProblemDetails = {
+      type: '/problems/validation-error',
+      title: 'Invalid request',
+      status: 400,
+      detail: '1 value is invalid',
+      instance: '/offers',
+      errors: [
         {
-          statusCode: 400,
-          message: ['title should not be empty'],
-          error: 'Bad Request',
+          in: 'body',
+          name: '/title',
+          code: 'isNotEmpty',
+          detail: 'title should not be empty',
         },
-        400,
-      ),
+      ],
+    };
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify(problem), {
+        status: 400,
+        headers: { 'Content-Type': 'application/problem+json' },
+      }),
     );
 
     const error: unknown = await api
@@ -105,20 +117,17 @@ describe('createHttpApi', () => {
       .catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(ApiError);
-    expect(error).toMatchObject({
-      status: 400,
-      messages: ['title should not be empty'],
-    });
+    expect(error).toMatchObject({ status: 400, problem });
   });
 
-  it('falls back to the status when the error body is not JSON', async () => {
+  it('has no problem details when the error body is not one', async () => {
     fetchMock.mockResolvedValue(
       new Response('upstream down', { status: 502, statusText: 'Bad Gateway' }),
     );
 
     await expect(api.getOffer(OFFER_ID)).rejects.toMatchObject({
       status: 502,
-      messages: ['502 Bad Gateway'],
+      problem: null,
     });
   });
 });

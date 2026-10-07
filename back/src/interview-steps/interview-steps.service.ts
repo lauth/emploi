@@ -3,14 +3,15 @@ import type {
   InterviewStep,
   UpdateInterviewStepRequest,
 } from '@emploi/shared';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { fromDateOnly } from '../common/date-only.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import {
+  interviewStepNotFound,
+  offerNotFound,
+  validationProblem,
+} from '../problems/problem.exception.js';
 import { toInterviewStep } from './interview-step.mapper.js';
 
 /** Prisma error code: the record to update or delete does not exist. */
@@ -39,7 +40,7 @@ export class InterviewStepsService {
       where: { id: stepId, offerId },
     });
     if (model === null) {
-      throw stepNotFound(offerId, stepId);
+      throw interviewStepNotFound(offerId, stepId);
     }
     return toInterviewStep(model);
   }
@@ -89,7 +90,9 @@ export class InterviewStepsService {
       });
       return toInterviewStep(updated);
     } catch (error) {
-      throw isRecordNotFound(error) ? stepNotFound(offerId, stepId) : error;
+      throw isRecordNotFound(error)
+        ? interviewStepNotFound(offerId, stepId)
+        : error;
     }
   }
 
@@ -99,7 +102,9 @@ export class InterviewStepsService {
         where: { id: stepId, offerId },
       });
     } catch (error) {
-      throw isRecordNotFound(error) ? stepNotFound(offerId, stepId) : error;
+      throw isRecordNotFound(error)
+        ? interviewStepNotFound(offerId, stepId)
+        : error;
     }
   }
 
@@ -117,9 +122,14 @@ export class InterviewStepsService {
         new Set(stepIds).size === stepIds.length &&
         stepIds.every((id) => currentIds.has(id));
       if (!isSameSet) {
-        throw new BadRequestException(
-          'stepIds must list every step of the offer exactly once',
-        );
+        throw validationProblem([
+          {
+            in: 'body',
+            name: '/stepIds',
+            code: 'everyStepOnce',
+            detail: `stepIds must list every step of the offer exactly once (it has ${String(currentIds.size)}). Get them with GET /offers/${offerId}/steps.`,
+          },
+        ]);
       }
 
       for (const [position, id] of stepIds.entries()) {
@@ -150,7 +160,7 @@ async function assertOfferExists(
     select: { id: true },
   });
   if (offer === null) {
-    throw new NotFoundException(`Offer ${offerId} not found`);
+    throw offerNotFound(offerId);
   }
 }
 
@@ -158,11 +168,5 @@ function isRecordNotFound(error: unknown): boolean {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === RECORD_NOT_FOUND
-  );
-}
-
-function stepNotFound(offerId: string, stepId: string): NotFoundException {
-  return new NotFoundException(
-    `Interview step ${stepId} not found for offer ${offerId}`,
   );
 }
