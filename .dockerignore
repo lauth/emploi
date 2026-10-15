@@ -9,6 +9,7 @@ design-system/storybook-static
 back/src/generated
 .certs
 .secrets
+backups
 k8s
 adrs
 e2e

@@ -119,14 +119,44 @@ db-deploy: ## Apply pending migrations to the cluster database
 db-studio: ## Open Prisma Studio on the cluster database
 	pnpm --filter back prisma:studio
 
+# Backups live outside the cluster and Docker, which can lose them
+# (adrs/0026-database-backups.md). Not committed: copy them somewhere safe.
+BACKUP_DIR := backups
+
+.PHONY: db-backup
+db-backup: ## Save the cluster database to backups/emploi-<date>.dump
+	@mkdir -p $(BACKUP_DIR)
+	@file="$(BACKUP_DIR)/emploi-$$(date +%Y%m%d-%H%M%S).dump"; \
+	if $(KUBECTL) exec postgres-0 -- \
+			sh -c 'pg_dump -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" --format=custom' \
+			> "$$file.partial" && test -s "$$file.partial"; then \
+		mv "$$file.partial" "$$file"; echo "Saved $$file"; \
+	else \
+		rm -f "$$file.partial"; echo "Backup failed: is the cluster running? (make status)"; exit 1; \
+	fi
+
+.PHONY: db-restore
+db-restore: ## Replace the cluster database with a backup (saves the current one first): make db-restore FILE=<dump>
+	@test -f "$(FILE)" || { echo "Usage: make db-restore FILE=$(BACKUP_DIR)/<file>.dump"; exit 1; }
+	@$(MAKE) --no-print-directory db-backup
+	$(KUBECTL) exec -i postgres-0 -- \
+		sh -c 'pg_restore -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" --clean --if-exists --no-owner --single-transaction' \
+		< "$(FILE)"
+	@# A backup from an older version: bring its schema up to date.
+	$(MAKE) --no-print-directory db-deploy
+
 ##@ Local cluster (k3d)
 
 .PHONY: up
-up: cluster-create secrets certs images deploy db-deploy ## Create the cluster and deploy everything
+up: cluster-create secrets certs images deploy ## Create the cluster and deploy everything (deploy applies the migrations)
 	@echo "Ready: https://emploi.localhost and $(API_URL)"
 
 .PHONY: down
-down: cluster-delete ## Delete the cluster and its data
+down: ## Save the database (make db-backup), then delete the cluster and its data
+	@$(MAKE) --no-print-directory db-backup || { \
+		echo "Not deleting the cluster without a backup. Delete it anyway with: make cluster-delete"; \
+		exit 1; }
+	$(MAKE) --no-print-directory cluster-delete
 
 .PHONY: host-check
 host-check: ## Check the host can run the cluster (kernel modules)
@@ -140,8 +170,15 @@ host-check: ## Check the host can run the cluster (kernel modules)
 		exit 1; }
 
 .PHONY: cluster-create
-cluster-create: host-check ## Create the k3d cluster if it does not exist
-	@k3d cluster get $(CLUSTER) >/dev/null 2>&1 || k3d cluster create --config k8s/k3d-cluster.yaml
+cluster-create: host-check ## Create the k3d cluster, or start it if it exists
+	@# An existing cluster may be partly stopped (e.g. its load balancer killed
+	@# by Docker): kubectl goes through the load balancer, so start what isn't
+	@# running. `k3d cluster start` leaves running nodes alone.
+	@if k3d cluster get $(CLUSTER) >/dev/null 2>&1; then \
+		k3d cluster start $(CLUSTER); \
+	else \
+		k3d cluster create --config k8s/k3d-cluster.yaml; \
+	fi
 	kubectl --context k3d-$(CLUSTER) apply -f k8s/namespace.yaml
 
 .PHONY: cluster-delete
@@ -193,9 +230,19 @@ images: $(NEXT_ACTIONS_KEY) ## Build the back and front images and import them i
 	k3d image import --cluster $(CLUSTER) emploi-back:dev emploi-front:dev
 
 .PHONY: deploy
-deploy: host-check ## Apply the manifests and restart the apps on the imported images
+deploy: host-check ## Apply the manifests and migrations, then restart the apps on the imported images
+	@# On a new cluster, k3s installs Traefik and its CRDs (Middleware, used by
+	@# k8s/ingress.yaml) a little after the API server is up: wait for them.
+	@for _ in $$(seq 90); do \
+		kubectl --context k3d-$(CLUSTER) get crd middlewares.traefik.io >/dev/null 2>&1 && break; \
+		sleep 2; \
+	done
+	kubectl --context k3d-$(CLUSTER) wait --for condition=established --timeout 60s crd/middlewares.traefik.io
 	$(KUBECTL) apply --kustomize k8s
 	$(KUBECTL) rollout status statefulset/postgres --timeout 180s
+	@# Migrate before the new apps start: they never run against an older schema,
+	@# and on a new cluster the front's probes need the API's tables.
+	$(MAKE) db-deploy
 	$(KUBECTL) rollout restart deployment/back deployment/front
 	$(KUBECTL) rollout status deployment/back --timeout 180s
 	$(KUBECTL) rollout status deployment/front --timeout 180s

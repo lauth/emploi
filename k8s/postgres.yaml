@@ -79,7 +79,35 @@ spec:
     - metadata:
         name: data
       spec:
+        # Bound to the fixed PersistentVolume below, not provisioned on the fly.
+        storageClassName: ''
+        volumeName: emploi-postgres
         accessModes: ['ReadWriteOnce']
         resources:
           requests:
             storage: 1Gi
+---
+# The database files, at a fixed path of the node: the named Docker volume
+# `emploi-data` (k8s/k3d-cluster.yaml) is mounted at /var/lib/emploi, so the
+# data outlives the cluster and a recreated cluster reuses it
+# (adrs/0027-named-volume-for-data.md).
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: emploi-postgres
+  labels:
+    app.kubernetes.io/name: postgres
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes: ['ReadWriteOnce']
+  storageClassName: ''
+  # Never deleted with its claim: the data stays.
+  persistentVolumeReclaimPolicy: Retain
+  # Reserved for the StatefulSet's claim.
+  claimRef:
+    namespace: emploi
+    name: data-postgres-0
+  hostPath:
+    path: /var/lib/emploi/postgres
+    type: DirectoryOrCreate

@@ -9,6 +9,8 @@ coverage/
 .env.*
 !.env.example
 .secrets/
+# Database backups (make db-backup): personal data, kept out of git.
+backups/
 
 # mkcert certificates
 .certs/

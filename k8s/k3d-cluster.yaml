@@ -18,3 +18,11 @@ ports:
   - port: 127.0.0.1:54320:30432
     nodeFilters:
       - loadbalancer
+volumes:
+  # Named Docker volume holding the database (adrs/0027-named-volume-for-data.md).
+  # Unlike the node's anonymous volumes, `k3d cluster delete` keeps it, and the
+  # PersistentVolume of k8s/postgres.yaml points at a fixed path inside it, so a
+  # recreated cluster finds the same database.
+  - volume: emploi-data:/var/lib/emploi
+    nodeFilters:
+      - server:0

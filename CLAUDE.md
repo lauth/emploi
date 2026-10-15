@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **emploi** records a personal job search history:
 
-- **Offers** the user applied to: link, title, description (plus the company).
+- **Offers** the user applied to, or spotted and plans to apply to (status `saved`, ADR-0025): link, title, description (plus the company).
 - **Interview process** for each offer: a sequence of steps. Every company runs its process differently, so steps are **not a fixed pipeline**. Model them as an ordered, open-ended list attached to an application (e.g. phone screen → technical test → onsite → offer). Each step has its own type, date, status and notes. Don't hardcode a set of stages in the schema or the UI.
 
 Implemented:
@@ -16,7 +16,7 @@ Implemented:
 - Offer list as a table (ADR-0021): full screen width (`.site-main`; reading pages and forms wrap their content in `.readable`). Column headers are sort links with `aria-sort` (`sortState`/`nextSort`), the application date header opens the period filter in a `Popover`; a compact `next/form` search sits next to the title (`src/app/offers/offer-search.tsx`, `offer-table.tsx`). GET forms keep the rest of the state with hidden inputs from `keptFields`.
 - Interview steps (ADR-0015): nested resource `/offers/:offerId/steps` with a `PUT …/order` to reorder; `back/src/interview-steps`, shown on the offer page (`front/src/app/offers/[id]/interview-steps.tsx`, forms and actions in `front/src/app/offers/[id]/steps`).
 
-- Offer status (ADR-0022): a stored enum chosen by the user (`applied` by default, then `interviewing`, `offered`, `accepted`, `rejected`, `ghosted`, `withdrawn`, in the order of a search), **not** derived from the steps. `GET /offers?status=a&status=b` filters (repeated parameter), `sort=status` follows the enum order. Front: select in the form, `OfferStatusBadge` on the offer page and in the table, header filter with a `CheckboxGroup`.
+- Offer status (ADR-0022, ADR-0025): a stored enum chosen by the user (`saved` for offers not applied to yet, `applied` by default, then `interviewing`, `offered`, `accepted`, `rejected`, `ghosted`, `withdrawn`, in the order of a search), **not** derived from the steps. `GET /offers?status=a&status=b` filters (repeated parameter), `sort=status` follows the enum order. Front: select in the form, `OfferStatusBadge` on the offer page and in the table, header filter with a `CheckboxGroup`.
 
 ## Architecture decisions (ADRs)
 
@@ -63,11 +63,15 @@ make test-browser T=offers # filtered by file name; `make browser-report` opens 
 make up                    # create cluster, secrets, certs, build+import images, deploy, apply migrations
 make images deploy         # after code changes: rebuild, import and roll out the images
 make status | logs APP=back|front|postgres
-make cluster-stop | cluster-start | down   # down deletes the cluster and its data
+make cluster-stop | cluster-start | down   # down backs up the database, then deletes the cluster and its data
 
 make db-migrate NAME=<change>   # prisma migrate dev against the cluster database
 make db-deploy | db-generate | db-studio
+make db-backup                  # pg_dump into backups/emploi-<date>.dump (not committed)
+make db-restore FILE=<dump>     # backs up first, restores, then applies migrations
 ```
+
+The database files live in the named Docker volume `emploi-data` (ADR-0027: static PersistentVolume `emploi-postgres` at `/var/lib/emploi/postgres` in the node), which survives `make down` and `k3d cluster delete`; a recreated cluster reuses it. Never run `docker volume rm emploi-data` or prune volumes without a backup. The cluster database holds the user's real data and the cluster can disappear (ADR-0026): back it up (`make db-backup`) before anything that could remove the cluster, its node container or Docker's data root. `make down` backs up first and refuses to delete without a backup. `make deploy` applies migrations before restarting the apps.
 
 First-time setup: `cp .env.example .env` (cluster DB credentials, used by `make secrets`) and `cp back/.env.example back/.env` (for the Prisma CLI and running the API on the host). The `db-*` targets need the cluster running: they reach PostgreSQL at `localhost:54320` through a NodePort.
 
