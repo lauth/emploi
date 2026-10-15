@@ -5,13 +5,24 @@ metadata:
   name: emploi
 servers: 1
 agents: 0
+# Every port is published on the loopback addresses only: the API has no
+# authentication, so nothing may reach the cluster from the network
+# (adrs/0028-cluster-reachable-from-localhost-only.md).
+kubeAPI:
+  hostIP: 127.0.0.1
 ports:
-  # Traefik (adrs/0006-local-domains-https-traefik-mkcert.md). No host IP, so Docker
-  # publishes on IPv4 and IPv6: *.localhost resolves to ::1 on the dev machine.
-  - port: 80:80
+  # Traefik (adrs/0006-local-domains-https-traefik-mkcert.md), on IPv4 and IPv6:
+  # *.localhost resolves to ::1 on the dev machine.
+  - port: 127.0.0.1:80:80
     nodeFilters:
       - loadbalancer
-  - port: 443:443
+  - port: '[::1]:80:80'
+    nodeFilters:
+      - loadbalancer
+  - port: 127.0.0.1:443:443
+    nodeFilters:
+      - loadbalancer
+  - port: '[::1]:443:443'
     nodeFilters:
       - loadbalancer
   # PostgreSQL NodePort (k8s/postgres.yaml), for the Prisma CLI and tools on the host.
