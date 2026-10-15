@@ -32,6 +32,7 @@ export const OFFER_LIMITS = {
 // order of a search, used by the select and the list filter; labels are in the
 // catalogue (`offers.status.*`) (adrs/0022-offer-status.md).
 const STATUSES: Record<OfferStatus, true> = {
+  saved: true,
   applied: true,
   interviewing: true,
   offered: true,

@@ -12,6 +12,7 @@ export const OFFER_LIMITS = {
 // A Record must list every status, and only those: a status added to the
 // shared type breaks the build until it is handled here (adrs/0022-offer-status.md).
 const STATUSES: Record<OfferStatus, true> = {
+  saved: true,
   applied: true,
   interviewing: true,
   offered: true,

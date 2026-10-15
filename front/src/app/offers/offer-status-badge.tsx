@@ -4,6 +4,8 @@ import { getTranslations } from 'next-intl/server';
 
 /** Colour of each status; the label carries the meaning too (adrs/0022-offer-status.md). */
 const STATUS_TONES: Record<OfferStatus, BadgeTone> = {
+  // Something to do: apply.
+  saved: 'warning',
   applied: 'neutral',
   interviewing: 'info',
   offered: 'success',

@@ -41,6 +41,8 @@ model Offer {
 /// (adrs/0022-offer-status.md). Declared in the order of a search: PostgreSQL
 /// sorts enum values in this order.
 enum OfferStatus {
+  /// Spotted, not applied yet (adrs/0025-offer-status-saved.md).
+  saved
   /// Sent, no answer yet.
   applied
   /// Interviews under way.

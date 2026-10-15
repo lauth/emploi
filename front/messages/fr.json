@@ -58,8 +58,8 @@
         "title-asc": "intitulé, de A à Z",
         "company-desc": "entreprise, de Z à A",
         "company-asc": "entreprise, de A à Z",
-        "status-asc": "statut, de la candidature envoyée à l’abandon",
-        "status-desc": "statut, de l’abandon à la candidature envoyée"
+        "status-asc": "statut, des offres à postuler aux abandons",
+        "status-desc": "statut, des abandons aux offres à postuler"
       },
       "columns": {
         "title": "Intitulé",
@@ -135,6 +135,7 @@
       "description": "Description"
     },
     "status": {
+      "saved": "À postuler",
       "applied": "Candidature envoyée",
       "interviewing": "Entretiens en cours",
       "offered": "Offre reçue",

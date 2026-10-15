@@ -49,6 +49,7 @@ const STATUSES = Object.keys(STATUS_DESCRIPTIONS) as [
 
 /** Statuses of an offer, in the order of a search (sorting by status follows it). */
 export const OFFER_STATUS_DESCRIPTIONS: Record<OfferStatus, string> = {
+  saved: 'spotted, the user has not applied yet',
   applied: 'sent, no answer yet',
   interviewing: 'interviews under way',
   offered: 'the company made an offer',
@@ -186,7 +187,7 @@ export const listOffersInput = z.object({
     .enum(SORT_FIELDS)
     .optional()
     .describe(
-      'Sort field, default appliedAt (application date). Offers with no value for it come last. Status sorts in the order of a search, applied first.',
+      'Sort field, default appliedAt (application date). Offers with no value for it come last. Status sorts in the order of a search: saved, applied, interviewing…',
     ),
   order: z
     .enum(SORT_ORDERS)

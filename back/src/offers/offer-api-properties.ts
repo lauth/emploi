@@ -48,7 +48,8 @@ export const OFFER_PROPERTIES = {
     enum: OFFER_STATUSES,
     enumName: 'OfferStatus',
     description:
-      'Where the application stands, chosen by the user: `applied`: sent, no answer yet; ' +
+      'Where the application stands, chosen by the user: `saved`: spotted, not applied yet; ' +
+      '`applied`: sent, no answer yet; ' +
       '`interviewing`: interviews under way; `offered`: the company made an offer; ' +
       '`accepted`: the user accepted it; `rejected`: the company said no; ' +
       '`ghosted`: no answer after a long time; `withdrawn`: the user withdrew.',

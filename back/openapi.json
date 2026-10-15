@@ -283,6 +283,7 @@
               "items": {
                 "type": "string",
                 "enum": [
+                  "saved",
                   "applied",
                   "interviewing",
                   "offered",
@@ -1359,6 +1360,7 @@
       "OfferStatus": {
         "type": "string",
         "enum": [
+          "saved",
           "applied",
           "interviewing",
           "offered",
@@ -1367,7 +1369,7 @@
           "ghosted",
           "withdrawn"
         ],
-        "description": "Where the application stands, chosen by the user: `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew."
+        "description": "Where the application stands, chosen by the user: `saved`: spotted, not applied yet; `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew."
       },
       "CreateOfferDto": {
         "type": "object",
@@ -1414,7 +1416,7 @@
             "example": "2026-09-28"
           },
           "status": {
-            "description": "Where the application stands, chosen by the user: `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew.",
+            "description": "Where the application stands, chosen by the user: `saved`: spotted, not applied yet; `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew.",
             "example": "interviewing",
             "default": "applied",
             "allOf": [
@@ -1477,7 +1479,7 @@
             "example": "2026-09-28"
           },
           "status": {
-            "description": "Where the application stands, chosen by the user: `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew.",
+            "description": "Where the application stands, chosen by the user: `saved`: spotted, not applied yet; `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew.",
             "example": "interviewing",
             "allOf": [
               {
@@ -1599,7 +1601,7 @@
             "example": "2026-09-28"
           },
           "status": {
-            "description": "Where the application stands, chosen by the user: `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew.",
+            "description": "Where the application stands, chosen by the user: `saved`: spotted, not applied yet; `applied`: sent, no answer yet; `interviewing`: interviews under way; `offered`: the company made an offer; `accepted`: the user accepted it; `rejected`: the company said no; `ghosted`: no answer after a long time; `withdrawn`: the user withdrew.",
             "example": "interviewing",
             "allOf": [
               {

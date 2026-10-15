@@ -93,6 +93,7 @@ describe('Problem Details (e2e)', () => {
           name: '/status',
           code: 'isIn',
           allowed: [
+            'saved',
             'applied',
             'interviewing',
             'offered',

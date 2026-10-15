@@ -10,6 +10,7 @@ import type { PageQuery, SortOrder } from './pagination.js';
  * the build until both handle it.
  */
 export type OfferStatus =
+  | 'saved'
   | 'applied'
   | 'interviewing'
   | 'offered'

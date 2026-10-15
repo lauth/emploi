@@ -6,7 +6,7 @@ import type { OfferSortField, SortOrder } from '@emploi/shared';
 
 /**
  * Default direction of each sort field: most recent dates first, text A to Z,
- * statuses in the order of a search (applied first, adrs/0022-offer-status.md).
+ * statuses in the order of a search (saved, then applied…, adrs/0022-offer-status.md).
  */
 export const DEFAULT_ORDERS: Record<OfferSortField, SortOrder> = {
   appliedAt: 'desc',
