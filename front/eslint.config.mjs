@@ -39,6 +39,24 @@ export default defineConfig([
     },
   },
   {
+    // Zod configured for the Content-Security-Policy (src/lib/zod.ts).
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/lib/zod.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'zod',
+              message: "Import `z` from '@/lib/zod', which configures it.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.{js,mjs,cjs}'],
     extends: [tseslint.configs.disableTypeChecked],
   },

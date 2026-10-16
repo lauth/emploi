@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from './zod';
 
 // Building blocks of the feature forms (offers, interview steps): raw values
 // read from FormData, Zod schemas mirroring the API validation, and the state

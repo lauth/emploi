@@ -3,7 +3,7 @@ import type {
   OfferFieldLimits,
   OfferStatus,
 } from '@emploi/shared';
-import { z } from 'zod';
+import { z } from './zod';
 import {
   choice,
   initialFormState,

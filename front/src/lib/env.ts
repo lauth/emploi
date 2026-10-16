@@ -1,5 +1,5 @@
 import 'server-only';
-import { z } from 'zod';
+import { z } from './zod';
 
 const schema = z.object({
   /** Base URL of the API, read at runtime (adrs/0012-front-calls-api-from-server.md). */

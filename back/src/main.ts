@@ -4,10 +4,11 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
 import type { EnvironmentVariables } from './config/env.validation.js';
 import { setupOpenApi } from './openapi/openapi.js';
+import { applySecurityHeaders } from './security/security-headers.js';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.disable('x-powered-by');
+  applySecurityHeaders(app);
   const config: ConfigService<EnvironmentVariables, true> =
     app.get(ConfigService);
 

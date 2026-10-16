@@ -4,7 +4,7 @@ import type {
   OfferStatus,
   SortOrder,
 } from '@emploi/shared';
-import { z } from 'zod';
+import { z } from './zod';
 import { OFFER_STATUSES } from './offer-form';
 
 // State of the offer list, kept in the URL (adrs/0020-offer-list-filters-sorting-and-pagination.md):

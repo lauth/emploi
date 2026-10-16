@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { connection } from 'next/server';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
 import '@emploi/design-system/styles.css';
@@ -14,6 +15,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: LayoutProps<'/'>) {
+  // Every page renders per request, even those that don't read the API: Next
+  // can only add the Content-Security-Policy nonce of src/proxy.ts while
+  // rendering a request (adrs/0029-security-headers.md).
+  await connection();
   const locale = await getLocale();
   const t = await getTranslations();
 
