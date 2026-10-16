@@ -65,7 +65,7 @@ export class CreateOfferDto implements CreateOfferRequest {
   @IsDateString({ strict: true })
   appliedAt?: string | null;
 
-  /** Absent means `applied`; `null` is rejected. */
+  /** Absent means `saved`; `null` is rejected. */
   @ApiPropertyOptional({
     ...OFFER_PROPERTIES.status,
     default: DEFAULT_OFFER_STATUS,

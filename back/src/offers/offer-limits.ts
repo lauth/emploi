@@ -24,4 +24,4 @@ const STATUSES: Record<OfferStatus, true> = {
 
 export const OFFER_STATUSES = Object.keys(STATUSES) as OfferStatus[];
 
-export const DEFAULT_OFFER_STATUS: OfferStatus = 'applied';
+export const DEFAULT_OFFER_STATUS: OfferStatus = 'saved';

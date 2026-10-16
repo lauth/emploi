@@ -206,7 +206,9 @@ export const createOfferInput = z.object({
   location: offerFields.location.optional(),
   description: offerFields.description.optional(),
   appliedAt: offerFields.appliedAt.optional(),
-  status: offerFields.status.optional().describe('Defaults to applied.'),
+  status: offerFields.status
+    .optional()
+    .describe('Defaults to saved (not applied yet).'),
 });
 
 /** Absent fields are left unchanged; `null` clears an optional field. */

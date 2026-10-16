@@ -21,7 +21,7 @@ model Offer {
   description String?
   /// Day the user responded to the offer (no time part).
   appliedAt   DateTime? @map("applied_at") @db.Date
-  status      OfferStatus @default(applied)
+  status      OfferStatus @default(saved)
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 

@@ -80,7 +80,7 @@ export class OffersService {
         location: input.location ?? null,
         description: input.description ?? null,
         appliedAt: input.appliedAt ? fromDateOnly(input.appliedAt) : null,
-        // Absent: the database default (`applied`).
+        // Absent: the database default (`saved`).
         status: input.status,
       },
     });

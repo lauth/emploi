@@ -38,7 +38,7 @@ describe('parseOfferForm', () => {
         location: null,
         description: null,
         appliedAt: '2026-09-28',
-        status: 'applied',
+        status: 'saved',
       },
     });
   });

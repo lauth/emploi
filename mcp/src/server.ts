@@ -23,7 +23,7 @@ const INSTRUCTIONS = `emploi records the user's job search: the job offers they 
 
 - Offers: list_offers gives their ids, most recent application first by default; it can search (q), filter by application period and by status, and sort, one page at a time. get_offer returns an offer with its interview steps.
 - Only the title of an offer is required; company, link, location, description and the day the user applied (appliedAt) are optional.
-- Each offer has a status the user sets: saved (spotted, not applied yet), applied (the default), interviewing, offered, accepted, rejected, ghosted or withdrawn. It is not derived from the steps: when the user reports news (they applied, an interview, an offer, a refusal), update it with update_offer. An offer the user only wants to keep for later is created as saved, without appliedAt.
+- Each offer has a status the user sets: saved (spotted, not applied yet; the default), applied, interviewing, offered, accepted, rejected, ghosted or withdrawn. It is not derived from the steps: when the user reports news (they applied, an interview, an offer, a refusal), update it with update_offer. An offer the user says they applied to is created with status applied (and appliedAt when known); without a status it is saved, to apply to later.
 - Interview steps are an ordered, free-form list per offer (phone screen, technical test, onsite…), each with a title, an optional date, a status and notes. New steps are added last; reorder_interview_steps sets the whole order.
 - Dates are days in YYYY-MM-DD format. Updates are partial: omitted fields are left unchanged, null clears an optional field.
 - Deleting an offer also deletes its interview steps. Deletions cannot be undone: confirm with the user first.`;
@@ -154,7 +154,7 @@ export function createServer(api: EmploiApi): McpServer {
     {
       title: 'Record a job offer',
       description:
-        'Records a job offer the user responded to. Only the title is required.',
+        'Records a job offer the user spotted or applied to. Only the title is required. Without a status it is saved (to apply to later): pass status applied when the user says they applied.',
       inputSchema: createOfferInput,
       outputSchema: offerOutput,
       annotations: {

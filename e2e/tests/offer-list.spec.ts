@@ -122,7 +122,7 @@ test('filters by application period from the column header', async ({
 
 test('filters by status from the column header', async ({ page, offers }) => {
   const token = randomUUID().slice(0, 8);
-  await offers.create({ title: `Envoyée ${token}` });
+  await offers.create({ title: `Envoyée ${token}`, status: 'applied' });
   await offers.create({
     title: `Entretiens ${token}`,
     status: 'interviewing',

@@ -74,6 +74,8 @@ test('adds an offer with only a title', async ({ page, offers }) => {
   await expect(page).toHaveURL(/\/offers\/[0-9a-f-]{36}$/);
   const id = offers.track(page.url());
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
+  // The form starts on "À postuler" (adrs/0030-offers-saved-by-default.md).
+  await expect(page.getByText('À postuler')).toBeVisible();
 
   await page.goto(`/offers/${id}/edit`);
   await expect(page.getByLabel('Entreprise')).toHaveValue('');
@@ -114,9 +116,10 @@ test('changes the status of an offer and shows it in the list', async ({
   const offer = await offers.create();
 
   await page.goto(`/offers/${offer.id}`);
-  await expect(page.getByText('Candidature envoyée')).toBeVisible();
+  // Created without a status: saved (adrs/0030-offers-saved-by-default.md).
+  await expect(page.getByText('À postuler')).toBeVisible();
   await page.getByRole('link', { name: 'Modifier', exact: true }).click();
-  await expect(page.getByLabel('Statut')).toHaveValue('applied');
+  await expect(page.getByLabel('Statut')).toHaveValue('saved');
   await page.getByLabel('Statut').selectOption({ label: 'Offre reçue' });
   await page.getByRole('button', { name: 'Enregistrer' }).click();
 

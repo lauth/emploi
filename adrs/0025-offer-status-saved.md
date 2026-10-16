@@ -1,6 +1,6 @@
 # 25. Offer status for offers not applied to yet
 
-- Status: Accepted
+- Status: Accepted; default status superseded by ADR-0030
 - Date: 2026-10-15
 - Extends ADR-0022 (offer status)
 

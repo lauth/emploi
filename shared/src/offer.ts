@@ -70,7 +70,7 @@ export interface CreateOfferRequest {
   description?: string | null;
   /** `YYYY-MM-DD`. */
   appliedAt?: string | null;
-  /** Default `applied`. */
+  /** Default `saved`. */
   status?: OfferStatus;
 }
 

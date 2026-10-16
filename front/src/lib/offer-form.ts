@@ -71,7 +71,7 @@ export const EMPTY_OFFER_FORM: OfferFormValues = {
   location: '',
   description: '',
   appliedAt: '',
-  status: 'applied',
+  status: 'saved',
 };
 
 /** Mirrors the API validation (back/src/offers/dto) for immediate feedback. */
