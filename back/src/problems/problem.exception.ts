@@ -39,6 +39,31 @@ export function offerNotFound(offerId: string): ProblemException {
   );
 }
 
+/** 404 `resource-not-found`: the offer exists but has no image. */
+export function offerImageNotFound(offerId: string): ProblemException {
+  return new ProblemException(
+    'resource-not-found',
+    `Offer ${offerId} has no image. Its \`image\` field (GET /offers/${offerId}) is null until one is sent with PUT /offers/${offerId}/image.`,
+    { resource: 'offer-image' },
+  );
+}
+
+/** 415 `unsupported-image`. */
+export function unsupportedImage(): ProblemException {
+  return new ProblemException(
+    'unsupported-image',
+    'The body is not a JPEG, PNG, WebP or GIF image. Send the raw image bytes as the body, with its Content-Type (e.g. image/png).',
+  );
+}
+
+/** 413 `image-too-large`. */
+export function imageTooLarge(maxBytes: number): ProblemException {
+  return new ProblemException(
+    'image-too-large',
+    `The image is bigger than ${String(maxBytes)} bytes. Send a smaller or more compressed image.`,
+  );
+}
+
 /** 404 `resource-not-found` for a step, or a step of another offer. */
 export function interviewStepNotFound(
   offerId: string,

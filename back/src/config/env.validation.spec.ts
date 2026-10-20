@@ -4,6 +4,7 @@ describe('validateEnv', () => {
   const valid = {
     DATABASE_URL: 'postgresql://user:password@localhost:5432/db',
     CORS_ORIGINS: 'https://emploi.localhost',
+    IMAGES_DIR: '/var/lib/emploi/images',
   };
 
   it('accepts a valid environment and applies defaults', () => {
@@ -31,6 +32,15 @@ describe('validateEnv', () => {
 
   it('converts PORT to a number', () => {
     expect(validateEnv({ ...valid, PORT: '4000' }).PORT).toBe(4000);
+  });
+
+  it('rejects a missing IMAGES_DIR', () => {
+    expect(() =>
+      validateEnv({
+        DATABASE_URL: valid.DATABASE_URL,
+        CORS_ORIGINS: valid.CORS_ORIGINS,
+      }),
+    ).toThrow(/IMAGES_DIR/);
   });
 
   it('rejects a missing DATABASE_URL', () => {

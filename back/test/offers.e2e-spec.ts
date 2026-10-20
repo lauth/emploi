@@ -3,15 +3,13 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
-import {
-  Prisma,
-  type Offer as OfferModel,
-} from '../src/generated/prisma/client.js';
+import { Prisma } from '../src/generated/prisma/client.js';
+import type { OfferWithImage } from '../src/offers/offer.mapper.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 
 const ID = '0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d';
 
-const model: OfferModel = {
+const model: OfferWithImage = {
   id: ID,
   title: 'Backend developer',
   company: 'Acme',
@@ -20,8 +18,14 @@ const model: OfferModel = {
   description: null,
   appliedAt: new Date('2026-09-28T00:00:00.000Z'),
   status: 'applied',
+  image: null,
   createdAt: new Date('2026-10-01T08:30:00.000Z'),
   updatedAt: new Date('2026-10-01T08:30:00.000Z'),
+};
+
+/** What offers read of their image. */
+const INCLUDE = {
+  image: { select: { contentType: true, byteSize: true, updatedAt: true } },
 };
 
 const recordNotFound = new Prisma.PrismaClientKnownRequestError(
@@ -84,6 +88,7 @@ describe('Offers (e2e)', () => {
         description: null,
         appliedAt: '2026-09-28',
         status: 'applied',
+        image: null,
         createdAt: '2026-10-01T08:30:00.000Z',
         updatedAt: '2026-10-01T08:30:00.000Z',
       });
@@ -93,6 +98,7 @@ describe('Offers (e2e)', () => {
           title: 'Backend developer',
           location: null,
         }) as unknown,
+        include: INCLUDE,
       });
     });
 
@@ -109,6 +115,7 @@ describe('Offers (e2e)', () => {
         expect(response.body).toMatchObject({ company: null });
         expect(prisma.offer.create).toHaveBeenCalledWith({
           data: expect.objectContaining({ company: null }) as unknown,
+          include: INCLUDE,
         });
       },
     );
@@ -312,6 +319,7 @@ describe('Offers (e2e)', () => {
           url: null,
           title: undefined,
         }) as unknown,
+        include: INCLUDE,
       });
     });
 
@@ -326,6 +334,7 @@ describe('Offers (e2e)', () => {
       expect(prisma.offer.update).toHaveBeenCalledWith({
         where: { id: ID },
         data: expect.objectContaining({ company: null }) as unknown,
+        include: INCLUDE,
       });
     });
 
@@ -341,6 +350,7 @@ describe('Offers (e2e)', () => {
       expect(prisma.offer.update).toHaveBeenCalledWith({
         where: { id: ID },
         data: expect.objectContaining({ status: 'offered' }) as unknown,
+        include: INCLUDE,
       });
     });
 

@@ -55,11 +55,32 @@ export interface Offer {
   /** Day the user responded, `YYYY-MM-DD`. */
   appliedAt: string | null;
   status: OfferStatus;
+  /** The offer's image, `null` when it has none (adrs/0031-offer-image.md). */
+  image: OfferImage | null;
   /** ISO 8601 timestamp. */
   createdAt: string;
   /** ISO 8601 timestamp. */
   updatedAt: string;
 }
+
+/**
+ * Image formats an offer image may have, detected from its bytes. Each side
+ * derives its runtime list from a `Record<OfferImageType, …>`.
+ */
+export type OfferImageType =
+  'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+
+/** What an offer says about its image; the bytes are at `GET /offers/:offerId/image`. */
+export interface OfferImage {
+  contentType: OfferImageType;
+  /** Size in bytes. */
+  byteSize: number;
+  /** ISO 8601 timestamp: changes when the image is replaced. */
+  updatedAt: string;
+}
+
+/** Largest image the API accepts, in bytes (10 MiB). */
+export type OfferImageMaxBytes = 10_485_760;
 
 /** Body of `POST /offers`. */
 export interface CreateOfferRequest {

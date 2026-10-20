@@ -29,6 +29,15 @@
   gap: var(--space-3);
 }
 
+/* The offer's image: thumbnail, then the button that removes it. */
+.image {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+}
+
 /* Offer list: title, search and add button on one line when the screen
    allows, the table, then count, pagination and page size. */
 

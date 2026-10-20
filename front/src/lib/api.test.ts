@@ -5,9 +5,11 @@ import {
   createOffer,
   getInterviewStep,
   getOffer,
+  getOfferImage,
   isProblem,
   listInterviewSteps,
   listOffers,
+  putOfferImage,
   reorderInterviewSteps,
 } from './api';
 
@@ -22,6 +24,7 @@ const offer: Offer = {
   description: null,
   appliedAt: null,
   status: 'applied',
+  image: null,
   createdAt: '2026-10-01T08:30:00.000Z',
   updatedAt: '2026-10-01T08:30:00.000Z',
 };
@@ -174,6 +177,48 @@ describe('createOffer', () => {
       status: 502,
       problem: null,
     });
+  });
+});
+
+describe('offer image', () => {
+  it('sends the image as the raw body, with its type', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        contentType: 'image/png',
+        byteSize: 3,
+        updatedAt: '2026-10-20T10:00:00.000Z',
+      }),
+    );
+    const image = new File([new Uint8Array(3)], 'a.png', {
+      type: 'image/png',
+    });
+
+    await putOfferImage(offer.id, image);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `http://back/offers/${offer.id}/image`,
+      expect.objectContaining({
+        method: 'PUT',
+        body: image,
+        headers: { Accept: 'application/json', 'Content-Type': 'image/png' },
+      }),
+    );
+  });
+
+  it('gives the bytes and type of the image, or null without one', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response('png', { headers: { 'Content-Type': 'image/png' } }),
+    );
+    const image = await getOfferImage(offer.id);
+    expect(image?.contentType).toBe('image/png');
+    await expect(new Response(image?.body).text()).resolves.toBe('png');
+
+    fetchMock.mockResolvedValueOnce(
+      problemResponse(
+        problem('resource-not-found', { resource: 'offer-image' }),
+      ),
+    );
+    await expect(getOfferImage(offer.id)).resolves.toBeNull();
   });
 });
 

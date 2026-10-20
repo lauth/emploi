@@ -1,9 +1,8 @@
 import { Test } from '@nestjs/testing';
-import {
-  Prisma,
-  type Offer as OfferModel,
-} from '../generated/prisma/client.js';
+import { Prisma } from '../generated/prisma/client.js';
+import { OfferImageStore } from '../offer-images/offer-image-store.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import type { OfferWithImage } from './offer.mapper.js';
 import { OffersService } from './offers.service.js';
 
 const ID = '0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d';
@@ -14,7 +13,7 @@ const OFFER_NOT_FOUND = {
   extras: { resource: 'offer' },
 };
 
-const model: OfferModel = {
+const model: OfferWithImage = {
   id: ID,
   title: 'Backend developer',
   company: 'Acme',
@@ -23,8 +22,14 @@ const model: OfferModel = {
   description: null,
   appliedAt: null,
   status: 'applied',
+  image: null,
   createdAt: new Date('2026-10-01T08:30:00.000Z'),
   updatedAt: new Date('2026-10-01T08:30:00.000Z'),
+};
+
+/** What offers read of their image: never its bytes. */
+const INCLUDE = {
+  image: { select: { contentType: true, byteSize: true, updatedAt: true } },
 };
 
 function recordNotFound(): Prisma.PrismaClientKnownRequestError {
@@ -35,6 +40,7 @@ function recordNotFound(): Prisma.PrismaClientKnownRequestError {
 }
 
 describe('OffersService', () => {
+  const images = { remove: vi.fn() };
   const prisma = {
     offer: {
       create: vi.fn(),
@@ -53,7 +59,11 @@ describe('OffersService', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     const moduleRef = await Test.createTestingModule({
-      providers: [OffersService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        OffersService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: OfferImageStore, useValue: images },
+      ],
     }).compile();
     service = moduleRef.get(OffersService);
   });
@@ -76,6 +86,7 @@ describe('OffersService', () => {
           description: null,
           appliedAt: new Date('2026-09-28T00:00:00.000Z'),
         },
+        include: INCLUDE,
       });
     });
 
@@ -111,6 +122,7 @@ describe('OffersService', () => {
         ],
         take: 20,
         skip: 0,
+        include: INCLUDE,
       });
       expect(prisma.offer.count).toHaveBeenCalledWith({ where: {} });
       expect(page).toMatchObject({ total: 21, limit: 20, offset: 0 });
@@ -228,6 +240,7 @@ describe('OffersService', () => {
           appliedAt: undefined,
           status: undefined,
         },
+        include: INCLUDE,
       });
     });
 
@@ -268,12 +281,14 @@ describe('OffersService', () => {
       await service.remove(ID);
 
       expect(prisma.offer.delete).toHaveBeenCalledWith({ where: { id: ID } });
+      expect(images.remove).toHaveBeenCalledWith(ID);
     });
 
     it('raises resource-not-found for an unknown id', async () => {
       prisma.offer.delete.mockRejectedValue(recordNotFound());
 
       await expect(service.remove(ID)).rejects.toMatchObject(OFFER_NOT_FOUND);
+      expect(images.remove).not.toHaveBeenCalled();
     });
   });
 });

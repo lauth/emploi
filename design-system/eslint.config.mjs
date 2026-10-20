@@ -25,6 +25,11 @@ export default tseslint.config(
       },
     },
     settings: { react: { version: 'detect' } },
+    rules: {
+      // `closedby` (light dismiss of a <dialog>) is typed by React but not yet
+      // known to eslint-plugin-react.
+      'react/no-unknown-property': ['error', { ignore: ['closedby'] }],
+    },
   },
   {
     // Components carry no text: labels and messages come through props, so

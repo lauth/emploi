@@ -4,18 +4,25 @@ import { z } from './zod';
 // read from FormData, Zod schemas mirroring the API validation, and the state
 // kept by `useActionState` between submissions.
 
-/** State of a form between submissions. */
-export interface FormState<Field extends string> {
+/**
+ * State of a form between submissions. `ErrorField` adds fields that can have
+ * errors but whose value isn't kept, such as a file input.
+ */
+export interface FormState<
+  Field extends string,
+  ErrorField extends string = Field,
+> {
   /** Submitted values, so the form keeps what the user typed after an error. */
   values: Record<Field, string>;
-  fieldErrors: Partial<Record<Field, string[]>>;
+  fieldErrors: Partial<Record<Field | ErrorField, string[]>>;
   /** Errors not tied to a field, e.g. answered by the API. */
   formErrors: string[];
 }
 
-export function initialFormState<Field extends string>(
-  values: Record<Field, string>,
-): FormState<Field> {
+export function initialFormState<
+  Field extends string,
+  ErrorField extends string = Field,
+>(values: Record<Field, string>): FormState<Field, ErrorField> {
   return { values, fieldErrors: {}, formErrors: [] };
 }
 
@@ -45,6 +52,8 @@ const VALIDATION_MESSAGES = [
   'invalidUrl',
   'invalidDate',
   'invalidChoice',
+  'imageType',
+  'imageTooLarge',
   'invalid',
 ] as const;
 

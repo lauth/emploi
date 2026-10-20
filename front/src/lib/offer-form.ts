@@ -62,7 +62,8 @@ export type OfferField = (typeof OFFER_FIELDS)[number];
 /** Raw form values, as typed by the user. */
 export type OfferFormValues = Record<OfferField, string>;
 
-export type OfferFormState = FormState<OfferField>;
+/** The image is a file: it can have errors, but its value isn't kept. */
+export type OfferFormState = FormState<OfferField, 'image'>;
 
 export const EMPTY_OFFER_FORM: OfferFormValues = {
   title: '',

@@ -32,6 +32,22 @@ const PROBLEMS: Record<ProblemType, Omit<ProblemTypeDescription, 'type'>> = {
       'been deleted. List offers with `GET /offers`, and the steps of an offer with ' +
       '`GET /offers/{offerId}/steps`, to get valid ids.',
   },
+  'unsupported-image': {
+    title: 'Unsupported image',
+    status: 415,
+    description:
+      'The body is not a JPEG, PNG, WebP or GIF image. The format is recognised from ' +
+      'the bytes, not from `Content-Type`; SVG is refused because it can carry ' +
+      'scripts. Send the raw image as the body with its `Content-Type`, e.g. ' +
+      '`image/png`.',
+  },
+  'image-too-large': {
+    title: 'Image too large',
+    status: 413,
+    description:
+      'The image is bigger than 10 MiB (10485760 bytes). Send a smaller or more ' +
+      'compressed image, e.g. a JPEG or WebP rather than a PNG screenshot.',
+  },
   'route-not-found': {
     title: 'No such endpoint',
     status: 404,

@@ -1,5 +1,6 @@
 import type { Offer, OfferStatus, Page } from '@emploi/shared';
 import { ApiProperty } from '@nestjs/swagger';
+import { OfferImageDto } from '../../offer-images/offer-image.dto.js';
 import { OFFER_PROPERTIES } from '../offer-api-properties.js';
 
 // Response shapes, for the OpenAPI document only: they implement the shared
@@ -30,6 +31,14 @@ export class OfferDto implements Offer {
 
   @ApiProperty(OFFER_PROPERTIES.status)
   status: OfferStatus;
+
+  @ApiProperty({
+    type: OfferImageDto,
+    nullable: true,
+    description:
+      'The offer’s image, `null` when it has none. Its bytes: `GET /offers/{offerId}/image`.',
+  })
+  image: OfferImageDto | null;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-01T08:30:00.000Z' })
   createdAt: string;

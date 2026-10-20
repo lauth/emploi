@@ -39,6 +39,8 @@
                 "validation-error",
                 "malformed-request",
                 "resource-not-found",
+                "unsupported-image",
+                "image-too-large",
                 "route-not-found",
                 "service-unavailable",
                 "internal-error"
@@ -620,6 +622,336 @@
           }
         },
         "summary": "Delete an offer and its interview steps",
+        "tags": [
+          "offers"
+        ]
+      }
+    },
+    "/offers/{offerId}/image": {
+      "put": {
+        "description": "The body is the raw image (JPEG, PNG, WebP or GIF, at most 10 MiB) with its Content-Type, e.g. `curl -X PUT --data-binary @ad.png -H \"Content-Type: image/png\"`. The format is detected from the bytes.",
+        "operationId": "OfferImagesController_put",
+        "parameters": [
+          {
+            "name": "offerId",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/webp": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/gif": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferImageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No offer with this id (`resource-not-found`).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "No offer has the id 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d. It may have been deleted; list offers (GET /offers) to get valid ids.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "offer"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The image is bigger than 10485760 bytes (`image-too-large`).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/image-too-large",
+                  "title": "Image too large",
+                  "status": 413,
+                  "detail": "The image is bigger than 10485760 bytes. Send a smaller or more compressed image.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body is not a JPEG, PNG, WebP or GIF image (`unsupported-image`).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/unsupported-image",
+                  "title": "Unsupported image",
+                  "status": 415,
+                  "detail": "The body is not a JPEG, PNG, WebP or GIF image. Send the raw image bytes as the body, with its Content-Type (e.g. image/png).",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Set or replace the image of an offer",
+        "tags": [
+          "offers"
+        ]
+      },
+      "get": {
+        "operationId": "OfferImagesController_get",
+        "parameters": [
+          {
+            "name": "offerId",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The image.",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/gif": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The offer has no image, or there is no such offer (`resource-not-found`, `resource` says which).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d has no image. Its `image` field (GET /offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d) is null until one is sent with PUT /offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d/image.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "offer-image"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get the image of an offer (its bytes)",
+        "tags": [
+          "offers"
+        ]
+      },
+      "delete": {
+        "operationId": "OfferImagesController_remove",
+        "parameters": [
+          {
+            "name": "offerId",
+            "required": true,
+            "in": "path",
+            "description": "Offer id.",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed."
+          },
+          "400": {
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The offer has no image, or there is no such offer (`resource-not-found`, `resource` says which).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/resource-not-found",
+                  "title": "Resource not found",
+                  "status": 404,
+                  "detail": "Offer 0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d has no image. Its `image` field (GET /offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d) is null until one is sent with PUT /offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d/image.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "resource": "offer-image"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Remove the image of an offer",
         "tags": [
           "offers"
         ]
@@ -1330,7 +1662,8 @@
             "type": "string",
             "enum": [
               "offer",
-              "interview-step"
+              "interview-step",
+              "offer-image"
             ],
             "description": "`resource-not-found`: the kind of resource not found."
           }
@@ -1430,6 +1763,44 @@
           "title"
         ]
       },
+      "OfferImageType": {
+        "type": "string",
+        "enum": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/gif"
+        ],
+        "description": "Format, detected from the bytes."
+      },
+      "OfferImageDto": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "description": "Format, detected from the bytes.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OfferImageType"
+              }
+            ]
+          },
+          "byteSize": {
+            "type": "integer",
+            "description": "Size in bytes."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the image was last set: changes when it is replaced.",
+            "example": "2026-10-02T09:45:00.000Z"
+          }
+        },
+        "required": [
+          "contentType",
+          "byteSize",
+          "updatedAt"
+        ]
+      },
       "OfferDto": {
         "type": "object",
         "properties": {
@@ -1487,6 +1858,16 @@
               }
             ]
           },
+          "image": {
+            "nullable": true,
+            "description": "The offer’s image, `null` when it has none. Its bytes: `GET /offers/{offerId}/image`.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OfferImageDto"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -1507,6 +1888,7 @@
           "description",
           "appliedAt",
           "status",
+          "image",
           "createdAt",
           "updatedAt"
         ]

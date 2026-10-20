@@ -44,6 +44,16 @@ const COVERAGE: Record<string, { tool: string } | { excluded: string }> = {
   },
   'GET /health/live': { excluded: 'Kubernetes probe, not a user operation' },
   'GET /health/ready': { excluded: 'Kubernetes probe, not a user operation' },
+  'PUT /offers/{offerId}/image': {
+    excluded:
+      'binary image: the user adds it in the web app (get_offer shows it)',
+  },
+  'GET /offers/{offerId}/image': {
+    excluded: 'binary image: get_offer shows whether there is one',
+  },
+  'DELETE /offers/{offerId}/image': {
+    excluded: 'binary image: the user removes it in the web app',
+  },
   'GET /problems': {
     excluded: 'error documentation: tool errors already include each problem',
   },

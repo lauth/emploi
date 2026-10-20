@@ -12,8 +12,15 @@ import { fromDateOnly } from '../common/date-only.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { offerNotFound } from '../problems/problem.exception.js';
+import { OfferImageStore } from '../offer-images/offer-image-store.js';
+import { OFFER_IMAGE_INFO } from '../offer-images/offer-images.service.js';
 import { DEFAULT_ORDERS } from './offer-list-options.js';
 import { toOffer } from './offer.mapper.js';
+
+/** What offers show of their image: never its bytes (adrs/0031-offer-image.md). */
+const OFFER_INCLUDE = {
+  image: { select: OFFER_IMAGE_INFO },
+} as const satisfies Prisma.OfferInclude;
 
 /** Prisma error code: the record to update or delete does not exist. */
 const RECORD_NOT_FOUND = 'P2025';
@@ -69,7 +76,10 @@ function offerOrder(
 
 @Injectable()
 export class OffersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly images: OfferImageStore,
+  ) {}
 
   async create(input: CreateOfferRequest): Promise<Offer> {
     const created = await this.prisma.offer.create({
@@ -83,6 +93,7 @@ export class OffersService {
         // Absent: the database default (`saved`).
         status: input.status,
       },
+      include: OFFER_INCLUDE,
     });
     return toOffer(created);
   }
@@ -99,6 +110,7 @@ export class OffersService {
         ),
         take: query.limit,
         skip: query.offset,
+        include: OFFER_INCLUDE,
       }),
       this.prisma.offer.count({ where }),
     ]);
@@ -111,7 +123,10 @@ export class OffersService {
   }
 
   async get(id: string): Promise<Offer> {
-    const model = await this.prisma.offer.findUnique({ where: { id } });
+    const model = await this.prisma.offer.findUnique({
+      where: { id },
+      include: OFFER_INCLUDE,
+    });
     if (model === null) {
       throw offerNotFound(id);
     }
@@ -134,6 +149,7 @@ export class OffersService {
               : fromDateOnly(input.appliedAt),
           status: input.status,
         },
+        include: OFFER_INCLUDE,
       });
       return toOffer(updated);
     } catch (error) {
@@ -141,12 +157,14 @@ export class OffersService {
     }
   }
 
+  /** Deletes the offer, its steps and its image (row by cascade, then file). */
   async remove(id: string): Promise<void> {
     try {
       await this.prisma.offer.delete({ where: { id } });
     } catch (error) {
       throw isRecordNotFound(error) ? offerNotFound(id) : error;
     }
+    await this.images.remove(id);
   }
 }
 

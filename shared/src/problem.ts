@@ -11,6 +11,8 @@ export type ProblemType =
   | 'validation-error'
   | 'malformed-request'
   | 'resource-not-found'
+  | 'unsupported-image'
+  | 'image-too-large'
   | 'route-not-found'
   | 'service-unavailable'
   | 'internal-error';
@@ -36,6 +38,9 @@ export interface InvalidParam {
   maxLength?: number;
 }
 
+/** Kinds of resource a `resource-not-found` problem can be about. */
+export type ProblemResource = 'offer' | 'interview-step' | 'offer-image';
+
 /** Body of every error response. */
 export interface ProblemDetails {
   /** `/problems/<ProblemType>`, or `about:blank`. */
@@ -51,7 +56,7 @@ export interface ProblemDetails {
   /** `validation-error`: every invalid value. */
   errors?: InvalidParam[];
   /** `resource-not-found`: the kind of resource that wasn't found. */
-  resource?: 'offer' | 'interview-step';
+  resource?: ProblemResource;
 }
 
 /** Body of `GET /problems/:type`: what a kind of problem means. */

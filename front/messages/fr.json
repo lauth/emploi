@@ -32,6 +32,8 @@
     "invalidUrl": "Saisissez une adresse commençant par http:// ou https://",
     "invalidDate": "Saisissez une date valide",
     "invalidChoice": "Choisissez une valeur de la liste",
+    "imageType": "Choisissez une image JPEG, PNG, WebP ou GIF",
+    "imageTooLarge": "Image de {max, number} Mo maximum",
     "invalid": "Valeur invalide"
   },
   "offers": {
@@ -112,7 +114,8 @@
     "edit": {
       "title": "Modifier l’offre",
       "metaTitle": "Modifier « {title} »",
-      "submit": "Enregistrer"
+      "submit": "Enregistrer",
+      "imageFailed": "L’offre a été créée, mais pas son image : choisissez-la à nouveau (JPEG, PNG, WebP ou GIF)."
     },
     "detail": {
       "metaFallback": "Offre",
@@ -123,7 +126,13 @@
       "addedOn": "Ajoutée le",
       "updatedOn": "Modifiée le",
       "description": "Description",
-      "noDescription": "Pas de description."
+      "noDescription": "Pas de description.",
+      "imageAlt": "Image de l’offre « {title} »",
+      "imageOpen": "Agrandir l’image",
+      "imageClose": "Fermer",
+      "imageRemove": "Retirer l’image",
+      "imageRemoving": "Retrait…",
+      "imageRemoveConfirm": "Retirer l’image de cette offre ?"
     },
     "fields": {
       "title": "Intitulé du poste",
@@ -132,7 +141,10 @@
       "location": "Lieu",
       "appliedAt": "Date de candidature",
       "status": "Statut",
-      "description": "Description"
+      "description": "Description",
+      "image": "Image",
+      "imageHint": "Une capture de l’annonce, par exemple. JPEG, PNG, WebP ou GIF, 10 Mo maximum.",
+      "imageReplaceHint": "Choisir un fichier remplace l’image actuelle. JPEG, PNG, WebP ou GIF, 10 Mo maximum."
     },
     "status": {
       "saved": "À postuler",
@@ -146,7 +158,8 @@
     },
     "errors": {
       "notFound": "Cette offre n’existe plus.",
-      "failed": "L’offre n’a pas pu être enregistrée. Veuillez réessayer."
+      "failed": "L’offre n’a pas pu être enregistrée. Veuillez réessayer.",
+      "imageFailed": "L’offre est enregistrée, mais l’image a été refusée : choisissez une image JPEG, PNG, WebP ou GIF."
     }
   },
   "steps": {

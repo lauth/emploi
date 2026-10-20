@@ -5,6 +5,7 @@ import type {
   InterviewStep,
   ListOffersQuery,
   Offer,
+  OfferImage,
   Page,
   ProblemDetails,
   ProblemType,
@@ -40,15 +41,18 @@ function describeProblem(problem: ProblemDetails | null): string {
   return errors ? `${problem.detail} (${errors})` : problem.detail;
 }
 
-async function send(path: string, init: RequestInit = {}): Promise<Response> {
+/** Bodies are JSON unless `contentType` says otherwise (an image). */
+async function send(
+  path: string,
+  init: RequestInit = {},
+  contentType = 'application/json',
+): Promise<Response> {
   const response = await fetch(`${serverEnv().API_URL}${path}`, {
     ...init,
     cache: 'no-store',
     headers: {
       Accept: 'application/json',
-      ...(init.body === undefined
-        ? {}
-        : { 'Content-Type': 'application/json' }),
+      ...(init.body === undefined ? {} : { 'Content-Type': contentType }),
     },
   });
   if (!response.ok) {
@@ -85,6 +89,8 @@ const PROBLEM_TYPES: Record<ProblemType, string> = {
   'validation-error': '/problems/validation-error',
   'malformed-request': '/problems/malformed-request',
   'resource-not-found': '/problems/resource-not-found',
+  'unsupported-image': '/problems/unsupported-image',
+  'image-too-large': '/problems/image-too-large',
   'route-not-found': '/problems/route-not-found',
   'service-unavailable': '/problems/service-unavailable',
   'internal-error': '/problems/internal-error',
@@ -172,6 +178,38 @@ export async function updateOffer(
 
 export async function deleteOffer(id: string): Promise<void> {
   await send(`/offers/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+// Offer image (adrs/0031-offer-image.md)
+
+const imagePath = (offerId: string) => `${offerPath(offerId)}/image`;
+
+/** Sets or replaces the image; the API checks its format from the bytes. */
+export async function putOfferImage(
+  offerId: string,
+  image: File,
+): Promise<OfferImage> {
+  return json(
+    await send(imagePath(offerId), { method: 'PUT', body: image }, image.type),
+  );
+}
+
+export async function deleteOfferImage(offerId: string): Promise<void> {
+  await send(imagePath(offerId), { method: 'DELETE' });
+}
+
+/** The image's bytes and type, `null` when the offer has none (or doesn't exist). */
+export async function getOfferImage(
+  offerId: string,
+): Promise<{ contentType: string; body: ReadableStream<Uint8Array> } | null> {
+  const response = await nullIfNotFound(send(imagePath(offerId)));
+  if (response?.body == null) {
+    return null;
+  }
+  return {
+    contentType: response.headers.get('content-type') ?? '',
+    body: response.body,
+  };
 }
 
 // Interview steps (adrs/0015-interview-step-data-model-and-api.md)

@@ -123,25 +123,41 @@ db-studio: ## Open Prisma Studio on the cluster database
 # (adrs/0026-database-backups.md). Not committed: copy them somewhere safe.
 BACKUP_DIR := backups
 
+# Offer image files, on their persistent volume in the back pod (adrs/0031-offer-image.md).
+IMAGES_DIR := /var/lib/emploi/images
+
 .PHONY: db-backup
-db-backup: ## Save the cluster database to backups/emploi-<date>.dump
+db-backup: ## Save the database and the offer images to backups/emploi-<date>.dump and <date>-images.tar
 	@mkdir -p $(BACKUP_DIR)
-	@file="$(BACKUP_DIR)/emploi-$$(date +%Y%m%d-%H%M%S).dump"; \
+	@base="$(BACKUP_DIR)/emploi-$$(date +%Y%m%d-%H%M%S)"; \
 	if $(KUBECTL) exec postgres-0 -- \
 			sh -c 'pg_dump -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" --format=custom' \
-			> "$$file.partial" && test -s "$$file.partial"; then \
-		mv "$$file.partial" "$$file"; echo "Saved $$file"; \
+			> "$$base.dump.partial" && test -s "$$base.dump.partial" \
+		&& $(KUBECTL) exec deploy/back -c back -- tar -C $(IMAGES_DIR) -cf - . \
+			> "$$base-images.tar.partial" && test -s "$$base-images.tar.partial"; then \
+		mv "$$base.dump.partial" "$$base.dump"; \
+		mv "$$base-images.tar.partial" "$$base-images.tar"; \
+		echo "Saved $$base.dump and $$base-images.tar"; \
 	else \
-		rm -f "$$file.partial"; echo "Backup failed: is the cluster running? (make status)"; exit 1; \
+		rm -f "$$base.dump.partial" "$$base-images.tar.partial"; \
+		echo "Backup failed: are the cluster and the back running? (make status)"; exit 1; \
 	fi
 
 .PHONY: db-restore
-db-restore: ## Replace the cluster database with a backup (saves the current one first): make db-restore FILE=<dump>
+db-restore: ## Replace the database (and the images, when <dump>-images.tar exists) with a backup, saving the current ones first: make db-restore FILE=<dump>
 	@test -f "$(FILE)" || { echo "Usage: make db-restore FILE=$(BACKUP_DIR)/<file>.dump"; exit 1; }
 	@$(MAKE) --no-print-directory db-backup
 	$(KUBECTL) exec -i postgres-0 -- \
 		sh -c 'pg_restore -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" --clean --if-exists --no-owner --single-transaction' \
 		< "$(FILE)"
+	@images="$(FILE:.dump=-images.tar)"; \
+	if [ -f "$$images" ]; then \
+		$(KUBECTL) exec -i deploy/back -c back -- \
+			sh -c 'find $(IMAGES_DIR) -mindepth 1 -delete && tar -C $(IMAGES_DIR) -xf -' \
+			< "$$images" && echo "Restored the images of $$images"; \
+	else \
+		echo "No $$images: the image files are left as they are."; \
+	fi
 	@# A backup from an older version: bring its schema up to date.
 	$(MAKE) --no-print-directory db-deploy
 

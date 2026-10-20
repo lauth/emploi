@@ -7,6 +7,7 @@ import type {
   ListOffersQuery,
   Offer,
   OfferFieldLimits,
+  OfferImageType,
   OfferSortField,
   OfferStatus,
   ReorderInterviewStepsRequest,
@@ -260,6 +261,28 @@ export const stepIdInput = z.object({
 
 // Tool outputs
 
+/** A Record lists every format: one added to the shared type breaks the build. */
+const IMAGE_TYPES: Record<OfferImageType, true> = {
+  'image/jpeg': true,
+  'image/png': true,
+  'image/webp': true,
+  'image/gif': true,
+};
+
+/** The tools don't send or read image bytes (adrs/0031-offer-image.md). */
+const offerImageSchema = z
+  .object({
+    contentType: z.enum(
+      Object.keys(IMAGE_TYPES) as [OfferImageType, ...OfferImageType[]],
+    ),
+    byteSize: z.number().int().describe('Size in bytes'),
+    updatedAt: z.string().describe('ISO 8601 timestamp'),
+  })
+  .nullable()
+  .describe(
+    'The image the user attached to the offer (e.g. a screenshot of the ad), null when none. The user adds, views and removes it in the web app.',
+  );
+
 const offerSchema = z.object({
   id: z.uuid(),
   title: z.string(),
@@ -269,6 +292,7 @@ const offerSchema = z.object({
   description: z.string().nullable(),
   appliedAt: z.string().nullable().describe('YYYY-MM-DD'),
   status: z.enum(OFFER_STATUSES),
+  image: offerImageSchema,
   createdAt: z.string().describe('ISO 8601 timestamp'),
   updatedAt: z.string().describe('ISO 8601 timestamp'),
 });

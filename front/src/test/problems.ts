@@ -8,6 +8,8 @@ const STATUSES: Record<ProblemType, number> = {
   'validation-error': 400,
   'malformed-request': 400,
   'resource-not-found': 404,
+  'unsupported-image': 415,
+  'image-too-large': 413,
   'route-not-found': 404,
   'service-unavailable': 503,
   'internal-error': 500,

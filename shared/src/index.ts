@@ -15,6 +15,9 @@ export type {
   ListOffersQuery,
   Offer,
   OfferFieldLimits,
+  OfferImage,
+  OfferImageMaxBytes,
+  OfferImageType,
   OfferSortField,
   OfferStatus,
   UpdateOfferRequest,
@@ -24,6 +27,7 @@ export type {
   InvalidParam,
   InvalidParamLocation,
   ProblemDetails,
+  ProblemResource,
   ProblemType,
   ProblemTypeDescription,
 } from './problem.js';

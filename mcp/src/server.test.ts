@@ -21,6 +21,7 @@ const offer: Offer = {
   description: null,
   appliedAt: '2026-09-28',
   status: 'interviewing',
+  image: null,
   createdAt: '2026-10-01T08:30:00.000Z',
   updatedAt: '2026-10-01T08:30:00.000Z',
 };

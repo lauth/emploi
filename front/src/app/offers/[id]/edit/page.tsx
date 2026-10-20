@@ -1,3 +1,4 @@
+import { Alert } from '@emploi/design-system';
 import type { Offer } from '@emploi/shared';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -21,21 +22,26 @@ export async function generateMetadata({
 
 export default async function EditOfferPage({
   params,
+  searchParams,
 }: PageProps<'/offers/[id]/edit'>) {
   const offer = await loadOffer((await params).id);
   if (offer === null) {
     notFound();
   }
   const t = await getTranslations('offers.edit');
+  // Set by createOfferAction when the offer was created but not its image.
+  const imageFailed = (await searchParams).image === 'failed';
 
   return (
     <div className="readable">
       <h1>{t('title')}</h1>
+      {imageFailed && <Alert tone="danger">{t('imageFailed')}</Alert>}
       <OfferForm
         action={updateOfferAction.bind(null, offer.id)}
         initialValues={toFormValues(offer)}
         submitLabel={t('submit')}
         cancelHref={`/offers/${offer.id}`}
+        hasImage={offer.image !== null}
       />
     </div>
   );

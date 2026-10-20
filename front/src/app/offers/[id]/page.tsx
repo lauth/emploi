@@ -1,11 +1,16 @@
-import { buttonClassName, DescriptionList } from '@emploi/design-system';
+import {
+  buttonClassName,
+  DescriptionList,
+  ImagePreview,
+} from '@emploi/design-system';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { listInterviewSteps } from '@/lib/api';
 import { formatDate, formatDateTime } from '@/lib/format';
-import { deleteOfferAction } from '../actions';
+import { offerImageUrl } from '@/lib/offer-image';
+import { deleteOfferAction, deleteOfferImageAction } from '../actions';
 import { CompanyAndLocation } from '../company-and-location';
 import { ConfirmButton } from '../confirm-button';
 import { OfferStatusBadge } from '../offer-status-badge';
@@ -29,6 +34,7 @@ export default async function OfferPage({ params }: PageProps<'/offers/[id]'>) {
   const steps = await listInterviewSteps(offer.id);
   const t = await getTranslations();
   const format = await getFormatter();
+  const imageUrl = offerImageUrl(offer);
 
   const details = [
     {
@@ -92,6 +98,24 @@ export default async function OfferPage({ params }: PageProps<'/offers/[id]'>) {
           />
         </div>
       </div>
+
+      {imageUrl !== null && (
+        <figure className={styles.image}>
+          <ImagePreview
+            src={imageUrl}
+            alt={t('offers.detail.imageAlt', { title: offer.title })}
+            openLabel={t('offers.detail.imageOpen')}
+            closeLabel={t('offers.detail.imageClose')}
+          />
+          <ConfirmButton
+            action={deleteOfferImageAction.bind(null, offer.id)}
+            confirmMessage={t('offers.detail.imageRemoveConfirm')}
+            label={t('offers.detail.imageRemove')}
+            pendingLabel={t('offers.detail.imageRemoving')}
+            size="sm"
+          />
+        </figure>
+      )}
 
       <DescriptionList items={details} />
 

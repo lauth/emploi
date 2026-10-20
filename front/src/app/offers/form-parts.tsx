@@ -8,9 +8,9 @@ import styles from './offers.module.css';
 // system (adrs/0017-design-system-package-with-storybook.md).
 
 /** The error of a field, joined for the field's `error` prop. */
-export function fieldError<Field extends string>(
-  state: FormState<Field>,
-  field: Field,
+export function fieldError<Field extends string, ErrorField extends string>(
+  state: FormState<Field, ErrorField>,
+  field: Field | ErrorField,
 ): string | undefined {
   return state.fieldErrors[field]?.join(' ');
 }

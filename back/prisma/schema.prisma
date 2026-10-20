@@ -26,6 +26,7 @@ model Offer {
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   interviewSteps InterviewStep[]
+  image          OfferImage?
 
   // `title` and `company` use the ICU collation "und-x-icu" so text sorts
   // properly (accents, case). Prisma can't express collations: it is set in the
@@ -94,4 +95,18 @@ model InterviewStep {
 
   @@index([offerId, position])
   @@map("interview_steps")
+}
+
+/// The image of an offer, e.g. a screenshot of the job ad (adrs/0031-offer-image.md).
+/// Only its description: the bytes are a file named after the offer id in
+/// IMAGES_DIR, a persistent volume, so the database stays small.
+model OfferImage {
+  offerId     String   @id @map("offer_id") @db.Uuid
+  offer       Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  /// `image/jpeg`, `image/png`, `image/webp` or `image/gif`, detected from the bytes.
+  contentType String   @map("content_type") @db.VarChar(20)
+  byteSize    Int      @map("byte_size")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("offer_images")
 }

@@ -15,6 +15,9 @@ backups/
 # mkcert certificates
 .certs/
 
+# Offer images of an API run on the host (back/.env: IMAGES_DIR)
+back/.data/
+
 # Prisma generated client
 back/src/generated/
 

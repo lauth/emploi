@@ -26,6 +26,14 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   CORS_ORIGINS: string;
 
+  /**
+   * Directory of the offer images, on a volume that outlives the container
+   * (adrs/0031-offer-image.md). Created at startup if missing.
+   */
+  @IsString()
+  @IsNotEmpty()
+  IMAGES_DIR: string;
+
   /** Serves Swagger UI at /docs and the OpenAPI document at /docs-json. */
   @Transform(({ value }: { value: unknown }) => parseBoolean(value))
   @IsBoolean()

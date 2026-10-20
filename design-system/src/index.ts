@@ -41,6 +41,10 @@ export {
 } from './components/field/text-area-field';
 export { TextField, type TextFieldProps } from './components/field/text-field';
 export {
+  ImagePreview,
+  type ImagePreviewProps,
+} from './components/image-preview/image-preview';
+export {
   Popover,
   popoverCloseProps,
   type PopoverProps,

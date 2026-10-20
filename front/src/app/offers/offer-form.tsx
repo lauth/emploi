@@ -10,6 +10,7 @@ import {
   type OfferFormState,
   type OfferFormValues,
 } from '@/lib/offer-form';
+import { OFFER_IMAGE_ACCEPT } from '@/lib/offer-image';
 import { fieldError, FormActions, FormErrors } from './form-parts';
 import styles from './offers.module.css';
 
@@ -21,6 +22,8 @@ interface OfferFormProps {
   initialValues: OfferFormValues;
   submitLabel: string;
   cancelHref: string;
+  /** The offer already has an image, which a new file replaces. */
+  hasImage?: boolean;
 }
 
 /**
@@ -32,6 +35,7 @@ export function OfferForm({
   initialValues,
   submitLabel,
   cancelHref,
+  hasImage = false,
 }: OfferFormProps) {
   const [state, formAction, pending] = useActionState(
     action,
@@ -105,6 +109,17 @@ export function OfferForm({
           label: tStatus(status),
         }))}
         error={fieldError(state, 'status')}
+      />
+
+      {/* A file input can't be refilled: after an error, the image is chosen again. */}
+      <TextField
+        id="image"
+        name="image"
+        type="file"
+        accept={OFFER_IMAGE_ACCEPT}
+        label={t('image')}
+        hint={hasImage ? t('imageReplaceHint') : t('imageHint')}
+        error={fieldError(state, 'image')}
       />
 
       <TextAreaField

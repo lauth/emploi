@@ -1,12 +1,19 @@
 import type { Offer } from '@emploi/shared';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { createOffer, deleteOffer, updateOffer } from '@/lib/api';
+import {
+  createOffer,
+  deleteOffer,
+  deleteOfferImage,
+  putOfferImage,
+  updateOffer,
+} from '@/lib/api';
 import { EMPTY_OFFER_FORM, initialOfferFormState } from '@/lib/offer-form';
 import { problemError, validationError } from '@/test/problems';
 import {
   createOfferAction,
   deleteOfferAction,
+  deleteOfferImageAction,
   updateOfferAction,
 } from './actions';
 
@@ -22,6 +29,8 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   createOffer: vi.fn(),
   updateOffer: vi.fn(),
   deleteOffer: vi.fn(),
+  putOfferImage: vi.fn(),
+  deleteOfferImage: vi.fn(),
 }));
 
 const ID = '0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d';
@@ -145,6 +154,101 @@ describe('updateOfferAction', () => {
     );
 
     expect(state.formErrors).toEqual(['Cette offre n’existe plus.']);
+  });
+});
+
+describe('the offer image (adrs/0031-offer-image.md)', () => {
+  function png(size = 16): File {
+    return new File([new Uint8Array(size)], 'annonce.png', {
+      type: 'image/png',
+    });
+  }
+
+  function formWithImage(image: File): FormData {
+    const formData = form({ title: 'Dev' });
+    formData.set('image', image);
+    return formData;
+  }
+
+  it('sends the chosen image after creating the offer', async () => {
+    vi.mocked(createOffer).mockResolvedValue({ id: ID } as Offer);
+    const image = png();
+
+    await expect(
+      createOfferAction(initial, formWithImage(image)),
+    ).rejects.toThrow(`redirect:/offers/${ID}`);
+
+    expect(putOfferImage).toHaveBeenCalledWith(ID, image);
+  });
+
+  it('sends no image when the file input is empty', async () => {
+    vi.mocked(createOffer).mockResolvedValue({ id: ID } as Offer);
+    const formData = form({ title: 'Dev' });
+    // What a browser sends for a file input left empty.
+    formData.set(
+      'image',
+      new File([], '', { type: 'application/octet-stream' }),
+    );
+
+    await expect(createOfferAction(initial, formData)).rejects.toThrow(
+      `redirect:/offers/${ID}`,
+    );
+    expect(putOfferImage).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      'not an accepted format',
+      new File(['<svg/>'], 'logo.svg', { type: 'image/svg+xml' }),
+      'Choisissez une image JPEG, PNG, WebP ou GIF',
+    ],
+    ['over 10 MiB', png(10_485_761), 'Image de 10 Mo maximum'],
+  ])(
+    'refuses an image %s before calling the API',
+    async (_case, image, message) => {
+      const state = await createOfferAction(initial, formWithImage(image));
+
+      expect(state.fieldErrors).toEqual({ image: [message] });
+      expect(createOffer).not.toHaveBeenCalled();
+    },
+  );
+
+  it('opens the new offer for editing when the API refuses its image', async () => {
+    vi.mocked(createOffer).mockResolvedValue({ id: ID } as Offer);
+    vi.mocked(putOfferImage).mockRejectedValue(
+      problemError('unsupported-image'),
+    );
+
+    await expect(
+      createOfferAction(initial, formWithImage(png())),
+    ).rejects.toThrow(`redirect:/offers/${ID}/edit?image=failed`);
+  });
+
+  it('keeps the edit form open when the API refuses a new image', async () => {
+    vi.mocked(updateOffer).mockResolvedValue({ id: ID } as Offer);
+    vi.mocked(putOfferImage).mockRejectedValue(
+      problemError('unsupported-image'),
+    );
+
+    const state = await updateOfferAction(ID, initial, formWithImage(png()));
+
+    expect(state.fieldErrors).toEqual({
+      image: [
+        'L’offre est enregistrée, mais l’image a été refusée : choisissez une image JPEG, PNG, WebP ou GIF.',
+      ],
+    });
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('removes the image, an image already gone included', async () => {
+    vi.mocked(deleteOfferImage).mockRejectedValue(
+      problemError('resource-not-found', { resource: 'offer-image' }),
+    );
+
+    await deleteOfferImageAction(ID);
+
+    expect(deleteOfferImage).toHaveBeenCalledWith(ID);
+    expect(revalidatePath).toHaveBeenCalledWith(`/offers/${ID}`);
   });
 });
 

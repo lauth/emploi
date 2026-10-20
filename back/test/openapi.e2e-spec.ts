@@ -73,11 +73,13 @@ describe('OpenAPI documentation (e2e)', () => {
         .sort(),
     ).toEqual([
       'DELETE /offers/{id}',
+      'DELETE /offers/{offerId}/image',
       'DELETE /offers/{offerId}/steps/{stepId}',
       'GET /health/live',
       'GET /health/ready',
       'GET /offers',
       'GET /offers/{id}',
+      'GET /offers/{offerId}/image',
       'GET /offers/{offerId}/steps',
       'GET /offers/{offerId}/steps/{stepId}',
       'GET /problems',
@@ -86,6 +88,7 @@ describe('OpenAPI documentation (e2e)', () => {
       'PATCH /offers/{offerId}/steps/{stepId}',
       'POST /offers',
       'POST /offers/{offerId}/steps',
+      'PUT /offers/{offerId}/image',
       'PUT /offers/{offerId}/steps/order',
     ]);
   });

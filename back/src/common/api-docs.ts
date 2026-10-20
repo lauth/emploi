@@ -1,6 +1,7 @@
 import type {
   InvalidParam,
   InvalidParamLocation,
+  ProblemResource,
   ProblemDetails,
 } from '@emploi/shared';
 import { applyDecorators } from '@nestjs/common';
@@ -8,17 +9,22 @@ import {
   ApiBadRequestResponse,
   ApiExtraModels,
   ApiNotFoundResponse,
+  ApiPayloadTooLargeResponse,
   ApiProperty,
   ApiPropertyOptional,
   ApiServiceUnavailableResponse,
+  ApiUnsupportedMediaTypeResponse,
   getSchemaPath,
   type ApiResponseOptions,
 } from '@nestjs/swagger';
 import { PROBLEM_CONTENT_TYPE } from '../problems/problem.filter.js';
 import {
+  imageTooLarge,
   interviewStepNotFound,
+  offerImageNotFound,
   offerNotFound,
   ProblemException,
+  unsupportedImage,
   validationProblem,
 } from '../problems/problem.exception.js';
 import { describeProblemType } from '../problems/problem-types.js';
@@ -96,10 +102,10 @@ export class ProblemDetailsDto implements ProblemDetails {
   errors?: InvalidParamDto[];
 
   @ApiPropertyOptional({
-    enum: ['offer', 'interview-step'],
+    enum: ['offer', 'interview-step', 'offer-image'],
     description: '`resource-not-found`: the kind of resource not found.',
   })
-  resource?: 'offer' | 'interview-step';
+  resource?: ProblemResource;
 }
 
 const EXAMPLE_PATH = '/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d';
@@ -164,20 +170,47 @@ export const ApiInvalidRequest = () =>
     ),
   );
 
-/** 404 `resource-not-found` for an offer or an interview step. */
-export const ApiNotFound = (resource: 'offer' | 'interview-step') =>
+/** The 404 response of each kind of resource. */
+const NOT_FOUND_RESPONSES: Record<ProblemResource, () => ApiResponseOptions> = {
+  offer: () =>
+    problemResponse(
+      'No offer with this id (`resource-not-found`).',
+      example(offerNotFound(EXAMPLE_OFFER_ID)),
+    ),
+  'interview-step': () =>
+    problemResponse(
+      'The offer has no step with this id, or there is no such offer (`resource-not-found`, `resource` says which).',
+      example(interviewStepNotFound(EXAMPLE_OFFER_ID, EXAMPLE_STEP_ID)),
+    ),
+  'offer-image': () =>
+    problemResponse(
+      'The offer has no image, or there is no such offer (`resource-not-found`, `resource` says which).',
+      example(offerImageNotFound(EXAMPLE_OFFER_ID)),
+    ),
+};
+
+/** 404 `resource-not-found` for an offer, an interview step or an offer image. */
+export const ApiNotFound = (resource: ProblemResource) =>
   applyDecorators(
     ApiExtraModels(ProblemDetailsDto, InvalidParamDto),
-    ApiNotFoundResponse(
-      resource === 'offer'
-        ? problemResponse(
-            'No offer with this id (`resource-not-found`).',
-            example(offerNotFound(EXAMPLE_OFFER_ID)),
-          )
-        : problemResponse(
-            'The offer has no step with this id, or there is no such offer (`resource-not-found`, `resource` says which).',
-            example(interviewStepNotFound(EXAMPLE_OFFER_ID, EXAMPLE_STEP_ID)),
-          ),
+    ApiNotFoundResponse(NOT_FOUND_RESPONSES[resource]()),
+  );
+
+/** 413 `image-too-large` and 415 `unsupported-image` of an image upload. */
+export const ApiImageRejected = (maxBytes: number) =>
+  applyDecorators(
+    ApiExtraModels(ProblemDetailsDto, InvalidParamDto),
+    ApiPayloadTooLargeResponse(
+      problemResponse(
+        `The image is bigger than ${String(maxBytes)} bytes (\`image-too-large\`).`,
+        example(imageTooLarge(maxBytes)),
+      ),
+    ),
+    ApiUnsupportedMediaTypeResponse(
+      problemResponse(
+        'The body is not a JPEG, PNG, WebP or GIF image (`unsupported-image`).',
+        example(unsupportedImage()),
+      ),
     ),
   );
 

@@ -9,6 +9,49 @@ data:
   CORS_ORIGINS: https://emploi.localhost
   # Swagger UI at https://api.emploi.localhost/docs (adrs/0018-openapi-documentation.md).
   API_DOCS_ENABLED: 'true'
+  # Offer images, on the persistent volume below (adrs/0031-offer-image.md).
+  IMAGES_DIR: /var/lib/emploi/images
+---
+# The offer image files, at a fixed path of the node: the named Docker volume
+# `emploi-data` (k8s/k3d-cluster.yaml) is mounted at /var/lib/emploi, so the
+# images outlive the pods, the node container and the cluster, like the
+# database (adrs/0027-named-volume-for-data.md, adrs/0031-offer-image.md).
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: emploi-images
+  labels:
+    app.kubernetes.io/name: back
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes: ['ReadWriteOnce']
+  storageClassName: ''
+  # Never deleted with its claim: the images stay.
+  persistentVolumeReclaimPolicy: Retain
+  # Reserved for the claim below.
+  claimRef:
+    namespace: emploi
+    name: offer-images
+  hostPath:
+    path: /var/lib/emploi/images
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: offer-images
+  labels:
+    app.kubernetes.io/name: back
+spec:
+  # Bound to the fixed PersistentVolume above, not provisioned on the fly.
+  storageClassName: ''
+  volumeName: emploi-images
+  # One node: the old and new back pods of a rollout share it.
+  accessModes: ['ReadWriteOnce']
+  resources:
+    requests:
+      storage: 5Gi
 ---
 apiVersion: v1
 kind: Service
@@ -50,6 +93,24 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 1000
+      initContainers:
+        # The node creates the hostPath directory as root: hand it to the API's
+        # user. The only step that runs as root, with no capability but CHOWN.
+        - name: images-owner
+          image: emploi-back:dev
+          imagePullPolicy: Never
+          command: ['chown', '1000:1000', '/var/lib/emploi/images']
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ['ALL']
+              add: ['CHOWN']
+          volumeMounts:
+            - name: images
+              mountPath: /var/lib/emploi/images
       containers:
         - name: back
           # Built locally and imported with `make images` (no registry).
@@ -95,3 +156,11 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: ['ALL']
+          volumeMounts:
+            # The only writable path: the offer images.
+            - name: images
+              mountPath: /var/lib/emploi/images
+      volumes:
+        - name: images
+          persistentVolumeClaim:
+            claimName: offer-images
