@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { EMPTY_OFFER_FORM } from '@/lib/offer-form';
-import { createOfferAction } from '../actions';
+import { createOfferAction, fetchJobAdAction } from '../actions';
 import { OfferForm } from '../offer-form';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,6 +16,7 @@ export default async function NewOfferPage() {
       <h1>{t('title')}</h1>
       <OfferForm
         action={createOfferAction}
+        fetchJobAd={fetchJobAdAction}
         initialValues={EMPTY_OFFER_FORM}
         submitLabel={t('submit')}
         cancelHref="/offers"

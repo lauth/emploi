@@ -7,6 +7,7 @@ import {
   type OfferFormValues,
 } from '@/lib/offer-form';
 import { renderWithIntl } from '@/test/intl';
+import type { FetchJobAdResult } from './actions';
 import { OfferForm } from './offer-form';
 
 vi.mock('next/link', () => ({
@@ -35,10 +36,12 @@ function renderForm(
     formData: FormData,
   ) => Promise<OfferFormState>,
   initialValues = EMPTY_OFFER_FORM,
+  fetchJobAd: (url: string) => Promise<FetchJobAdResult> = vi.fn(),
 ) {
   renderWithIntl(
     <OfferForm
       action={action}
+      fetchJobAd={fetchJobAd}
       initialValues={initialValues}
       submitLabel="Enregistrer"
       cancelHref="/offers"
@@ -68,13 +71,112 @@ describe('OfferForm', () => {
     );
   });
 
-  it('asks for the link first, then the title', async () => {
+  it('asks for the link first, with its fetch button, then the title', async () => {
     renderForm(vi.fn());
 
     await userEvent.tab();
     expect(screen.getByLabelText('Lien vers l’offre')).toHaveFocus();
     await userEvent.tab();
+    expect(
+      screen.getByRole('button', { name: 'Récupérer l’annonce' }),
+    ).toHaveFocus();
+    await userEvent.tab();
     expect(screen.getByLabelText('Intitulé du poste')).toHaveFocus();
+  });
+
+  describe('fetching the job ad (adrs/0032-fetch-job-ad.md)', () => {
+    const ad = {
+      url: 'https://jobs.example.com/42',
+      title: 'Développeur backend',
+      company: 'Acme',
+      location: 'Lyon',
+      description: 'Missions\n\n• API',
+    };
+
+    async function fetchFrom(url: string) {
+      await userEvent.type(screen.getByLabelText('Lien vers l’offre'), url);
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Récupérer l’annonce' }),
+      );
+    }
+
+    it('fills the empty fields from the ad', async () => {
+      const fetchJobAd = vi.fn(() =>
+        Promise.resolve({ ok: true, ad } as const),
+      );
+      renderForm(vi.fn(), EMPTY_OFFER_FORM, fetchJobAd);
+
+      await fetchFrom('https://jobs.example.com/42');
+
+      expect(fetchJobAd).toHaveBeenCalledWith('https://jobs.example.com/42');
+      expect(await screen.findByRole('status')).toHaveTextContent(
+        'Annonce récupérée : vérifiez les champs avant d’enregistrer.',
+      );
+      expect(screen.getByLabelText('Intitulé du poste')).toHaveValue(
+        'Développeur backend',
+      );
+      expect(screen.getByLabelText('Entreprise')).toHaveValue('Acme');
+      expect(screen.getByLabelText('Lieu')).toHaveValue('Lyon');
+      expect(screen.getByLabelText('Description')).toHaveValue(
+        'Missions\n\n• API',
+      );
+    });
+
+    it('keeps what the user typed, and asks before replacing the description', async () => {
+      const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+      renderForm(
+        vi.fn(),
+        {
+          ...EMPTY_OFFER_FORM,
+          title: 'Mon intitulé',
+          description: 'Mes notes',
+        },
+        () => Promise.resolve({ ok: true, ad }),
+      );
+
+      await fetchFrom('https://jobs.example.com/42');
+
+      await screen.findByRole('status');
+      expect(confirm).toHaveBeenCalledWith(
+        'Remplacer la description actuelle par le texte de l’annonce ?',
+      );
+      expect(screen.getByLabelText('Intitulé du poste')).toHaveValue(
+        'Mon intitulé',
+      );
+      expect(screen.getByLabelText('Description')).toHaveValue('Mes notes');
+      expect(screen.getByLabelText('Entreprise')).toHaveValue('Acme');
+      confirm.mockRestore();
+    });
+
+    it('shows why the ad could not be read', async () => {
+      renderForm(vi.fn(), EMPTY_OFFER_FORM, () =>
+        Promise.resolve({
+          ok: false,
+          message: 'La page n’a pas pu être récupérée.',
+        }),
+      );
+
+      await fetchFrom('https://jobs.example.com/42');
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'La page n’a pas pu être récupérée.',
+      );
+      expect(screen.getByLabelText('Description')).toHaveValue('');
+    });
+
+    it('asks for the link before fetching', async () => {
+      const fetchJobAd = vi.fn();
+      renderForm(vi.fn(), EMPTY_OFFER_FORM, fetchJobAd);
+
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Récupérer l’annonce' }),
+      );
+
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Saisissez d’abord le lien de l’annonce.',
+      );
+      expect(fetchJobAd).not.toHaveBeenCalled();
+    });
   });
 
   it('submits the typed values to the action', async () => {

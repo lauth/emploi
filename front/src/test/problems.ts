@@ -10,6 +10,8 @@ const STATUSES: Record<ProblemType, number> = {
   'resource-not-found': 404,
   'unsupported-image': 415,
   'image-too-large': 413,
+  'job-ad-unreachable': 502,
+  'job-ad-unreadable': 422,
   'route-not-found': 404,
   'service-unavailable': 503,
   'internal-error': 500,

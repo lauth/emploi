@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import type { OfferFormValues } from '@/lib/offer-form';
-import { updateOfferAction } from '../../actions';
+import { fetchJobAdAction, updateOfferAction } from '../../actions';
 import { OfferForm } from '../../offer-form';
 import { loadOffer } from '../load-offer';
 
@@ -38,6 +38,7 @@ export default async function EditOfferPage({
       {imageFailed && <Alert tone="danger">{t('imageFailed')}</Alert>}
       <OfferForm
         action={updateOfferAction.bind(null, offer.id)}
+        fetchJobAd={fetchJobAdAction}
         initialValues={toFormValues(offer)}
         submitLabel={t('submit')}
         cancelHref={`/offers/${offer.id}`}

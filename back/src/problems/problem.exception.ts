@@ -64,6 +64,22 @@ export function imageTooLarge(maxBytes: number): ProblemException {
   );
 }
 
+/** 502 `job-ad-unreachable`, with the reason. */
+export function jobAdUnreachable(reason: string): ProblemException {
+  return new ProblemException(
+    'job-ad-unreachable',
+    `The page of the job ad could not be fetched: ${reason}.`,
+  );
+}
+
+/** 422 `job-ad-unreadable`. */
+export function jobAdUnreadable(): ProblemException {
+  return new ProblemException(
+    'job-ad-unreadable',
+    'The page holds neither a schema.org JobPosting nor readable text (it may be rendered by JavaScript). Copy the text of the ad instead.',
+  );
+}
+
 /** 404 `resource-not-found` for a step, or a step of another offer. */
 export function interviewStepNotFound(
   offerId: string,

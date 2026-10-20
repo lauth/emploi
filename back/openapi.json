@@ -41,6 +41,8 @@
                 "resource-not-found",
                 "unsupported-image",
                 "image-too-large",
+                "job-ad-unreachable",
+                "job-ad-unreadable",
                 "route-not-found",
                 "service-unavailable",
                 "internal-error"
@@ -1527,6 +1529,108 @@
           "interview-steps"
         ]
       }
+    },
+    "/job-ads/fetch": {
+      "post": {
+        "description": "Fetches the page (one request, like a browser opening the link; private and local addresses are refused) and reads its schema.org JobPosting, or else its title and main text. Saves nothing: use the result to fill an offer.",
+        "operationId": "JobAdsController_fetch",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchJobAdDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAdDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (`validation-error`): `errors` lists every invalid value of the body, query or path. Also `malformed-request` when the body is not valid JSON.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/validation-error",
+                  "title": "Invalid request",
+                  "status": 400,
+                  "detail": "2 values are invalid: see `errors`, fix them and send the request again.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d",
+                  "errors": [
+                    {
+                      "in": "body",
+                      "name": "/title",
+                      "code": "isNotEmpty",
+                      "detail": "title should not be empty"
+                    },
+                    {
+                      "in": "body",
+                      "name": "/status",
+                      "code": "isIn",
+                      "detail": "status must be one of the following values: applied, interviewing",
+                      "allowed": [
+                        "applied",
+                        "interviewing"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The page holds nothing readable (`job-ad-unreadable`).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/job-ad-unreadable",
+                  "title": "Nothing to read in the job ad",
+                  "status": 422,
+                  "detail": "The page holds neither a schema.org JobPosting nor readable text (it may be rendered by JavaScript). Copy the text of the ad instead.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The page could not be fetched (`job-ad-unreachable`): `detail` says why.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailsDto"
+                },
+                "example": {
+                  "type": "/problems/job-ad-unreachable",
+                  "title": "Job ad unreachable",
+                  "status": 502,
+                  "detail": "The page of the job ad could not be fetched: the site answered HTTP 403.",
+                  "instance": "/offers/0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Fetch a job ad from its link and read it",
+        "tags": [
+          "job-ads"
+        ]
+      }
     }
   },
   "info": {
@@ -1543,6 +1647,10 @@
     {
       "name": "interview-steps",
       "description": "Steps of the interview process of an offer, in the order chosen by the user."
+    },
+    {
+      "name": "job-ads",
+      "description": "Reading a job ad from its link, to fill an offer. Saves nothing."
     },
     {
       "name": "health",
@@ -2153,6 +2261,65 @@
             ]
           }
         }
+      },
+      "FetchJobAdDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Link of the job ad, `http` or `https`. Private and local addresses are refused.",
+            "maxLength": 2048,
+            "example": "https://jobs.example.com/42"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "JobAdDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The page read, after redirects."
+          },
+          "title": {
+            "type": "string",
+            "description": "Job title. Trimmed.",
+            "maxLength": 200,
+            "example": "Développeur backend",
+            "nullable": true
+          },
+          "company": {
+            "type": "string",
+            "nullable": true,
+            "description": "Employer, when the offer names it. Blank is stored as `null`.",
+            "maxLength": 200,
+            "example": "Acme"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true,
+            "description": "City, country or \"Remote\".",
+            "maxLength": 200,
+            "example": "Lyon"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Text of the ad: paragraphs separated by a blank line, list items starting with •.",
+            "maxLength": 20000
+          }
+        },
+        "required": [
+          "url",
+          "title",
+          "company",
+          "location",
+          "description"
+        ]
       }
     }
   }

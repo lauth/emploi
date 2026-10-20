@@ -48,6 +48,22 @@ const PROBLEMS: Record<ProblemType, Omit<ProblemTypeDescription, 'type'>> = {
       'The image is bigger than 10 MiB (10485760 bytes). Send a smaller or more ' +
       'compressed image, e.g. a JPEG or WebP rather than a PNG screenshot.',
   },
+  'job-ad-unreachable': {
+    title: 'Job ad unreachable',
+    status: 502,
+    description:
+      'The page of the job ad could not be fetched: `detail` says why (its address ' +
+      'is private or local, it timed out, it answered an HTTP error, it is not an ' +
+      'HTML page or is bigger than 5 MB). Check the link; pages behind a login or ' +
+      'a bot challenge cannot be fetched, copy their text instead.',
+  },
+  'job-ad-unreadable': {
+    title: 'Nothing to read in the job ad',
+    status: 422,
+    description:
+      'The page was fetched but holds neither a schema.org JobPosting nor readable ' +
+      'text, e.g. a page rendered by JavaScript only. Copy the text of the ad instead.',
+  },
   'route-not-found': {
     title: 'No such endpoint',
     status: 404,

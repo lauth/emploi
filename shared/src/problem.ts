@@ -13,6 +13,8 @@ export type ProblemType =
   | 'resource-not-found'
   | 'unsupported-image'
   | 'image-too-large'
+  | 'job-ad-unreachable'
+  | 'job-ad-unreadable'
   | 'route-not-found'
   | 'service-unavailable'
   | 'internal-error';

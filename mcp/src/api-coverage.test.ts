@@ -54,6 +54,9 @@ const COVERAGE: Record<string, { tool: string } | { excluded: string }> = {
   'DELETE /offers/{offerId}/image': {
     excluded: 'binary image: the user removes it in the web app',
   },
+  'POST /job-ads/fetch': {
+    excluded: 'AI clients read web pages themselves',
+  },
   'GET /problems': {
     excluded: 'error documentation: tool errors already include each problem',
   },

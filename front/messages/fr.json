@@ -160,6 +160,17 @@
       "notFound": "Cette offre n’existe plus.",
       "failed": "L’offre n’a pas pu être enregistrée. Veuillez réessayer.",
       "imageFailed": "L’offre est enregistrée, mais l’image a été refusée : choisissez une image JPEG, PNG, WebP ou GIF."
+    },
+    "jobAd": {
+      "fetch": "Récupérer l’annonce",
+      "fetching": "Récupération…",
+      "missingUrl": "Saisissez d’abord le lien de l’annonce.",
+      "invalidUrl": "Ce lien n’est pas une adresse web valide (http:// ou https://).",
+      "replaceDescription": "Remplacer la description actuelle par le texte de l’annonce ?",
+      "filled": "Annonce récupérée : vérifiez les champs avant d’enregistrer.",
+      "unreachable": "La page n’a pas pu être récupérée (site protégé, connexion requise ou lien invalide). Copiez le texte de l’annonce à la main.",
+      "unreadable": "La page ne contient pas d’annonce lisible (elle est peut-être générée par JavaScript). Copiez le texte de l’annonce à la main.",
+      "failed": "La récupération a échoué. Veuillez réessayer."
     }
   },
   "steps": {

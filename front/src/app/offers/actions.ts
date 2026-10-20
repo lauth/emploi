@@ -1,6 +1,6 @@
 'use server';
 
-import type { CreateOfferRequest } from '@emploi/shared';
+import type { CreateOfferRequest, JobAd } from '@emploi/shared';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -9,12 +9,15 @@ import {
   createOffer,
   deleteOffer,
   deleteOfferImage,
+  fetchJobAd,
   isNotFound,
+  isProblem,
   putOfferImage,
   updateOffer,
 } from '@/lib/api';
-import type { TranslateValidation } from '@/lib/forms';
+import { optionalHttpUrl, type TranslateValidation } from '@/lib/forms';
 import {
+  OFFER_LIMITS,
   parseOfferForm,
   readOfferForm,
   type OfferFormState,
@@ -114,6 +117,45 @@ export async function updateOfferAction(
   }
 
   redirect(`/offers/${id}`);
+}
+
+export type FetchJobAdResult =
+  { ok: true; ad: JobAd } | { ok: false; message: string };
+
+/**
+ * Reads the job ad at `url` to fill the form (adrs/0032-fetch-job-ad.md); saves
+ * nothing. Called with the link typed in the form, which isn't trusted.
+ */
+export async function fetchJobAdAction(
+  url: unknown,
+): Promise<FetchJobAdResult> {
+  const t = await getTranslations('offers.jobAd');
+  const link = optionalHttpUrl(OFFER_LIMITS.url).safeParse(
+    typeof url === 'string' ? url : '',
+  );
+  if (!link.success) {
+    return { ok: false, message: t('invalidUrl') };
+  }
+  if (link.data === null) {
+    return { ok: false, message: t('missingUrl') };
+  }
+  try {
+    return { ok: true, ad: await fetchJobAd(link.data) };
+  } catch (error) {
+    // The problem's detail says why (HTTP status, timeout…): logged, not shown.
+    console.error(error);
+    if (isProblem(error, 'job-ad-unreachable')) {
+      return { ok: false, message: t('unreachable') };
+    }
+    if (isProblem(error, 'job-ad-unreadable')) {
+      return { ok: false, message: t('unreadable') };
+    }
+    // Stricter than the form, e.g. a host without a domain name.
+    if (isProblem(error, 'validation-error')) {
+      return { ok: false, message: t('invalidUrl') };
+    }
+    return { ok: false, message: t('failed') };
+  }
 }
 
 /** Removes the image of an offer; already gone is fine. */

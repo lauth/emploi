@@ -2,7 +2,7 @@
 
 import { SelectField, TextAreaField, TextField } from '@emploi/design-system';
 import { useTranslations } from 'next-intl';
-import { useActionState } from 'react';
+import { useActionState, useRef } from 'react';
 import {
   initialOfferFormState,
   OFFER_LIMITS,
@@ -11,7 +11,9 @@ import {
   type OfferFormValues,
 } from '@/lib/offer-form';
 import { OFFER_IMAGE_ACCEPT } from '@/lib/offer-image';
+import type { FetchJobAdResult } from './actions';
 import { fieldError, FormActions, FormErrors } from './form-parts';
+import { JobAdFetcher } from './job-ad-fetcher';
 import styles from './offers.module.css';
 
 interface OfferFormProps {
@@ -24,6 +26,8 @@ interface OfferFormProps {
   cancelHref: string;
   /** The offer already has an image, which a new file replaces. */
   hasImage?: boolean;
+  /** Reads the job ad at the link (`fetchJobAdAction`). */
+  fetchJobAd: (url: string) => Promise<FetchJobAdResult>;
 }
 
 /**
@@ -36,30 +40,34 @@ export function OfferForm({
   submitLabel,
   cancelHref,
   hasImage = false,
+  fetchJobAd,
 }: OfferFormProps) {
   const [state, formAction, pending] = useActionState(
     action,
     initialOfferFormState(initialValues),
   );
   const { values } = state;
+  const form = useRef<HTMLFormElement>(null);
   const t = useTranslations('offers.fields');
   const tStatus = useTranslations('offers.status');
 
   return (
-    <form action={formAction} className={styles.form}>
+    <form ref={form} action={formAction} className={styles.form}>
       <FormErrors messages={state.formErrors} />
 
       {/* The link first: the user copies it from the job board, then the rest. */}
-      <TextField
-        id="url"
-        name="url"
-        type="url"
-        label={t('url')}
-        placeholder="https://"
-        maxLength={OFFER_LIMITS.url}
-        defaultValue={values.url}
-        error={fieldError(state, 'url')}
-      />
+      <JobAdFetcher form={form} fetchJobAd={fetchJobAd}>
+        <TextField
+          id="url"
+          name="url"
+          type="url"
+          label={t('url')}
+          placeholder="https://"
+          maxLength={OFFER_LIMITS.url}
+          defaultValue={values.url}
+          error={fieldError(state, 'url')}
+        />
+      </JobAdFetcher>
 
       <TextField
         id="title"

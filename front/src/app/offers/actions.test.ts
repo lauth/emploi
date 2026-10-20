@@ -5,6 +5,7 @@ import {
   createOffer,
   deleteOffer,
   deleteOfferImage,
+  fetchJobAd,
   putOfferImage,
   updateOffer,
 } from '@/lib/api';
@@ -14,6 +15,7 @@ import {
   createOfferAction,
   deleteOfferAction,
   deleteOfferImageAction,
+  fetchJobAdAction,
   updateOfferAction,
 } from './actions';
 
@@ -31,6 +33,7 @@ vi.mock('@/lib/api', async (importOriginal) => ({
   deleteOffer: vi.fn(),
   putOfferImage: vi.fn(),
   deleteOfferImage: vi.fn(),
+  fetchJobAd: vi.fn(),
 }));
 
 const ID = '0199a7a4-3c2e-7b6a-9c1d-2f3e4a5b6c7d';
@@ -249,6 +252,66 @@ describe('the offer image (adrs/0031-offer-image.md)', () => {
 
     expect(deleteOfferImage).toHaveBeenCalledWith(ID);
     expect(revalidatePath).toHaveBeenCalledWith(`/offers/${ID}`);
+  });
+});
+
+describe('fetchJobAdAction (adrs/0032-fetch-job-ad.md)', () => {
+  const ad = {
+    url: 'https://jobs.example.com/42',
+    title: 'Dev',
+    company: null,
+    location: null,
+    description: 'Texte',
+  };
+
+  it('reads the ad through the API', async () => {
+    vi.mocked(fetchJobAd).mockResolvedValue(ad);
+
+    await expect(
+      fetchJobAdAction('  https://jobs.example.com/42 '),
+    ).resolves.toEqual({ ok: true, ad });
+    expect(fetchJobAd).toHaveBeenCalledWith('https://jobs.example.com/42');
+  });
+
+  it.each([
+    ['', 'Saisissez d’abord le lien de l’annonce.'],
+    [
+      'javascript:alert(1)',
+      'Ce lien n’est pas une adresse web valide (http:// ou https://).',
+    ],
+    [42, 'Saisissez d’abord le lien de l’annonce.'],
+  ])('refuses %j without calling the API', async (url, message) => {
+    await expect(fetchJobAdAction(url)).resolves.toEqual({
+      ok: false,
+      message,
+    });
+    expect(fetchJobAd).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      problemError('job-ad-unreachable'),
+      'La page n’a pas pu être récupérée (site protégé, connexion requise ou lien invalide). Copiez le texte de l’annonce à la main.',
+    ],
+    [
+      problemError('job-ad-unreadable'),
+      'La page ne contient pas d’annonce lisible (elle est peut-être générée par JavaScript). Copiez le texte de l’annonce à la main.',
+    ],
+    [
+      problemError('validation-error'),
+      'Ce lien n’est pas une adresse web valide (http:// ou https://).',
+    ],
+    [
+      new TypeError('fetch failed'),
+      'La récupération a échoué. Veuillez réessayer.',
+    ],
+  ])('translates the failure %#, and logs it', async (failure, message) => {
+    vi.mocked(fetchJobAd).mockRejectedValue(failure);
+
+    await expect(
+      fetchJobAdAction('https://jobs.example.com/42'),
+    ).resolves.toEqual({ ok: false, message });
+    expect(console.error).toHaveBeenCalledWith(failure);
   });
 });
 

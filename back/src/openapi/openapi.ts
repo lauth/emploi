@@ -28,6 +28,10 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
       'interview-steps',
       'Steps of the interview process of an offer, in the order chosen by the user.',
     )
+    .addTag(
+      'job-ads',
+      'Reading a job ad from its link, to fill an offer. Saves nothing.',
+    )
     .addTag('health', 'Probes used by Kubernetes.')
     .addTag(
       'problems',

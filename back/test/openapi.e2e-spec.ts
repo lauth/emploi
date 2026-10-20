@@ -86,6 +86,7 @@ describe('OpenAPI documentation (e2e)', () => {
       'GET /problems/{type}',
       'PATCH /offers/{id}',
       'PATCH /offers/{offerId}/steps/{stepId}',
+      'POST /job-ads/fetch',
       'POST /offers',
       'POST /offers/{offerId}/steps',
       'PUT /offers/{offerId}/image',

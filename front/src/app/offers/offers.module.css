@@ -176,3 +176,12 @@
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: var(--space-4);
 }
+
+/* A field with a button on its right, aligned with the input (the link and
+   "Récupérer l'annonce"). */
+.withAction {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: var(--space-3);
+}

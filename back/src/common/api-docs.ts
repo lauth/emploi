@@ -6,6 +6,7 @@ import type {
 } from '@emploi/shared';
 import { applyDecorators } from '@nestjs/common';
 import {
+  ApiBadGatewayResponse,
   ApiBadRequestResponse,
   ApiExtraModels,
   ApiNotFoundResponse,
@@ -13,6 +14,7 @@ import {
   ApiProperty,
   ApiPropertyOptional,
   ApiServiceUnavailableResponse,
+  ApiUnprocessableEntityResponse,
   ApiUnsupportedMediaTypeResponse,
   getSchemaPath,
   type ApiResponseOptions,
@@ -21,6 +23,8 @@ import { PROBLEM_CONTENT_TYPE } from '../problems/problem.filter.js';
 import {
   imageTooLarge,
   interviewStepNotFound,
+  jobAdUnreachable,
+  jobAdUnreadable,
   offerImageNotFound,
   offerNotFound,
   ProblemException,
@@ -210,6 +214,24 @@ export const ApiImageRejected = (maxBytes: number) =>
       problemResponse(
         'The body is not a JPEG, PNG, WebP or GIF image (`unsupported-image`).',
         example(unsupportedImage()),
+      ),
+    ),
+  );
+
+/** 502 `job-ad-unreachable` and 422 `job-ad-unreadable` of fetching a job ad. */
+export const ApiJobAdFailures = () =>
+  applyDecorators(
+    ApiExtraModels(ProblemDetailsDto, InvalidParamDto),
+    ApiBadGatewayResponse(
+      problemResponse(
+        'The page could not be fetched (`job-ad-unreachable`): `detail` says why.',
+        example(jobAdUnreachable('the site answered HTTP 403')),
+      ),
+    ),
+    ApiUnprocessableEntityResponse(
+      problemResponse(
+        'The page holds nothing readable (`job-ad-unreadable`).',
+        example(jobAdUnreadable()),
       ),
     ),
   );

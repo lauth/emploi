@@ -2,7 +2,9 @@ import 'server-only';
 import type {
   CreateInterviewStepRequest,
   CreateOfferRequest,
+  FetchJobAdRequest,
   InterviewStep,
+  JobAd,
   ListOffersQuery,
   Offer,
   OfferImage,
@@ -91,6 +93,8 @@ const PROBLEM_TYPES: Record<ProblemType, string> = {
   'resource-not-found': '/problems/resource-not-found',
   'unsupported-image': '/problems/unsupported-image',
   'image-too-large': '/problems/image-too-large',
+  'job-ad-unreachable': '/problems/job-ad-unreachable',
+  'job-ad-unreadable': '/problems/job-ad-unreadable',
   'route-not-found': '/problems/route-not-found',
   'service-unavailable': '/problems/service-unavailable',
   'internal-error': '/problems/internal-error',
@@ -178,6 +182,18 @@ export async function updateOffer(
 
 export async function deleteOffer(id: string): Promise<void> {
   await send(`/offers/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+// Job ads (adrs/0032-fetch-job-ad.md)
+
+/** What the page at `url` says about the ad; the API fetches it. */
+export async function fetchJobAd(url: string): Promise<JobAd> {
+  return json(
+    await send('/job-ads/fetch', {
+      method: 'POST',
+      body: JSON.stringify({ url } satisfies FetchJobAdRequest),
+    }),
+  );
 }
 
 // Offer image (adrs/0031-offer-image.md)
