@@ -68,6 +68,15 @@ describe('OfferForm', () => {
     );
   });
 
+  it('asks for the link first, then the title', async () => {
+    renderForm(vi.fn());
+
+    await userEvent.tab();
+    expect(screen.getByLabelText('Lien vers l’offre')).toHaveFocus();
+    await userEvent.tab();
+    expect(screen.getByLabelText('Intitulé du poste')).toHaveFocus();
+  });
+
   it('submits the typed values to the action', async () => {
     const submitted: FormData[] = [];
     const action = vi.fn((state: OfferFormState, formData: FormData) => {

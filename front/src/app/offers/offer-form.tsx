@@ -45,6 +45,18 @@ export function OfferForm({
     <form action={formAction} className={styles.form}>
       <FormErrors messages={state.formErrors} />
 
+      {/* The link first: the user copies it from the job board, then the rest. */}
+      <TextField
+        id="url"
+        name="url"
+        type="url"
+        label={t('url')}
+        placeholder="https://"
+        maxLength={OFFER_LIMITS.url}
+        defaultValue={values.url}
+        error={fieldError(state, 'url')}
+      />
+
       <TextField
         id="title"
         name="title"
@@ -62,17 +74,6 @@ export function OfferForm({
         maxLength={OFFER_LIMITS.company}
         defaultValue={values.company}
         error={fieldError(state, 'company')}
-      />
-
-      <TextField
-        id="url"
-        name="url"
-        type="url"
-        label={t('url')}
-        placeholder="https://"
-        maxLength={OFFER_LIMITS.url}
-        defaultValue={values.url}
-        error={fieldError(state, 'url')}
       />
 
       <div className={styles.row}>
