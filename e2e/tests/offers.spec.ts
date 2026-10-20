@@ -34,7 +34,7 @@ test('adds an offer from the form', async ({ page, offers }) => {
   await expect(
     page.getByRole('link', { name: 'https://example.com/jobs/7' }),
   ).toHaveAttribute('target', '_blank');
-  await expect(page.getByText('1 oct. 2026')).toBeVisible();
+  await expect(page.getByText('1 oct. 2026', { exact: true })).toBeVisible();
   await expect(page.getByText('React et TypeScript.')).toBeVisible();
 
   await page.getByRole('link', { name: '← Toutes les offres' }).click();
